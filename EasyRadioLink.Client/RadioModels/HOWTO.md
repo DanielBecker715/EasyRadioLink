@@ -1,0 +1,79 @@
+# Radio models
+
+Each JSON file in this folder is a radio model ("Sound"): how a transmission made with that radio sounds on the
+receiving side. The file name without `.json` is the model key (`cb.json` -> `cb`), which is what a radio's `model`
+field / the Sound selector stores. Keys are lower case letters and digits only (max 32 characters).
+
+- Built-in models live here, next to `EasyRadioLink.exe`. Do not edit them - updates overwrite them.
+- Your own models go into `%AppData%\EasyRadioLink\RadioModels`. A file with the same name as a built-in model
+  replaces it. Restart EasyRadioLink after adding or changing a file.
+- `standard` is the default and the fallback for unknown keys. `hfnoise` is internal (it shapes the static below
+  30 MHz) and is not offered in the Sound selector.
+- Invalid files are skipped and reported in the client log.
+- Other users only hear your model if they have a model with the same key.
+
+## File format
+
+```json
+{
+  "version": 1,
+  "displayName": "My CB",
+  "description": "Old AM CB with a hot power microphone.",
+  "sortOrder": 100,
+  "txEffect": { "$type": "chain", "effects": [ ... ] },
+  "rxEffect": { "$type": "filters", "filters": [ ... ] },
+  "encryptionEffect": { "$type": "cvsd" },
+  "noiseGain": -22
+}
+```
+
+| Field | Required | Meaning |
+|---|---|---|
+| `version` | yes | Always `1`. |
+| `displayName` | no | Name shown in the Sound selector (default: the key). |
+| `description` | no | Short description (tool tip). |
+| `sortOrder` | no | Position in the Sound selector (lower first, default 1000). |
+| `txEffect` | yes | Effect applied to transmissions made with this model (microphone + transmitter). |
+| `rxEffect` | yes | Receive filter (receiver + speaker). A gentle highpass 270 / lowpass 4500 is typical. |
+| `encryptionEffect` | no | Applied after `txEffect` when the transmission is encrypted, usually `cvsd`. |
+| `noiseGain` | yes | Static level in dB, added to the frequency dependent base level (lower frequencies are noisier). Above 30 MHz the static is always subtle. At or below 30 MHz (CB/HF) it is much stronger and rises steeply: `-22` is heavy (`cb`), `-33` light (`standard`); above about `-18` the static drowns the voice. |
+
+Property names are camelCase. Comments (`// ...`) and trailing commas are allowed. Unknown properties of filters
+make the file invalid. Frequencies are in Hz, gains and thresholds in dB, times in seconds.
+
+## Effects
+
+| `$type` | Fields | Meaning |
+|---|---|---|
+| `chain` | `effects` | Runs the listed effects one after another, top to bottom. |
+| `filters` | `filters` | Runs the listed filters (see below). |
+| `gain` | `gain` | Amplifies (positive) or attenuates (negative) by `gain` dB. |
+| `saturation` | `gain`, `threshold` | Soft clipping / overdrive. |
+| `compressor` | `attack`, `release`, `threshold`, `ratio`, `makeUp` | Dynamic range compressor. |
+| `sidechainCompressor` | as `compressor` + `sidechainEffect` | Compressor driven by a filtered copy of the signal. |
+| `cvsd` | - | CVSD vocoder artefacts ("digital secure voice"), mostly used as `encryptionEffect`. |
+
+## Filters
+
+| Field | Meaning |
+|---|---|
+| `$type` | `lowpass`, `highpass` or `peak`. |
+| `frequency` | Cut-off / centre frequency in Hz (> 0). |
+| `q` | Optional for `lowpass`/`highpass` (without `q`: gentle first-order filter), required for `peak`. |
+| `gain` | `peak` only: boost or cut in dB. |
+
+Example:
+
+```json
+{
+  "$type": "filters",
+  "filters": [
+    { "$type": "highpass", "frequency": 300 },
+    { "$type": "peak", "frequency": 2300, "q": 0.6, "gain": 8 },
+    { "$type": "lowpass", "frequency": 3200, "q": 0.5 }
+  ]
+}
+```
+
+Tip: start from a copy of a built-in model, change one thing at a time and compare with the microphone preview.
+Keep the final `gain` so the model is about as loud as `standard`.

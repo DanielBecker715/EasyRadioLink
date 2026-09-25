@@ -1,0 +1,297 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <!-- 
+    Microsoft ResX Schema 
+    
+    Version 2.0
+    
+    The primary goals of this format is to allow a simple XML format 
+    that is mostly human readable. The generation and parsing of the 
+    various data types are done through the TypeConverter classes 
+    associated with the data types.
+    
+    Example:
+    
+    ... ado.net/XML headers & schema ...
+    <resheader name="resmimetype">text/microsoft-resx</resheader>
+    <resheader name="version">2.0</resheader>
+    <resheader name="reader">System.Resources.ResXResourceReader, System.Windows.Forms, ...</resheader>
+    <resheader name="writer">System.Resources.ResXResourceWriter, System.Windows.Forms, ...</resheader>
+    <data name="Name1"><value>this is my long string</value><comment>this is a comment</comment></data>
+    <data name="Color1" type="System.Drawing.Color, System.Drawing">Blue</data>
+    <data name="Bitmap1" mimetype="application/x-microsoft.net.object.binary.base64">
+        <value>[base64 mime encoded serialized .NET Framework object]</value>
+    </data>
+    <data name="Icon1" type="System.Drawing.Icon, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
+        <value>[base64 mime encoded string representing a byte array form of the .NET Framework object]</value>
+        <comment>This is a comment</comment>
+    </data>
+                
+    There are any number of "resheader" rows that contain simple 
+    name/value pairs.
+    
+    Each data row contains a name, and value. The row also contains a 
+    type or mimetype. Type corresponds to a .NET class that support 
+    text/value conversion through the TypeConverter architecture. 
+    Classes that don't support this are serialized and stored with the 
+    mimetype set.
+    
+    The mimetype is used for serialized objects, and tells the 
+    ResXResourceReader how to depersist the object. This is currently not 
+    extensible. For a given mimetype the value must be set accordingly:
+    
+    Note - application/x-microsoft.net.object.binary.base64 is the format 
+    that the ResXResourceWriter will generate, however the reader can 
+    read any of the formats listed below.
+    
+    mimetype: application/x-microsoft.net.object.binary.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Binary.BinaryFormatter
+            : and then encoded with base64 encoding.
+    
+    mimetype: application/x-microsoft.net.object.soap.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Soap.SoapFormatter
+            : and then encoded with base64 encoding.
+
+    mimetype: application/x-microsoft.net.object.bytearray.base64
+    value   : The object must be serialized into a byte array 
+            : using a System.ComponentModel.TypeConverter
+            : and then encoded with base64 encoding.
+    -->
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="CreateDesktopShortcut" xml:space="preserve">
+    <value>Create a desktop shortcut</value>
+  </data>
+  <data name="CreateStartMenuShortcut" xml:space="preserve">
+    <value>Create Start menu shortcuts</value>
+  </data>
+  <data name="DataNote" xml:space="preserve">
+    <value>Your settings (%AppData%\EasyRadioLink) and recordings (Documents\EasyRadioLink\Recordings) are kept when you update or uninstall.</value>
+  </data>
+  <data name="InstallButton" xml:space="preserve">
+    <value>Install / Update</value>
+  </data>
+  <data name="InstallingButton" xml:space="preserve">
+    <value>Installing...</value>
+  </data>
+  <data name="intro" xml:space="preserve">
+    <value>EasyRadioLink Setup</value>
+  </data>
+  <data name="IntroDescription" xml:space="preserve">
+    <value>Installs the EasyRadioLink client, the server and the command-line server.</value>
+  </data>
+  <data name="MsgBoxCloseApps" xml:space="preserve">
+    <value>Close EasyRadioLink</value>
+  </data>
+  <data name="MsgBoxCloseAppsText" xml:space="preserve">
+    <value>The following EasyRadioLink programs are running and will be closed:
+
+{0}
+
+Click OK to close them and continue.</value>
+  </data>
+  <data name="MsgBoxExtracted" xml:space="preserve">
+    <value>Please extract the download first</value>
+  </data>
+  <data name="MsgBoxExtractedText" xml:space="preserve">
+    <value>Some installation files are missing.
+
+Please extract the entire EasyRadioLink zip file into a folder and run EasyRadioLink-Setup.exe from the extracted folder. The setup does not work when it is started directly from inside the zip file.</value>
+  </data>
+  <data name="MsgBoxFolder" xml:space="preserve">
+    <value>Invalid install location</value>
+  </data>
+  <data name="MsgBoxFolderText" xml:space="preserve">
+    <value>Please choose a different install folder.
+
+The folder must be a full path (for example C:\Program Files\EasyRadioLink) and must not be a drive root, a Windows folder or a user profile folder.</value>
+  </data>
+  <data name="MsgBoxInstallError" xml:space="preserve">
+    <value>Installation error</value>
+  </data>
+  <data name="MsgBoxInstallErrorText" xml:space="preserve">
+    <value>The installation failed.
+
+Details were written to:
+{0}</value>
+  </data>
+  <data name="MsgBoxInstallSuccessText" xml:space="preserve">
+    <value>EasyRadioLink {0} was installed successfully to:
+{1}
+
+Start EasyRadioLink from the Start menu. README.txt in the install folder explains how to connect and how to host a server.</value>
+  </data>
+  <data name="MsgBoxInstallTitle" xml:space="preserve">
+    <value>EasyRadioLink Setup</value>
+  </data>
+  <data name="MsgBoxMoreFiles" xml:space="preserve">
+    <value>... and {0} more</value>
+  </data>
+  <data name="MsgBoxNotInstalledText" xml:space="preserve">
+    <value>EasyRadioLink was not found in:
+{0}
+
+Nothing was removed.</value>
+  </data>
+  <data name="MsgBoxRebootText" xml:space="preserve">
+    <value>Please restart Windows to finish the installation of the Microsoft Visual C++ Runtime.</value>
+  </data>
+  <data name="MsgBoxRemovedKeptText" xml:space="preserve">
+    <value>EasyRadioLink was uninstalled.
+
+Some files were kept in:
+{0}
+
+You can delete this folder if you no longer need them.</value>
+  </data>
+  <data name="MsgBoxRemovedText" xml:space="preserve">
+    <value>EasyRadioLink was uninstalled successfully.</value>
+  </data>
+  <data name="MsgBoxRemovedText2" xml:space="preserve">
+    <value>EasyRadioLink uninstalled</value>
+  </data>
+  <data name="MsgBoxRemoveEntryText" xml:space="preserve">
+    <value>EasyRadioLink is registered as installed in:
+{0}
+
+but its program files were not found there. Remove EasyRadioLink from the list of installed apps and delete its shortcuts?</value>
+  </data>
+  <data name="MsgBoxRunningFromInstallText" xml:space="preserve">
+    <value>This setup was started from the installation folder.
+
+To install or update EasyRadioLink, run EasyRadioLink-Setup.exe from the extracted download package.</value>
+  </data>
+  <data name="MsgBoxShortcutsWarningText" xml:space="preserve">
+    <value>The shortcuts could not be created. You can start EasyRadioLink with Client\EasyRadioLink.exe in the install folder.</value>
+  </data>
+  <data name="MsgBoxUninstallConfirm" xml:space="preserve">
+    <value>Do you want to uninstall EasyRadioLink from:
+{0}
+
+Your personal settings (%AppData%\EasyRadioLink) and recordings (Documents\EasyRadioLink\Recordings) are not deleted.</value>
+  </data>
+  <data name="MsgBoxUninstallDataText" xml:space="preserve">
+    <value>The install folder contains files that were created while EasyRadioLink was used, for example server settings (server.cfg), presets or log files:
+
+{0}
+
+Yes - delete these files too
+No - keep these files
+Cancel - do not uninstall</value>
+  </data>
+  <data name="MsgBoxUninstallError" xml:space="preserve">
+    <value>Uninstall error</value>
+  </data>
+  <data name="MsgBoxUninstallErrorText" xml:space="preserve">
+    <value>The uninstall failed.
+
+Details were written to:
+{0}</value>
+  </data>
+  <data name="MsgBoxUninstalling" xml:space="preserve">
+    <value>Uninstalling EasyRadioLink...</value>
+  </data>
+  <data name="MsgBoxVcRedistWarningText" xml:space="preserve">
+    <value>The Microsoft Visual C++ Redistributable (x64) could not be installed (exit code {0}). EasyRadioLink needs it for audio. Please install the latest Microsoft Visual C++ Redistributable (x64) from microsoft.com.</value>
+  </data>
+  <data name="ProgressClosingApps" xml:space="preserve">
+    <value>Closing running EasyRadioLink programs...</value>
+  </data>
+  <data name="ProgressCopying" xml:space="preserve">
+    <value>Copying program files...</value>
+  </data>
+  <data name="ProgressDone" xml:space="preserve">
+    <value>Done</value>
+  </data>
+  <data name="ProgressRegistry" xml:space="preserve">
+    <value>Updating the list of installed apps...</value>
+  </data>
+  <data name="ProgressRemoving" xml:space="preserve">
+    <value>Removing program files...</value>
+  </data>
+  <data name="ProgressRemovingOld" xml:space="preserve">
+    <value>Removing the previous version...</value>
+  </data>
+  <data name="ProgressShortcuts" xml:space="preserve">
+    <value>Creating shortcuts...</value>
+  </data>
+  <data name="ProgressVcRedist" xml:space="preserve">
+    <value>Installing the Microsoft Visual C++ Runtime...</value>
+  </data>
+  <data name="RemoveButton" xml:space="preserve">
+    <value>Uninstall</value>
+  </data>
+  <data name="RemovingButton" xml:space="preserve">
+    <value>Uninstalling...</value>
+  </data>
+  <data name="srPathButton" xml:space="preserve">
+    <value>Browse...</value>
+  </data>
+  <data name="step2" xml:space="preserve">
+    <value>Step 1: Choose the install location</value>
+  </data>
+  <data name="step4" xml:space="preserve">
+    <value>Step 2: Install or uninstall</value>
+  </data>
+  <data name="Title" xml:space="preserve">
+    <value>EasyRadioLink Setup</value>
+  </data>
+</root>

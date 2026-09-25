@@ -1,0 +1,102 @@
+﻿<Window x:Class="EasyRadioLink.Installer.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        Title="EasyRadioLink Setup"
+        Width="520"
+        ResizeMode="CanMinimize"
+        SizeToContent="Height"
+        WindowStartupLocation="CenterScreen"
+        mc:Ignorable="d">
+    <Grid Name="containerPanel" Margin="16,12,16,16" Background="Transparent">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <Label x:Name="intro"
+               Grid.Row="0"
+               Padding="0"
+               Content="EasyRadioLink Setup"
+               FontSize="22"
+               FontWeight="SemiBold" />
+
+        <TextBlock x:Name="introDescription"
+                   Grid.Row="1"
+                   Margin="0,4,0,0"
+                   Foreground="#FF555555"
+                   Text="Installs the EasyRadioLink client, the server and the command-line server."
+                   TextWrapping="Wrap" />
+
+        <Label x:Name="step2"
+               Grid.Row="2"
+               Margin="0,16,0,6"
+               Padding="0"
+               Content="Step 1: Choose the install location"
+               FontSize="16" />
+
+        <DockPanel Grid.Row="3" LastChildFill="True">
+            <Button x:Name="srPathButton"
+                    MinWidth="90"
+                    Margin="8,0,0,0"
+                    Padding="10,2"
+                    Click="Set_Install_Path"
+                    Content="Browse..."
+                    DockPanel.Dock="Right" />
+            <TextBox x:Name="srPath"
+                     Padding="2"
+                     VerticalContentAlignment="Center"
+                     Text="C:\Program Files\EasyRadioLink" />
+        </DockPanel>
+
+        <CheckBox x:Name="CreateStartMenuShortcut"
+                  Grid.Row="4"
+                  Margin="0,10,0,0"
+                  Content="Create Start menu shortcuts"
+                  IsChecked="True" />
+
+        <CheckBox x:Name="CreateDesktopShortcut"
+                  Grid.Row="5"
+                  Margin="0,6,0,0"
+                  Content="Create a desktop shortcut"
+                  IsChecked="False" />
+
+        <Label x:Name="step4"
+               Grid.Row="6"
+               Margin="0,18,0,8"
+               Padding="0"
+               Content="Step 2: Install or uninstall"
+               FontSize="16" />
+
+        <StackPanel Grid.Row="7" Orientation="Horizontal">
+            <Button x:Name="InstallButton"
+                    MinWidth="170"
+                    Padding="12,5"
+                    Click="InstallReleaseButton"
+                    Content="Install / Update"
+                    IsDefault="True" />
+            <Button x:Name="RemoveButton"
+                    MinWidth="170"
+                    Margin="12,0,0,0"
+                    Padding="12,5"
+                    Click="UninstallButton_Click"
+                    Content="Uninstall" />
+        </StackPanel>
+
+        <TextBlock x:Name="DataNote"
+                   Grid.Row="8"
+                   Margin="0,16,0,0"
+                   FontSize="11"
+                   Foreground="#FF666666"
+                   Text="Your settings (%AppData%\EasyRadioLink) and recordings (Documents\EasyRadioLink\Recordings) are kept when you update or uninstall."
+                   TextWrapping="Wrap" />
+    </Grid>
+</Window>

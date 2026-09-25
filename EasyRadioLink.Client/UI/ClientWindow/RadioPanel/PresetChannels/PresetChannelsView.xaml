@@ -1,0 +1,57 @@
+<UserControl
+    x:Class="EasyRadioLink.Client.UI.ClientWindow.RadioPanel.PresetChannels.PresetChannelsView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:Behaviors="http://schemas.microsoft.com/xaml/behaviors"
+    xmlns:presetChannels="clr-namespace:EasyRadioLink.Client.UI.ClientWindow.RadioPanel.PresetChannels"
+    xmlns:p="clr-namespace:EasyRadioLink.Client.Properties"
+    d:DataContext="{d:DesignInstance presetChannels:PresetChannelsViewModel,
+                                     IsDesignTimeCreatable=False}"
+    d:DesignHeight="70"
+    d:DesignWidth="190"
+    mc:Ignorable="d">
+    <StackPanel Margin="4,4,4,0"
+                Background="#444"
+                Orientation="Vertical">
+        <ComboBox x:Name="FrequencyDropDown"
+                  Height="20"
+                  HorizontalAlignment="Stretch"
+                  VerticalAlignment="Top"
+                  ItemsSource="{Binding Path=PresetChannels}"
+                  SelectedItem="{Binding Path=SelectedPresetChannel}"
+                  Style="{StaticResource DarkStyle-ComboBox}"
+                  ToolTip="{x:Static p:Resources.ToolTipPresetChannels}">
+            <Behaviors:Interaction.Triggers>
+                <Behaviors:EventTrigger EventName="DropDownClosed" SourceObject="{Binding ElementName=FrequencyDropDown}">
+                    <Behaviors:InvokeCommandAction Command="{Binding DropDownClosedCommand}" />
+                </Behaviors:EventTrigger>
+            </Behaviors:Interaction.Triggers>
+        </ComboBox>
+
+        <StackPanel Margin="0,4,0,0"
+                    HorizontalAlignment="Center"
+                    Orientation="Horizontal">
+            <Button Name="ReloadButton"
+                    Width="60"
+                    Height="18"
+                    Margin="2"
+                    Command="{Binding Path=ReloadCommand}"
+                    Content="{x:Static p:Resources.OverlayPresetReload}"
+                    FontSize="10"
+                    Style="{StaticResource DarkStyle-Button}"
+                    ToolTip="{x:Static p:Resources.ToolTipPresetReload}" />
+            <Button Name="CreateButton"
+                    Width="60"
+                    Height="18"
+                    Margin="2"
+                    Command="{Binding Path=PresetCreateCommand}"
+                    Content="{x:Static p:Resources.OverlayPresetCreate}"
+                    FontSize="10"
+                    Style="{StaticResource DarkStyle-Button}"
+                    ToolTip="{x:Static p:Resources.ToolTipPresetCreate}"
+                    Visibility="{Binding Path=ShowPresetCreate}" />
+        </StackPanel>
+    </StackPanel>
+</UserControl>

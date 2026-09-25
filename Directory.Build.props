@@ -1,0 +1,12 @@
+<Project>
+    <!-- Shared metadata for every EasyRadioLink project. Bump the version here only. -->
+    <PropertyGroup>
+        <Version>1.0.0</Version>
+        <AssemblyVersion>1.0.0.0</AssemblyVersion>
+        <FileVersion>1.0.0.0</FileVersion>
+        <Company>EasyRadioLink</Company>
+        <Product>EasyRadioLink</Product>
+        <Copyright>Copyright © EasyRadioLink contributors. Based on DCS-SimpleRadioStandalone by Ciribob. GPL-3.0.</Copyright>
+        <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
+    </PropertyGroup>
+</Project>

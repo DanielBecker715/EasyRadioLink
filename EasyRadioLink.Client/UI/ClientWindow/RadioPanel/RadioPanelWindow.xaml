@@ -1,0 +1,176 @@
+<Window
+    x:Class="EasyRadioLink.Client.UI.ClientWindow.RadioPanel.RadioPanelWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:p="clr-namespace:EasyRadioLink.Client.Properties"
+    xmlns:radioPanel="clr-namespace:EasyRadioLink.Client.UI.ClientWindow.RadioPanel"
+    x:Name="RadioPanelWin"
+    Title="{x:Static p:Resources.RadioPanelTitle}"
+    Width="620"
+    Height="170"
+    AllowsTransparency="True"
+    Background="#444"
+    Opacity="1.0"
+    ResizeMode="CanResizeWithGrip"
+    Style="{x:Null}"
+    Topmost="True"
+    WindowStyle="None">
+
+    <!-- the content has a fixed natural size; the window scales it uniformly when resized -->
+    <Viewbox x:Name="PanelViewbox"
+             Stretch="Uniform"
+             StretchDirection="Both">
+        <Grid x:Name="ContainerPanel" Background="#444">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="22" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="30" />
+            </Grid.RowDefinitions>
+
+            <!-- header: drag anywhere, minimise, close -->
+            <DockPanel Grid.Row="0" LastChildFill="True">
+                <Button Height="15"
+                        Margin="2,0,5,0"
+                        VerticalAlignment="Center"
+                        Click="Button_Close"
+                        DockPanel.Dock="Right"
+                        Focusable="False"
+                        Style="{StaticResource DarkStyle-Button}"
+                        ToolTip="{x:Static p:Resources.ToolTipClose}">
+                    <Grid Width="10" Height="10">
+                        <TextBlock HorizontalAlignment="Center"
+                                   VerticalAlignment="Center"
+                                   FontFamily="Marlett"
+                                   FontSize="14"
+                                   Padding="0,0,0,1"
+                                   Text="r" />
+                    </Grid>
+                </Button>
+                <Button Height="15"
+                        Margin="0"
+                        VerticalAlignment="Center"
+                        Click="Button_Minimise"
+                        DockPanel.Dock="Right"
+                        Focusable="False"
+                        Style="{StaticResource DarkStyle-Button}"
+                        ToolTip="{x:Static p:Resources.ToolTipMinimise}">
+                    <Grid Width="10" Height="10">
+                        <TextBlock HorizontalAlignment="Center"
+                                   VerticalAlignment="Center"
+                                   FontFamily="Marlett"
+                                   FontSize="14"
+                                   Padding="3.5,0,0,3"
+                                   Text="0" />
+                    </Grid>
+                </Button>
+                <Ellipse x:Name="ConnectionIndicator"
+                         Width="8"
+                         Height="8"
+                         Margin="7,0,6,0"
+                         VerticalAlignment="Center"
+                         DockPanel.Dock="Left"
+                         Fill="Red" />
+                <TextBlock x:Name="HeaderText"
+                           VerticalAlignment="Center"
+                           FontSize="12"
+                           Foreground="#E7E7E7"
+                           Text="{x:Static p:Resources.RadioPanelHeader}"
+                           TextTrimming="CharacterEllipsis" />
+            </DockPanel>
+
+            <!-- radios 1..10 - disabled radios are collapsed, the grid is sized by RadioPanelWindow.UpdateRadioLayout -->
+            <Grid Grid.Row="1" Margin="4,0,4,0">
+                <UniformGrid x:Name="RadioGrid"
+                             Columns="5"
+                             Rows="2">
+                    <radioPanel:RadioChannelControl x:Name="radio1"
+                                                    Margin="2"
+                                                    RadioId="1" />
+                    <radioPanel:RadioChannelControl x:Name="radio2"
+                                                    Margin="2"
+                                                    RadioId="2" />
+                    <radioPanel:RadioChannelControl x:Name="radio3"
+                                                    Margin="2"
+                                                    RadioId="3" />
+                    <radioPanel:RadioChannelControl x:Name="radio4"
+                                                    Margin="2"
+                                                    RadioId="4" />
+                    <radioPanel:RadioChannelControl x:Name="radio5"
+                                                    Margin="2"
+                                                    RadioId="5" />
+                    <radioPanel:RadioChannelControl x:Name="radio6"
+                                                    Margin="2"
+                                                    RadioId="6" />
+                    <radioPanel:RadioChannelControl x:Name="radio7"
+                                                    Margin="2"
+                                                    RadioId="7" />
+                    <radioPanel:RadioChannelControl x:Name="radio8"
+                                                    Margin="2"
+                                                    RadioId="8" />
+                    <radioPanel:RadioChannelControl x:Name="radio9"
+                                                    Margin="2"
+                                                    RadioId="9" />
+                    <radioPanel:RadioChannelControl x:Name="radio10"
+                                                    Margin="2"
+                                                    RadioId="10" />
+                </UniformGrid>
+
+                <!-- shown instead of the radios while they are not available -->
+                <Border x:Name="NoRadiosPanel"
+                        Width="612"
+                        Height="120"
+                        Margin="0,0,0,0"
+                        BorderBrush="#666"
+                        BorderThickness="1"
+                        CornerRadius="3"
+                        Visibility="Collapsed">
+                    <TextBlock x:Name="NoRadiosText"
+                               Margin="12"
+                               HorizontalAlignment="Center"
+                               VerticalAlignment="Center"
+                               FontSize="13"
+                               Foreground="#E7E7E7"
+                               Text="{x:Static p:Resources.RadioPanelNotConnected}"
+                               TextAlignment="Center"
+                               TextWrapping="Wrap" />
+                </Border>
+            </Grid>
+
+            <!-- footer: opacity, global simultaneous transmission -->
+            <DockPanel Grid.Row="2"
+                       Margin="8,0,8,0"
+                       LastChildFill="False">
+                <TextBlock Margin="0,0,6,0"
+                           VerticalAlignment="Center"
+                           DockPanel.Dock="Left"
+                           FontSize="10"
+                           Foreground="#E7E7E7"
+                           Text="{x:Static p:Resources.RadioPanelOpacity}" />
+                <Slider x:Name="WindowOpacitySlider"
+                        Width="160"
+                        VerticalAlignment="Center"
+                        DockPanel.Dock="Left"
+                        Focusable="False"
+                        IsMoveToPointEnabled="True"
+                        Maximum="1.0"
+                        Minimum="0.05"
+                        Style="{x:Null}"
+                        ToolTip="{x:Static p:Resources.ToolTipOpacity}"
+                        ValueChanged="WindowOpacitySlider_ValueChanged"
+                        Value="1.0" />
+                <Button x:Name="ToggleGlobalSimultaneousTransmissionButton"
+                        Height="20"
+                        Margin="0,0,14,0"
+                        Padding="8,1,8,1"
+                        VerticalAlignment="Center"
+                        Click="ToggleGlobalSimultaneousTransmissionButton_Click"
+                        Content="{x:Static p:Resources.OverlaySimulTransOFF}"
+                        DockPanel.Dock="Right"
+                        FontSize="11"
+                        Focusable="False"
+                        Style="{StaticResource DarkStyle-Button}"
+                        ToolTip="{x:Static p:Resources.ToolTipGlobalSimulTrans}" />
+            </DockPanel>
+        </Grid>
+    </Viewbox>
+</Window>

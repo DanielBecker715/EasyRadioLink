@@ -1,0 +1,971 @@
+<UserControl x:Class="EasyRadioLink.Client.UI.ClientWindow.ClientSettingsControl.ClientSettings"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:clientSettingsControl="clr-namespace:EasyRadioLink.Client.UI.ClientWindow.ClientSettingsControl"
+             xmlns:p="clr-namespace:EasyRadioLink.Client.Properties"
+             d:DataContext="{d:DesignInstance clientSettingsControl:ClientSettingsViewModel}"
+             d:DesignHeight="900"
+             d:DesignWidth="600"
+             mc:Ignorable="d">
+
+    <UserControl.Resources>
+        <!-- every settings row: text on the left, control on the right -->
+        <Style x:Key="SettingToggle" TargetType="{x:Type clientSettingsControl:SettingsToggleControl}">
+            <Setter Property="HorizontalAlignment" Value="Left" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="Margin" Value="0,2,0,2" />
+        </Style>
+        <Style x:Key="SettingCombo" TargetType="{x:Type ComboBox}" BasedOn="{StaticResource {x:Type ComboBox}}">
+            <Setter Property="HorizontalAlignment" Value="Stretch" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="Margin" Value="0,3,10,3" />
+        </Style>
+    </UserControl.Resources>
+
+    <ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
+        <StackPanel Margin="6">
+
+            <!-- ============================== Application (global.cfg) ============================== -->
+            <GroupBox Margin="0,0,0,8" Header="{x:Static p:Resources.GlobalSettingsHeader}">
+                <StackPanel>
+
+                    <!-- Interface -->
+                    <GroupBox Margin="0,0,0,6" Header="{x:Static p:Resources.InterfaceHeader}">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="290" />
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+
+                            <TextBlock Grid.Row="0"
+                                       Style="{StaticResource SettingText}"
+                                       Text="{x:Static p:Resources.AutoOpenRadioPanel}"
+                                       ToolTip="{x:Static p:Resources.ToolTipAutoOpenRadioPanel}" />
+                            <clientSettingsControl:SettingsToggleControl Grid.Row="0"
+                                                                         Grid.Column="1"
+                                                                         Style="{StaticResource SettingToggle}"
+                                                                         ToggleValue="{Binding AutoOpenRadioPanel, Mode=TwoWay}" />
+
+                            <TextBlock Grid.Row="1"
+                                       Style="{StaticResource SettingText}"
+                                       Text="{x:Static p:Resources.RadioOverlayTaskbarItem}" />
+                            <clientSettingsControl:SettingsToggleControl Grid.Row="1"
+                                                                         Grid.Column="1"
+                                                                         Style="{StaticResource SettingToggle}"
+                                                                         ToggleValue="{Binding RadioOverlayTaskbarItem, Mode=TwoWay}" />
+
+                            <TextBlock Grid.Row="2"
+                                       Style="{StaticResource SettingText}"
+                                       Text="{x:Static p:Resources.ResetRadioOverlay}" />
+                            <Button Grid.Row="2"
+                                    Grid.Column="1"
+                                    Width="100"
+                                    Margin="0,3,0,3"
+                                    HorizontalAlignment="Left"
+                                    Command="{Binding ResetOverlayCommand}"
+                                    Content="{x:Static p:Resources.Reset}"
+                                    ToolTip="{x:Static p:Resources.ToolTipResetRadioPanel}" />
+
+                            <TextBlock Grid.Row="3"
+                                       Style="{StaticResource SettingText}"
+                                       Text="{x:Static p:Resources.ShowTransmitterName}" />
+                            <clientSettingsControl:SettingsToggleControl Grid.Row="3"
+                                                                         Grid.Column="1"
+                                                                         Style="{StaticResource SettingToggle}"
+                                                                         ToggleValue="{Binding ShowTransmitterName, Mode=TwoWay}" />
+
+                            <TextBlock Grid.Row="4"
+                                       Style="{StaticResource SettingText}"
+                                       Text="{x:Static p:Resources.Minimisetotray}" />
+                            <clientSettingsControl:SettingsToggleControl Grid.Row="4"
+                                                                         Grid.Column="1"
+                                                                         Style="{StaticResource SettingToggle}"
+                                                                         ToggleValue="{Binding MinimiseToTray, Mode=TwoWay}" />
+
+                            <TextBlock Grid.Row="5"
+                                       Style="{StaticResource SettingText}"
+                                       Text="{x:Static p:Resources.Startminimised}" />
+                            <clientSettingsControl:SettingsToggleControl Grid.Row="5"
+                                                                         Grid.Column="1"
+                                                                         Style="{StaticResource SettingToggle}"
+                                                                         ToggleValue="{Binding StartMinimised, Mode=TwoWay}" />
+
+                            <TextBlock Grid.Row="6"
+                                       Style="{StaticResource SettingText}"
+                                       Text="{x:Static p:Resources.PlayConnectionSounds}" />
+                            <clientSettingsControl:SettingsToggleControl Grid.Row="6"
+                                                                         Grid.Column="1"
+                                                                         Style="{StaticResource SettingToggle}"
+                                                                         ToggleValue="{Binding PlayConnectionSounds, Mode=TwoWay}" />
+
+                            <TextBlock Grid.Row="7"
+                                       Style="{StaticResource SettingText}"
+                                       Text="{x:Static p:Resources.RequireAdminToggle}" />
+                            <clientSettingsControl:SettingsToggleControl Grid.Row="7"
+                                                                         Grid.Column="1"
+                                                                         Style="{StaticResource SettingToggle}"
+                                                                         ToggleValue="{Binding RequireAdminToggle, Mode=TwoWay}" />
+                        </Grid>
+                    </GroupBox>
+
+                    <!-- Microphone -->
+                    <GroupBox Margin="0,0,0,6" Header="{x:Static p:Resources.MicrophoneHeader}">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="290" />
+                            </Grid.ColumnDefinitions>
+
+                            <TextBlock Style="{StaticResource SettingText}" Text="{x:Static p:Resources.MicDenoise}" />
+                            <clientSettingsControl:SettingsToggleControl Grid.Column="1"
+                                                                         Style="{StaticResource SettingToggle}"
+                                                                         ToggleValue="{Binding MicDenoise, Mode=TwoWay}" />
+                        </Grid>
+                    </GroupBox>
+
+                    <!-- Incoming audio -->
+                    <GroupBox Margin="0,0,0,6" Header="{x:Static p:Resources.IncomingAudioHeader}">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="290" />
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+
+                            <TextBlock Grid.Row="0"
+                                       Style="{StaticResource SettingText}"
+                                       Text="{x:Static p:Resources.IncomingAudioAGC}" />
+                            <clientSettingsControl:SettingsToggleControl Grid.Row="0"
+                                                                         Grid.Column="1"
+                                                                         Style="{StaticResource SettingToggle}"
+                                                                         ToggleValue="{Binding IncomingAudioAGC, Mode=TwoWay}" />
+
+                            <TextBlock Grid.Row="1"
+                                       IsEnabled="{Binding IncomingAudioAGC}"
+                                       Style="{StaticResource SettingText}"
+                                       Text="{x:Static p:Resources.IncomingAudioAGCMaxDB}"
+                                       ToolTip="{x:Static p:Resources.IncomingAudioAGCMaxDBToolTip}" />
+                            <StackPanel Grid.Row="1"
+                                        Grid.Column="1"
+                                        Margin="0,4,10,4"
+                                        IsEnabled="{Binding IncomingAudioAGC}">
+                                <Slider LargeChange="5"
+                                        Maximum="70"
+                                        Minimum="0"
+                                        SmallChange="1"
+                                        ToolTip="{x:Static p:Resources.IncomingAudioAGCMaxDBToolTip}"
+                                        Value="{Binding IncomingAudioAGCMaxDB, Mode=TwoWay}" />
+                                <TextBlock HorizontalAlignment="Center"
+                                           FontSize="10"
+                                           Text="{Binding IncomingAudioAGCMaxDB, StringFormat={}{0} dB}" />
+                            </StackPanel>
+
+                            <TextBlock Grid.Row="2"
+                                       IsEnabled="{Binding IncomingAudioAGC}"
+                                       Style="{StaticResource SettingText}"
+                                       Text="{x:Static p:Resources.IncomingAudioAGCTargetLevel}"
+                                       ToolTip="{x:Static p:Resources.IncomingAudioAGCTargetLevelToolTip}" />
+                            <StackPanel Grid.Row="2"
+                                        Grid.Column="1"
+                                        Margin="0,4,10,4"
+                                        IsEnabled="{Binding IncomingAudioAGC}">
+                                <Slider LargeChange="1000"
+                                        Maximum="30000"
+                                        Minimum="1000"
+                                        SmallChange="100"
+                                        ToolTip="{x:Static p:Resources.IncomingAudioAGCTargetLevelToolTip}"
+                                        Value="{Binding IncomingAudioAGCTarget, Mode=TwoWay}" />
+                                <TextBlock HorizontalAlignment="Center"
+                                           FontSize="10"
+                                           Text="{Binding IncomingAudioAGCTarget}" />
+                            </StackPanel>
+
+                            <TextBlock Grid.Row="3"
+                                       Style="{StaticResource SettingText}"
+                                       Text="{x:Static p:Resources.IncomingAudioDenoise}" />
+                            <clientSettingsControl:SettingsToggleControl Grid.Row="3"
+                                                                         Grid.Column="1"
+                                                                         Style="{StaticResource SettingToggle}"
+                                                                         ToggleValue="{Binding IncomingAudioDenoise, Mode=TwoWay}" />
+                        </Grid>
+                    </GroupBox>
+
+                    <!-- Voice activation -->
+                    <GroupBox Margin="0,0,0,6" Header="{x:Static p:Resources.VOXHeader}">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="290" />
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+
+                            <TextBlock Grid.Row="0"
+                                       Style="{StaticResource SettingText}"
+                                       Text="{x:Static p:Resources.VOXEnabled}"
+                                       ToolTip="{x:Static p:Resources.ToolTipVOXEnabled}" />
+                            <clientSettingsControl:SettingsToggleControl Grid.Row="0"
+                                                                         Grid.Column="1"
+                                                                         Style="{StaticResource SettingToggle}"
+                                                                         ToggleValue="{Binding VOXEnabled, Mode=TwoWay}" />
+
+                            <TextBlock Grid.Row="1"
+                                       Style="{StaticResource SettingText}"
+                                       Text="{x:Static p:Resources.VOXMinimimumTXTime}" />
+                            <StackPanel Grid.Row="1"
+                                        Grid.Column="1"
+                                        Margin="0,4,10,4">
+                                <Slider x:Name="VOXMinimimumTXTime"
+                                        IsSnapToTickEnabled="True"
+                                        LargeChange="200"
+                                        Maximum="2000"
+                                        Minimum="0"
+                                        SmallChange="100"
+                                        TickFrequency="100"
+                                        TickPlacement="BottomRight"
+                                        Value="{Binding VOXMinimimumTXTime, Mode=TwoWay}" />
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0"
+                                               HorizontalAlignment="Left"
+                                               FontSize="10"
+                                               Text="{x:Static p:Resources.VOXMinimimumTXTime0}" />
+                                    <TextBlock Grid.Column="1"
+                                               HorizontalAlignment="Center"
+                                               FontSize="10"
+                                               Text="{x:Static p:Resources.VOXMinimimumTXTime1000}" />
+                                    <TextBlock Grid.Column="2"
+                                               HorizontalAlignment="Right"
+                                               FontSize="10"
+                                               Text="{x:Static p:Resources.VOXMinimimumTXTime2000}" />
+                                </Grid>
+                            </StackPanel>
+
+                            <TextBlock Grid.Row="2"
+                                       Style="{StaticResource SettingText}"
+                                       Text="{x:Static p:Resources.VOXMode}"
+                                       ToolTip="{x:Static p:Resources.ToolTipVOXSensitivity}" />
+                            <StackPanel Grid.Row="2"
+                                        Grid.Column="1"
+                                        Margin="0,4,10,4">
+                                <Slider x:Name="VOXMode"
+                                        IsSnapToTickEnabled="True"
+                                        LargeChange="1"
+                                        Maximum="3"
+                                        Minimum="0"
+                                        SmallChange="1"
+                                        TickFrequency="1"
+                                        TickPlacement="BottomRight"
+                                        ToolTip="{x:Static p:Resources.ToolTipVOXSensitivity}"
+                                        Value="{Binding VOXMode, Mode=TwoWay}" />
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0"
+                                               HorizontalAlignment="Left"
+                                               FontSize="10"
+                                               Text="{x:Static p:Resources.VOXModeHigher}" />
+                                    <TextBlock Grid.Column="1"
+                                               HorizontalAlignment="Right"
+                                               FontSize="10"
+                                               Text="{x:Static p:Resources.VOXModeLower}" />
+                                </Grid>
+                            </StackPanel>
+
+                            <TextBlock Grid.Row="3"
+                                       Style="{StaticResource SettingText}"
+                                       Text="{x:Static p:Resources.VOXMinimumRMS}"
+                                       ToolTip="{x:Static p:Resources.ToolTipVOXThreshold}" />
+                            <StackPanel Grid.Row="3"
+                                        Grid.Column="1"
+                                        Margin="0,4,10,4">
+                                <Slider x:Name="VOXMinimumRMS"
+                                        IsSnapToTickEnabled="True"
+                                        LargeChange="4"
+                                        Maximum="0"
+                                        Minimum="-96"
+                                        SmallChange="2"
+                                        TickFrequency="4"
+                                        TickPlacement="BottomRight"
+                                        Value="{Binding VOXMinimumRMS, Mode=TwoWay}" />
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0"
+                                               HorizontalAlignment="Left"
+                                               FontSize="10"
+                                               Text="{x:Static p:Resources.VOXMinimumRMSLower}" />
+                                    <TextBlock Grid.Column="1"
+                                               HorizontalAlignment="Right"
+                                               FontSize="10"
+                                               Text="{x:Static p:Resources.VOXMinimumRMSHigher}" />
+                                </Grid>
+                            </StackPanel>
+                        </Grid>
+                    </GroupBox>
+
+                    <!-- Recording -->
+                    <GroupBox Margin="0,0,0,6" Header="{x:Static p:Resources.RecordingHeader}">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="290" />
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+
+                            <TextBlock Grid.Row="0"
+                                       Style="{StaticResource SettingText}"
+                                       Text="{x:Static p:Resources.AllowTransmissionsRecord}"
+                                       ToolTip="{x:Static p:Resources.ToolTipAllowRecording}" />
+                            <clientSettingsControl:SettingsToggleControl Grid.Row="0"
+                                                                         Grid.Column="1"
+                                                                         Style="{StaticResource SettingToggle}"
+                                                                         ToggleValue="{Binding AllowTransmissionsRecording, Mode=TwoWay}" />
+
+                            <TextBlock Grid.Row="1"
+                                       Style="{StaticResource SettingText}"
+                                       Text="{x:Static p:Resources.RecordTransmissions}" />
+                            <clientSettingsControl:SettingsToggleControl Grid.Row="1"
+                                                                         Grid.Column="1"
+                                                                         Style="{StaticResource SettingToggle}"
+                                                                         ToggleValue="{Binding RecordTransmissions, Mode=TwoWay}" />
+
+                            <TextBlock Grid.Row="2"
+                                       Style="{StaticResource SettingText}"
+                                       Text="{x:Static p:Resources.SingleFileMixdown}" />
+                            <clientSettingsControl:SettingsToggleControl Grid.Row="2"
+                                                                         Grid.Column="1"
+                                                                         Style="{StaticResource SettingToggle}"
+                                                                         ToggleValue="{Binding SingleFileMixdown, Mode=TwoWay}" />
+
+                            <TextBlock Grid.Row="3"
+                                       Style="{StaticResource SettingText}"
+                                       Text="{x:Static p:Resources.RecordingFormat}" />
+                            <ComboBox x:Name="RecordingFormat"
+                                      Grid.Row="3"
+                                      Grid.Column="1"
+                                      ItemsSource="{Binding RecordingFormats}"
+                                      SelectedItem="{Binding SelectedRecordingFormat, Mode=TwoWay}"
+                                      Style="{StaticResource SettingCombo}" />
+
+                            <TextBlock Grid.Row="4"
+                                       Style="{StaticResource SettingText}"
+                                       Text="{x:Static p:Resources.RecordingQuality}" />
+                            <StackPanel Grid.Row="4"
+                                        Grid.Column="1"
+                                        Margin="0,4,10,4">
+                                <Slider x:Name="RecordingQuality"
+                                        IsSnapToTickEnabled="True"
+                                        LargeChange="3"
+                                        Maximum="9"
+                                        Minimum="0"
+                                        SmallChange="1"
+                                        TickFrequency="1"
+                                        TickPlacement="BottomRight"
+                                        ToolTip="{x:Static p:Resources.ToolTipRecordQuality}"
+                                        ToolTipService.ShowOnDisabled="True"
+                                        Value="{Binding RecordingQuality, Mode=TwoWay}" />
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0"
+                                               HorizontalAlignment="Left"
+                                               FontSize="10"
+                                               Text="{x:Static p:Resources.RecordingQuality0}" />
+                                    <TextBlock Grid.Column="1"
+                                               HorizontalAlignment="Right"
+                                               FontSize="10"
+                                               Text="{x:Static p:Resources.RecordingQuality9}" />
+                                </Grid>
+                            </StackPanel>
+
+                            <TextBlock Grid.Row="5"
+                                       Style="{StaticResource SettingText}"
+                                       Text="{x:Static p:Resources.DisallowedAudioTone}" />
+                            <clientSettingsControl:SettingsToggleControl Grid.Row="5"
+                                                                         Grid.Column="1"
+                                                                         Style="{StaticResource SettingToggle}"
+                                                                         ToggleValue="{Binding DisallowedAudioTone, Mode=TwoWay}" />
+                        </Grid>
+                    </GroupBox>
+
+                    <!-- Input devices -->
+                    <GroupBox Margin="0,0,0,2" Header="{x:Static p:Resources.InputDevicesHeader}">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="290" />
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+
+                            <TextBlock Grid.Row="0"
+                                       Style="{StaticResource SettingText}"
+                                       Text="{x:Static p:Resources.ExpandInputDevices}" />
+                            <clientSettingsControl:SettingsToggleControl Grid.Row="0"
+                                                                         Grid.Column="1"
+                                                                         Style="{StaticResource SettingToggle}"
+                                                                         ToggleValue="{Binding ExpandInputDevices, Mode=TwoWay}" />
+
+                            <TextBlock Grid.Row="1"
+                                       Style="{StaticResource SettingText}"
+                                       Text="{x:Static p:Resources.AllowXInputController}" />
+                            <clientSettingsControl:SettingsToggleControl Grid.Row="1"
+                                                                         Grid.Column="1"
+                                                                         Style="{StaticResource SettingToggle}"
+                                                                         ToggleValue="{Binding AllowXInputController, Mode=TwoWay}" />
+                        </Grid>
+                    </GroupBox>
+                </StackPanel>
+            </GroupBox>
+
+            <!-- ============================== Profile ============================== -->
+            <GroupBox Margin="0,0,0,8" Header="{x:Static p:Resources.ProfileHeader}">
+                <StackPanel Margin="4">
+                    <TextBlock Style="{StaticResource HintText}" Text="{x:Static p:Resources.ProfileHint}" />
+                    <ComboBox x:Name="ControlsProfile"
+                              Width="260"
+                              Margin="0,4,0,4"
+                              HorizontalAlignment="Center"
+                              ItemsSource="{Binding AvailableProfiles, Mode=OneWay}"
+                              SelectedItem="{Binding SelectedProfile, Mode=TwoWay}" />
+                    <StackPanel Margin="0,4,0,0"
+                                HorizontalAlignment="Center"
+                                Orientation="Horizontal">
+                        <Button Margin="4"
+                                Command="{Binding CreateProfileCommand}"
+                                Content="{x:Static p:Resources.CreateProfile}" />
+                        <Button Margin="4"
+                                Command="{Binding CopyProfileCommand}"
+                                Content="{x:Static p:Resources.CopyProfile}" />
+                        <Button Margin="4"
+                                Command="{Binding RenameProfileCommand}"
+                                Content="{x:Static p:Resources.RenameProfile}" />
+                        <Button Margin="4"
+                                Command="{Binding DeleteProfileCommand}"
+                                Content="{x:Static p:Resources.DeleteProfile}" />
+                    </StackPanel>
+                </StackPanel>
+            </GroupBox>
+
+            <!-- ============================== Profile settings ============================== -->
+            <GroupBox Margin="0,0,0,2" Header="{x:Static p:Resources.ProfileSettingsHeader}">
+                <StackPanel>
+
+                    <!-- Radio effects -->
+                    <GroupBox Margin="0,0,0,6" Header="{x:Static p:Resources.RadioEffectHeader}">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="290" />
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+
+                            <TextBlock Grid.Row="0"
+                                       Style="{StaticResource SettingText}"
+                                       Text="{x:Static p:Resources.RadioRxEffects}" />
+                            <StackPanel Grid.Row="0"
+                                        Grid.Column="1"
+                                        VerticalAlignment="Center"
+                                        Orientation="Horizontal">
+                                <TextBlock Margin="0,0,4,0"
+                                           VerticalAlignment="Center"
+                                           Text="{x:Static p:Resources.RadioRxStart}" />
+                                <clientSettingsControl:SettingsToggleControl
+                                                                             Style="{StaticResource SettingToggle}"
+                                                                             ToggleValue="{Binding RadioRxStart, Mode=TwoWay}" />
+                                <TextBlock Margin="8,0,4,0"
+                                           VerticalAlignment="Center"
+                                           Text="{x:Static p:Resources.RadioRxEnd}" />
+                                <clientSettingsControl:SettingsToggleControl
+                                                                             Style="{StaticResource SettingToggle}"
+                                                                             ToggleValue="{Binding RadioRxEnd, Mode=TwoWay}" />
+                            </StackPanel>
+
+                            <TextBlock Grid.Row="1"
+                                       Style="{StaticResource SettingText}"
+                                       Text="{x:Static p:Resources.RadioTxEffects}" />
+                            <StackPanel Grid.Row="1"
+                                        Grid.Column="1"
+                                        VerticalAlignment="Center"
+                                        Orientation="Horizontal">
+                                <TextBlock Margin="0,0,4,0"
+                                           VerticalAlignment="Center"
+                                           Text="{x:Static p:Resources.RadioTxStart}" />
+                                <clientSettingsControl:SettingsToggleControl
+                                                                             Style="{StaticResource SettingToggle}"
+                                                                             ToggleValue="{Binding RadioTxStart, Mode=TwoWay}" />
+                                <TextBlock Margin="8,0,4,0"
+                                           VerticalAlignment="Center"
+                                           Text="{x:Static p:Resources.RadioTxEnd}" />
+                                <clientSettingsControl:SettingsToggleControl
+                                                                             Style="{StaticResource SettingToggle}"
+                                                                             ToggleValue="{Binding RadioTxEnd, Mode=TwoWay}" />
+                            </StackPanel>
+
+                            <TextBlock Grid.Row="2"
+                                       Style="{StaticResource SettingText}"
+                                       Text="{x:Static p:Resources.RadioStartTransmitEffect}" />
+                            <ComboBox x:Name="RadioStartTransmitEffect"
+                                      Grid.Row="2"
+                                      Grid.Column="1"
+                                      ItemsSource="{Binding RadioTransmissionStart}"
+                                      SelectedItem="{Binding SelectedRadioTransmissionStartEffect, Mode=TwoWay}"
+                                      Style="{StaticResource SettingCombo}" />
+
+                            <TextBlock Grid.Row="3"
+                                       Style="{StaticResource SettingText}"
+                                       Text="{x:Static p:Resources.RadioEndTransmitEffect}" />
+                            <ComboBox x:Name="RadioEndTransmitEffect"
+                                      Grid.Row="3"
+                                      Grid.Column="1"
+                                      ItemsSource="{Binding RadioTransmissionEnd}"
+                                      SelectedItem="{Binding SelectedRadioTransmissionEndEffect, Mode=TwoWay}"
+                                      Style="{StaticResource SettingCombo}" />
+
+                            <TextBlock Grid.Row="4"
+                                       Style="{StaticResource SettingText}"
+                                       Text="{x:Static p:Resources.RadioEncryptionEffectsToggle}" />
+                            <clientSettingsControl:SettingsToggleControl Grid.Row="4"
+                                                                         Grid.Column="1"
+                                                                         Style="{StaticResource SettingToggle}"
+                                                                         ToggleValue="{Binding RadioEncryptionEffectsToggle, Mode=TwoWay}" />
+
+                            <TextBlock Grid.Row="5"
+                                       Style="{StaticResource SettingText}"
+                                       Text="{x:Static p:Resources.RadioSoundEffects}"
+                                       ToolTip="{x:Static p:Resources.ToolTipRadioSoundEffects}" />
+                            <clientSettingsControl:BackgroundEffectVolumeControl Grid.Row="5"
+                                                                                 Grid.Column="1"
+                                                                                 MaximumPercentage="100"
+                                                                                 VolumeValue="{Binding RadioSoundEffectsRatio, Mode=TwoWay}" />
+
+                            <TextBlock Grid.Row="6"
+                                       Style="{StaticResource SettingText}"
+                                       Text="{x:Static p:Resources.PerRadioModelEffects}"
+                                       ToolTip="{x:Static p:Resources.ToolTipPerRadioModelEffects}" />
+                            <clientSettingsControl:SettingsToggleControl Grid.Row="6"
+                                                                         Grid.Column="1"
+                                                                         Style="{StaticResource SettingToggle}"
+                                                                         ToggleValue="{Binding PerRadioModelEffects, Mode=TwoWay}" />
+
+                            <TextBlock Grid.Row="7"
+                                       Style="{StaticResource SettingText}"
+                                       Text="{x:Static p:Resources.RadioSoundEffectsClipping}" />
+                            <clientSettingsControl:SettingsToggleControl Grid.Row="7"
+                                                                         Grid.Column="1"
+                                                                         Style="{StaticResource SettingToggle}"
+                                                                         ToggleValue="{Binding RadioSoundEffectsClipping, Mode=TwoWay}" />
+
+                            <TextBlock Grid.Row="8"
+                                       Style="{StaticResource SettingText}"
+                                       Text="{x:Static p:Resources.NATORadioTone}"
+                                       ToolTip="{x:Static p:Resources.ToolTipFmTone}" />
+                            <StackPanel Grid.Row="8" Grid.Column="1">
+                                <clientSettingsControl:SettingsToggleControl Style="{StaticResource SettingToggle}"
+                                                                             ToggleValue="{Binding NATORadioToneToggle, Mode=TwoWay}" />
+                                <clientSettingsControl:BackgroundEffectVolumeControl IsEnabled="{Binding NATORadioToneToggle}"
+                                                                                     VolumeValue="{Binding NATORadioToneVolume, Mode=TwoWay}" />
+                            </StackPanel>
+
+                            <TextBlock Grid.Row="9"
+                                       Style="{StaticResource SettingText}"
+                                       Text="{x:Static p:Resources.RadioRxSquelchTail}"
+                                       ToolTip="{x:Static p:Resources.ToolTipRadioRxSquelchTail}" />
+                            <clientSettingsControl:SettingsToggleControl Grid.Row="9"
+                                                                         Grid.Column="1"
+                                                                         Style="{StaticResource SettingToggle}"
+                                                                         ToggleValue="{Binding RadioRxSquelchTail, Mode=TwoWay}" />
+
+                            <TextBlock Grid.Row="10"
+                                       Style="{StaticResource SettingText}"
+                                       Text="{x:Static p:Resources.BackgroundRadioNoise}" />
+                            <clientSettingsControl:SettingsToggleControl Grid.Row="10"
+                                                                         Grid.Column="1"
+                                                                         Style="{StaticResource SettingToggle}"
+                                                                         ToggleValue="{Binding BackgroundRadioNoiseToggle, Mode=TwoWay}" />
+
+                            <TextBlock Grid.Row="11"
+                                       IsEnabled="{Binding BackgroundRadioNoiseToggle}"
+                                       Style="{StaticResource SettingText}"
+                                       Text="{x:Static p:Resources.NoiseGainDB}" />
+                            <clientSettingsControl:GainDBControl Grid.Row="11"
+                                                                 Grid.Column="1"
+                                                                 GainDBValue="{Binding NoiseGainDB, Mode=TwoWay}"
+                                                                 IsEnabled="{Binding BackgroundRadioNoiseToggle}" />
+
+                            <TextBlock Grid.Row="12"
+                                       IsEnabled="{Binding BackgroundRadioNoiseToggle}"
+                                       Style="{StaticResource SettingText}"
+                                       Text="{x:Static p:Resources.HFNoiseGainDB}"
+                                       ToolTip="{x:Static p:Resources.ToolTipHFNoiseGainDB}" />
+                            <clientSettingsControl:GainDBControl Grid.Row="12"
+                                                                 Grid.Column="1"
+                                                                 GainDBValue="{Binding HFNoiseGainDB, Mode=TwoWay}"
+                                                                 IsEnabled="{Binding BackgroundRadioNoiseToggle}" />
+                        </Grid>
+                    </GroupBox>
+
+                    <!-- Background sound -->
+                    <GroupBox Margin="0,0,0,6" Header="{x:Static p:Resources.BackgroundSoundHeader}">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="290" />
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+
+                            <TextBlock Grid.Row="0"
+                                       Style="{StaticResource SettingText}"
+                                       Text="{x:Static p:Resources.BackgroundSound}"
+                                       ToolTip="{x:Static p:Resources.ToolTipBackgroundSound}" />
+                            <ComboBox x:Name="BackgroundSound"
+                                      Grid.Row="0"
+                                      Grid.Column="1"
+                                      DisplayMemberPath="Value"
+                                      ItemsSource="{Binding BackgroundSoundOptions}"
+                                      SelectedValue="{Binding BackgroundSound, Mode=TwoWay}"
+                                      SelectedValuePath="Key"
+                                      Style="{StaticResource SettingCombo}"
+                                      ToolTip="{x:Static p:Resources.ToolTipBackgroundSound}" />
+
+                            <TextBlock Grid.Row="1"
+                                       Style="{StaticResource SettingText}"
+                                       Text="{x:Static p:Resources.BackgroundSoundVolume}" />
+                            <clientSettingsControl:BackgroundEffectVolumeControl Grid.Row="1"
+                                                                                 Grid.Column="1"
+                                                                                 MaximumPercentage="100"
+                                                                                 VolumeValue="{Binding BackgroundSoundVolume, Mode=TwoWay}" />
+
+                            <TextBlock Grid.Row="2"
+                                       Style="{StaticResource SettingText}"
+                                       Text="{x:Static p:Resources.AmbientEffectToggle}"
+                                       ToolTip="{x:Static p:Resources.ToolTipAmbientEffect}" />
+                            <clientSettingsControl:SettingsToggleControl Grid.Row="2"
+                                                                         Grid.Column="1"
+                                                                         Style="{StaticResource SettingToggle}"
+                                                                         ToggleValue="{Binding AmbientEffectToggle, Mode=TwoWay}" />
+
+                            <TextBlock Grid.Row="3"
+                                       IsEnabled="{Binding AmbientEffectToggle}"
+                                       Style="{StaticResource SettingText}"
+                                       Text="{x:Static p:Resources.AmbientEffectVolume}" />
+                            <clientSettingsControl:BackgroundEffectVolumeControl Grid.Row="3"
+                                                                                 Grid.Column="1"
+                                                                                 IsEnabled="{Binding AmbientEffectToggle}"
+                                                                                 VolumeValue="{Binding AmbientEffectVolume, Mode=TwoWay}" />
+                        </Grid>
+                    </GroupBox>
+
+                    <!-- Push-to-talk and controls -->
+                    <GroupBox Margin="0,0,0,6" Header="{x:Static p:Resources.IntegrationHeader}">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="290" />
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+
+                            <TextBlock Grid.Row="0"
+                                       Style="{StaticResource SettingText}"
+                                       Text="{x:Static p:Resources.RadioSwitchIsPTT}" />
+                            <clientSettingsControl:SettingsToggleControl Grid.Row="0"
+                                                                         Grid.Column="1"
+                                                                         Style="{StaticResource SettingToggle}"
+                                                                         ToggleValue="{Binding RadioSwitchIsPTT, Mode=TwoWay}" />
+
+                            <TextBlock Grid.Row="1"
+                                       Style="{StaticResource SettingText}"
+                                       Text="{x:Static p:Resources.AllowRotaryIncrement}"
+                                       ToolTip="{x:Static p:Resources.ToolTipRotaryIncrement}" />
+                            <clientSettingsControl:SettingsToggleControl Grid.Row="1"
+                                                                         Grid.Column="1"
+                                                                         Style="{StaticResource SettingToggle}"
+                                                                         ToggleValue="{Binding AllowRotaryIncrement, Mode=TwoWay}" />
+
+                            <TextBlock Grid.Row="2"
+                                       Style="{StaticResource SettingText}"
+                                       Text="{x:Static p:Resources.PTTReleaseDelay}" />
+                            <StackPanel Grid.Row="2"
+                                        Grid.Column="1"
+                                        Margin="0,4,10,4">
+                                <Slider x:Name="PTTReleaseDelay"
+                                        IsSnapToTickEnabled="True"
+                                        LargeChange="50"
+                                        Maximum="1000"
+                                        Minimum="0"
+                                        SmallChange="20"
+                                        TickFrequency="50"
+                                        TickPlacement="BottomRight"
+                                        Value="{Binding PTTReleaseDelay, Mode=TwoWay}" />
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0"
+                                               HorizontalAlignment="Left"
+                                               FontSize="10"
+                                               Text="{x:Static p:Resources.PTTReleaseDelay0}" />
+                                    <TextBlock Grid.Column="1"
+                                               HorizontalAlignment="Center"
+                                               FontSize="10"
+                                               Text="{x:Static p:Resources.PTTReleaseDelay500}" />
+                                    <TextBlock Grid.Column="2"
+                                               HorizontalAlignment="Right"
+                                               FontSize="10"
+                                               Text="{x:Static p:Resources.PTTReleaseDelay1000}" />
+                                </Grid>
+                            </StackPanel>
+
+                            <TextBlock Grid.Row="3"
+                                       Style="{StaticResource SettingText}"
+                                       Text="{x:Static p:Resources.PTTStartDelay}" />
+                            <StackPanel Grid.Row="3"
+                                        Grid.Column="1"
+                                        Margin="0,4,10,4">
+                                <Slider x:Name="PTTStartDelay"
+                                        IsSnapToTickEnabled="True"
+                                        LargeChange="50"
+                                        Maximum="1000"
+                                        Minimum="0"
+                                        SmallChange="20"
+                                        TickFrequency="50"
+                                        TickPlacement="BottomRight"
+                                        Value="{Binding PTTStartDelay, Mode=TwoWay}" />
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0"
+                                               HorizontalAlignment="Left"
+                                               FontSize="10"
+                                               Text="{x:Static p:Resources.PTTStartDelay0}" />
+                                    <TextBlock Grid.Column="1"
+                                               HorizontalAlignment="Center"
+                                               FontSize="10"
+                                               Text="{x:Static p:Resources.PTTStartDelay500}" />
+                                    <TextBlock Grid.Column="2"
+                                               HorizontalAlignment="Right"
+                                               FontSize="10"
+                                               Text="{x:Static p:Resources.PTTStartDelay1000}" />
+                                </Grid>
+                            </StackPanel>
+
+                            <TextBlock Grid.Row="4"
+                                       Style="{StaticResource SettingText}"
+                                       Text="{x:Static p:Resources.ServerPresetsConfiguration}"
+                                       ToolTip="{x:Static p:Resources.ToolTipServerPresetsConfiguration}" />
+                            <ComboBox Grid.Row="4"
+                                      Grid.Column="1"
+                                      DisplayMemberPath="Value"
+                                      ItemsSource="{Binding ServerPresetConfigurations}"
+                                      SelectedValue="{Binding SelectedServerPresetConfiguration, Mode=TwoWay}"
+                                      SelectedValuePath="Key"
+                                      Style="{StaticResource SettingCombo}" />
+
+                            <TextBlock Grid.Row="5"
+                                       Style="{StaticResource SettingText}"
+                                       Text="{x:Static p:Resources.AutoSelectChannel}" />
+                            <clientSettingsControl:SettingsToggleControl Grid.Row="5"
+                                                                         Grid.Column="1"
+                                                                         Style="{StaticResource SettingToggle}"
+                                                                         ToggleValue="{Binding AutoSelectChannel, Mode=TwoWay}" />
+
+                            <TextBlock Grid.Row="6"
+                                       Style="{StaticResource SettingText}"
+                                       Text="{x:Static p:Resources.AllowServerRadioPreset}"
+                                       ToolTip="{x:Static p:Resources.ToolTipAllowServerRadioPreset}" />
+                            <clientSettingsControl:SettingsToggleControl Grid.Row="6"
+                                                                         Grid.Column="1"
+                                                                         Style="{StaticResource SettingToggle}"
+                                                                         ToggleValue="{Binding ServerRadioPresetEnabled, Mode=TwoWay}" />
+                        </Grid>
+                    </GroupBox>
+
+                    <!-- Left / right audio channel per radio -->
+                    <GroupBox Margin="0,0,0,2" Header="{x:Static p:Resources.AudioHeader}">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="290" />
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+
+                            <TextBlock Grid.Row="0"
+                                       Style="{StaticResource SettingText}"
+                                       Text="{x:Static p:Resources.Radio1Config}" />
+                            <clientSettingsControl:RadioChannelConfigUi x:Name="Radio1Config"
+                                                                        Grid.Row="0"
+                                                                        Grid.Column="1"
+                                                                        Margin="0,0,10,0"
+                                                                        VolumeValue="{Binding RadioChannel1, Mode=TwoWay}" />
+
+                            <TextBlock Grid.Row="1"
+                                       Style="{StaticResource SettingText}"
+                                       Text="{x:Static p:Resources.Radio2Config}" />
+                            <clientSettingsControl:RadioChannelConfigUi x:Name="Radio2Config"
+                                                                        Grid.Row="1"
+                                                                        Grid.Column="1"
+                                                                        Margin="0,0,10,0"
+                                                                        VolumeValue="{Binding RadioChannel2, Mode=TwoWay}" />
+
+                            <TextBlock Grid.Row="2"
+                                       Style="{StaticResource SettingText}"
+                                       Text="{x:Static p:Resources.Radio3Config}" />
+                            <clientSettingsControl:RadioChannelConfigUi x:Name="Radio3Config"
+                                                                        Grid.Row="2"
+                                                                        Grid.Column="1"
+                                                                        Margin="0,0,10,0"
+                                                                        VolumeValue="{Binding RadioChannel3, Mode=TwoWay}" />
+
+                            <TextBlock Grid.Row="3"
+                                       Style="{StaticResource SettingText}"
+                                       Text="{x:Static p:Resources.Radio4Config}" />
+                            <clientSettingsControl:RadioChannelConfigUi x:Name="Radio4Config"
+                                                                        Grid.Row="3"
+                                                                        Grid.Column="1"
+                                                                        Margin="0,0,10,0"
+                                                                        VolumeValue="{Binding RadioChannel4, Mode=TwoWay}" />
+
+                            <TextBlock Grid.Row="4"
+                                       Style="{StaticResource SettingText}"
+                                       Text="{x:Static p:Resources.Radio5Config}" />
+                            <clientSettingsControl:RadioChannelConfigUi x:Name="Radio5Config"
+                                                                        Grid.Row="4"
+                                                                        Grid.Column="1"
+                                                                        Margin="0,0,10,0"
+                                                                        VolumeValue="{Binding RadioChannel5, Mode=TwoWay}" />
+
+                            <TextBlock Grid.Row="5"
+                                       Style="{StaticResource SettingText}"
+                                       Text="{x:Static p:Resources.Radio6Config}" />
+                            <clientSettingsControl:RadioChannelConfigUi x:Name="Radio6Config"
+                                                                        Grid.Row="5"
+                                                                        Grid.Column="1"
+                                                                        Margin="0,0,10,0"
+                                                                        VolumeValue="{Binding RadioChannel6, Mode=TwoWay}" />
+
+                            <TextBlock Grid.Row="6"
+                                       Style="{StaticResource SettingText}"
+                                       Text="{x:Static p:Resources.Radio7Config}" />
+                            <clientSettingsControl:RadioChannelConfigUi x:Name="Radio7Config"
+                                                                        Grid.Row="6"
+                                                                        Grid.Column="1"
+                                                                        Margin="0,0,10,0"
+                                                                        VolumeValue="{Binding RadioChannel7, Mode=TwoWay}" />
+
+                            <TextBlock Grid.Row="7"
+                                       Style="{StaticResource SettingText}"
+                                       Text="{x:Static p:Resources.Radio8Config}" />
+                            <clientSettingsControl:RadioChannelConfigUi x:Name="Radio8Config"
+                                                                        Grid.Row="7"
+                                                                        Grid.Column="1"
+                                                                        Margin="0,0,10,0"
+                                                                        VolumeValue="{Binding RadioChannel8, Mode=TwoWay}" />
+
+                            <TextBlock Grid.Row="8"
+                                       Style="{StaticResource SettingText}"
+                                       Text="{x:Static p:Resources.Radio9Config}" />
+                            <clientSettingsControl:RadioChannelConfigUi x:Name="Radio9Config"
+                                                                        Grid.Row="8"
+                                                                        Grid.Column="1"
+                                                                        Margin="0,0,10,0"
+                                                                        VolumeValue="{Binding RadioChannel9, Mode=TwoWay}" />
+
+                            <TextBlock Grid.Row="9"
+                                       Style="{StaticResource SettingText}"
+                                       Text="{x:Static p:Resources.Radio10Config}" />
+                            <clientSettingsControl:RadioChannelConfigUi x:Name="Radio10Config"
+                                                                        Grid.Row="9"
+                                                                        Grid.Column="1"
+                                                                        Margin="0,0,10,0"
+                                                                        VolumeValue="{Binding RadioChannel10, Mode=TwoWay}" />
+                        </Grid>
+                    </GroupBox>
+                </StackPanel>
+            </GroupBox>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

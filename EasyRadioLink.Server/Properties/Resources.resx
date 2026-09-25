@@ -1,0 +1,240 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <!-- 
+    Microsoft ResX Schema 
+    
+    Version 2.0
+    
+    The primary goals of this format is to allow a simple XML format 
+    that is mostly human readable. The generation and parsing of the 
+    various data types are done through the TypeConverter classes 
+    associated with the data types.
+    
+    Example:
+    
+    ... ado.net/XML headers & schema ...
+    <resheader name="resmimetype">text/microsoft-resx</resheader>
+    <resheader name="version">2.0</resheader>
+    <resheader name="reader">System.Resources.ResXResourceReader, System.Windows.Forms, ...</resheader>
+    <resheader name="writer">System.Resources.ResXResourceWriter, System.Windows.Forms, ...</resheader>
+    <data name="Name1"><value>this is my long string</value><comment>this is a comment</comment></data>
+    <data name="Color1" type="System.Drawing.Color, System.Drawing">Blue</data>
+    <data name="Bitmap1" mimetype="application/x-microsoft.net.object.binary.base64">
+        <value>[base64 mime encoded serialized .NET Framework object]</value>
+    </data>
+    <data name="Icon1" type="System.Drawing.Icon, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
+        <value>[base64 mime encoded string representing a byte array form of the .NET Framework object]</value>
+        <comment>This is a comment</comment>
+    </data>
+                
+    There are any number of "resheader" rows that contain simple 
+    name/value pairs.
+    
+    Each data row contains a name, and value. The row also contains a 
+    type or mimetype. Type corresponds to a .NET class that support 
+    text/value conversion through the TypeConverter architecture. 
+    Classes that don't support this are serialized and stored with the 
+    mimetype set.
+    
+    The mimetype is used for serialized objects, and tells the 
+    ResXResourceReader how to depersist the object. This is currently not 
+    extensible. For a given mimetype the value must be set accordingly:
+    
+    Note - application/x-microsoft.net.object.binary.base64 is the format 
+    that the ResXResourceWriter will generate, however the reader can 
+    read any of the formats listed below.
+    
+    mimetype: application/x-microsoft.net.object.binary.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Binary.BinaryFormatter
+            : and then encoded with base64 encoding.
+    
+    mimetype: application/x-microsoft.net.object.soap.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Soap.SoapFormatter
+            : and then encoded with base64 encoding.
+
+    mimetype: application/x-microsoft.net.object.bytearray.base64
+    value   : The object must be serialized into a byte array 
+            : using a System.ComponentModel.TypeConverter
+            : and then encoded with base64 encoding.
+    -->
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="BtnBan" xml:space="preserve">
+    <value>Ban</value>
+  </data>
+  <data name="BtnClientAdmin" xml:space="preserve">
+    <value>Clients...</value>
+  </data>
+  <data name="BtnKick" xml:space="preserve">
+    <value>Kick</value>
+  </data>
+  <data name="BtnMute" xml:space="preserve">
+    <value>Mute</value>
+  </data>
+  <data name="BtnOff" xml:space="preserve">
+    <value>OFF</value>
+  </data>
+  <data name="BtnOn" xml:space="preserve">
+    <value>ON</value>
+  </data>
+  <data name="BtnStartServer" xml:space="preserve">
+    <value>Start Server</value>
+  </data>
+  <data name="BtnStopServer" xml:space="preserve">
+    <value>Stop Server</value>
+  </data>
+  <data name="LabelArchiveTime" xml:space="preserve">
+    <value>Keep transmission logs (days)</value>
+  </data>
+  <data name="LabelCleanFreq" xml:space="preserve">
+    <value>Clean frequencies (no radio effects, MHz)</value>
+  </data>
+  <data name="LabelClients" xml:space="preserve">
+    <value>Clients:</value>
+  </data>
+  <data name="LabelExportList" xml:space="preserve">
+    <value>Export client list (clients-list.json)</value>
+  </data>
+  <data name="LabelPort" xml:space="preserve">
+    <value>Port:</value>
+  </data>
+  <data name="LabelRadioEncryption" xml:space="preserve">
+    <value>Allow radio encryption</value>
+  </data>
+  <data name="LabelRealRx" xml:space="preserve">
+    <value>Radio interference (simultaneous transmissions)</value>
+  </data>
+  <data name="LabelRealTx" xml:space="preserve">
+    <value>Half-duplex radios (can't receive while transmitting)</value>
+  </data>
+  <data name="LabelServerPassword" xml:space="preserve">
+    <value>Server password</value>
+  </data>
+  <data name="LabelServerPresets" xml:space="preserve">
+    <value>Server channel presets (Presets folder)</value>
+  </data>
+  <data name="LabelServerRadioPreset" xml:space="preserve">
+    <value>Server radio layout</value>
+  </data>
+  <data name="LabelShowTransmitterName" xml:space="preserve">
+    <value>Show transmitter name</value>
+  </data>
+  <data name="LabelStrictEncryption" xml:space="preserve">
+    <value>Strict radio encryption</value>
+  </data>
+  <data name="LabelTestFreq" xml:space="preserve">
+    <value>Radio check (echo) frequencies (MHz)</value>
+  </data>
+  <data name="LabelTransmissionLog" xml:space="preserve">
+    <value>Log transmissions (CSV)</value>
+  </data>
+  <data name="LabelTunedCount" xml:space="preserve">
+    <value>Show number of users on a frequency</value>
+  </data>
+  <data name="MsgBoxBan" xml:space="preserve">
+    <value>Are you sure you want to ban {0}?</value>
+  </data>
+  <data name="MsgBoxBanTitle" xml:space="preserve">
+    <value>Ban Confirmation</value>
+  </data>
+  <data name="MsgBoxKick" xml:space="preserve">
+    <value>Are you sure you want to kick {0}?</value>
+  </data>
+  <data name="MsgBoxKickTitle" xml:space="preserve">
+    <value>Kick Confirmation</value>
+  </data>
+  <data name="TitleClientList" xml:space="preserve">
+    <value>Connected Clients</value>
+  </data>
+  <data name="TitleServer" xml:space="preserve">
+    <value>EasyRadioLink Server</value>
+  </data>
+  <data name="TooltipCleanFreq" xml:space="preserve">
+    <value>Transmissions on these frequencies are played without radio effects (static, filters, clicks). Comma separated, use a dot as decimal separator, e.g. 145.5,446.1</value>
+  </data>
+  <data name="TooltipRadioEncryption" xml:space="preserve">
+    <value>Radios that support encryption may scramble their transmissions with a key (1-252).</value>
+  </data>
+  <data name="TooltipRealRx" xml:space="preserve">
+    <value>Two stations transmitting at the same time on one frequency interfere with each other.</value>
+  </data>
+  <data name="TooltipRealTx" xml:space="preserve">
+    <value>A radio cannot receive while it is transmitting.</value>
+  </data>
+  <data name="TooltipServerPassword" xml:space="preserve">
+    <value>Clients must enter this password to connect. Leave empty for an open server. The password is sent unencrypted.</value>
+  </data>
+  <data name="TooltipServerPresets" xml:space="preserve">
+    <value>Offer the channel lists from the Presets folder next to server.cfg (one *.txt file per radio name, lines "Name|MHz").</value>
+  </data>
+  <data name="TooltipServerRadioPreset" xml:space="preserve">
+    <value>Clients use the radios defined in server-radios.json next to server.cfg (same format as the client's radios.json).</value>
+  </data>
+  <data name="TooltipStrictEncryption" xml:space="preserve">
+    <value>Encrypted radios only understand transmissions with the same key; unencrypted transmissions are scrambled for them too.</value>
+  </data>
+  <data name="TooltipTestFreq" xml:space="preserve">
+    <value>Transmissions on these frequencies are played back to the sender (radio check). Comma separated, use a dot as decimal separator, e.g. 27.405,446.19375</value>
+  </data>
+  <data name="TooltipTunedCount" xml:space="preserve">
+    <value>Clients see how many other users are tuned to each radio's frequency.</value>
+  </data>
+</root>

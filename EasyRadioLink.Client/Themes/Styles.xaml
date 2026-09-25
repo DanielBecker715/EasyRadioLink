@@ -1,0 +1,234 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!--
+        Shared styles of the client.
+        The main window uses the MahApps light theme (App.xaml); the radio panel is a dark, always-on-top window
+        and uses the "DarkStyle-*" styles below.
+    -->
+
+    <!-- Dark palette (radio panel) -->
+    <Color x:Key="WindowBackgroundColor">#444444</Color>
+    <Color x:Key="DarkBackgroundColor">#333333</Color>
+    <Color x:Key="LightBackgroundColor">#595959</Color>
+    <Color x:Key="BackgroundColor">#3D3D3D</Color>
+    <Color x:Key="DisabledBackgroundColor">#424242</Color>
+    <Color x:Key="LightDisabledBackgroundColor">#666666</Color>
+    <Color x:Key="BorderColor">#6A6A6A</Color>
+    <Color x:Key="ForegroundColor">#EFEFEF</Color>
+    <Color x:Key="SelectionColor">#335C85</Color>
+
+    <SolidColorBrush x:Key="ForegroundBrush" Color="{StaticResource ForegroundColor}" />
+    <SolidColorBrush x:Key="WindowBackgroundBrush" Color="{StaticResource WindowBackgroundColor}" />
+    <SolidColorBrush x:Key="DarkBackgroundBrush" Color="{StaticResource DarkBackgroundColor}" />
+    <SolidColorBrush x:Key="PanelBorderBrush" Color="{StaticResource BorderColor}" />
+    <SolidColorBrush x:Key="PanelSelectionBrush" Color="{StaticResource SelectionColor}" />
+    <SolidColorBrush x:Key="PanelHighlightBrush" Color="{StaticResource LightBackgroundColor}" />
+    <SolidColorBrush x:Key="DisabledForegroundBrush" Color="#8C8C8C" />
+
+    <SolidColorBrush x:Key="ButtonForeground" Color="{StaticResource ForegroundColor}" />
+    <SolidColorBrush x:Key="MouseOverButtonForeground" Color="#1B1B1B" />
+    <SolidColorBrush x:Key="ButtonBackground" Color="{StaticResource LightBackgroundColor}" />
+    <SolidColorBrush x:Key="ButtonBorder" Color="{StaticResource DarkBackgroundColor}" />
+    <SolidColorBrush x:Key="PressedButtonBackground" Color="{StaticResource DisabledBackgroundColor}" />
+    <SolidColorBrush x:Key="MouseOverButtonBackground" Color="#AAAAAA" />
+    <SolidColorBrush x:Key="DisabledButtonBackground" Color="{StaticResource LightDisabledBackgroundColor}" />
+    <SolidColorBrush x:Key="DisabledButtonForeground" Color="{StaticResource DisabledBackgroundColor}" />
+
+    <!-- Dark button (radio panel) -->
+    <Style x:Key="ButtonFocusVisual">
+        <Setter Property="Control.Template">
+            <Setter.Value>
+                <ControlTemplate>
+                    <Rectangle Margin="2"
+                               SnapsToDevicePixels="true"
+                               Stroke="{StaticResource ForegroundBrush}"
+                               StrokeDashArray="1 2"
+                               StrokeThickness="1" />
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style x:Key="DarkStyle-Button" TargetType="{x:Type Button}">
+        <Setter Property="FocusVisualStyle" Value="{StaticResource ButtonFocusVisual}" />
+        <Setter Property="Background" Value="{StaticResource ButtonBackground}" />
+        <Setter Property="BorderBrush" Value="{StaticResource ButtonBorder}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="Foreground" Value="{StaticResource ButtonForeground}" />
+        <Setter Property="HorizontalContentAlignment" Value="Center" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+        <Setter Property="Padding" Value="1" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type Button}">
+                    <Border Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            CornerRadius="3">
+                        <ContentPresenter Margin="{TemplateBinding Padding}"
+                                          HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                          VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                                          RecognizesAccessKey="True"
+                                          SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}" />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="true">
+                            <Setter Property="Background" Value="{StaticResource MouseOverButtonBackground}" />
+                            <Setter Property="Foreground" Value="{StaticResource MouseOverButtonForeground}" />
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="true">
+                            <Setter Property="Background" Value="{StaticResource PressedButtonBackground}" />
+                            <Setter Property="Foreground" Value="{StaticResource ButtonForeground}" />
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="false">
+                            <Setter Property="Foreground" Value="{StaticResource DisabledButtonForeground}" />
+                            <Setter Property="Background" Value="{StaticResource DisabledButtonBackground}" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- Dark combo box (radio panel: radio sound, preset channels) -->
+    <ControlTemplate x:Key="DarkStyle-ComboBoxToggleButton" TargetType="{x:Type ToggleButton}">
+        <Border x:Name="Border"
+                Background="{StaticResource DarkBackgroundBrush}"
+                BorderBrush="{StaticResource PanelBorderBrush}"
+                BorderThickness="1"
+                CornerRadius="2">
+            <Path x:Name="Arrow"
+                  Margin="0,0,4,0"
+                  HorizontalAlignment="Right"
+                  VerticalAlignment="Center"
+                  Data="M 0 0 L 3.5 4 L 7 0 Z"
+                  Fill="#CCCCCC" />
+        </Border>
+        <ControlTemplate.Triggers>
+            <Trigger Property="IsMouseOver" Value="True">
+                <Setter TargetName="Border" Property="BorderBrush" Value="#AAAAAA" />
+            </Trigger>
+            <Trigger Property="IsChecked" Value="True">
+                <Setter TargetName="Border" Property="Background" Value="{StaticResource PanelHighlightBrush}" />
+            </Trigger>
+            <Trigger Property="IsEnabled" Value="False">
+                <Setter TargetName="Arrow" Property="Fill" Value="#666666" />
+                <Setter TargetName="Border" Property="BorderBrush" Value="#555555" />
+            </Trigger>
+        </ControlTemplate.Triggers>
+    </ControlTemplate>
+
+    <Style x:Key="DarkStyle-ComboBoxItem" TargetType="{x:Type ComboBoxItem}">
+        <Setter Property="OverridesDefaultStyle" Value="True" />
+        <Setter Property="SnapsToDevicePixels" Value="True" />
+        <Setter Property="Foreground" Value="{StaticResource ForegroundBrush}" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type ComboBoxItem}">
+                    <Border x:Name="Border"
+                            Padding="4,2,4,2"
+                            Background="Transparent"
+                            SnapsToDevicePixels="True">
+                        <ContentPresenter />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsHighlighted" Value="True">
+                            <Setter TargetName="Border" Property="Background" Value="{StaticResource PanelHighlightBrush}" />
+                        </Trigger>
+                        <Trigger Property="IsSelected" Value="True">
+                            <Setter TargetName="Border" Property="Background" Value="{StaticResource PanelSelectionBrush}" />
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Foreground" Value="{StaticResource DisabledForegroundBrush}" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style x:Key="DarkStyle-ComboBox" TargetType="{x:Type ComboBox}">
+        <Setter Property="OverridesDefaultStyle" Value="True" />
+        <Setter Property="SnapsToDevicePixels" Value="True" />
+        <Setter Property="Foreground" Value="{StaticResource ForegroundBrush}" />
+        <Setter Property="FontSize" Value="10" />
+        <Setter Property="MinHeight" Value="16" />
+        <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Disabled" />
+        <Setter Property="ScrollViewer.VerticalScrollBarVisibility" Value="Auto" />
+        <Setter Property="ScrollViewer.CanContentScroll" Value="True" />
+        <Setter Property="ItemContainerStyle" Value="{StaticResource DarkStyle-ComboBoxItem}" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type ComboBox}">
+                    <Grid>
+                        <ToggleButton x:Name="ToggleButton"
+                                      ClickMode="Press"
+                                      Focusable="False"
+                                      IsChecked="{Binding IsDropDownOpen, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}"
+                                      Template="{StaticResource DarkStyle-ComboBoxToggleButton}" />
+                        <ContentPresenter x:Name="ContentSite"
+                                          Margin="4,0,14,0"
+                                          HorizontalAlignment="Left"
+                                          VerticalAlignment="Center"
+                                          Content="{TemplateBinding SelectionBoxItem}"
+                                          ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}"
+                                          ContentTemplateSelector="{TemplateBinding ItemTemplateSelector}"
+                                          IsHitTestVisible="False" />
+                        <Popup x:Name="Popup"
+                               AllowsTransparency="True"
+                               Focusable="False"
+                               IsOpen="{TemplateBinding IsDropDownOpen}"
+                               Placement="Bottom"
+                               PopupAnimation="Slide">
+                            <Grid x:Name="DropDown"
+                                  MinWidth="{TemplateBinding ActualWidth}"
+                                  MaxHeight="{TemplateBinding MaxDropDownHeight}"
+                                  SnapsToDevicePixels="True">
+                                <Border x:Name="DropDownBorder"
+                                        Background="{StaticResource DarkBackgroundBrush}"
+                                        BorderBrush="{StaticResource PanelBorderBrush}"
+                                        BorderThickness="1" />
+                                <ScrollViewer Margin="1" SnapsToDevicePixels="True">
+                                    <StackPanel IsItemsHost="True" KeyboardNavigation.DirectionalNavigation="Contained" />
+                                </ScrollViewer>
+                            </Grid>
+                        </Popup>
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="HasItems" Value="False">
+                            <Setter TargetName="DropDownBorder" Property="MinHeight" Value="20" />
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Foreground" Value="{StaticResource DisabledForegroundBrush}" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- Main window: label text of a settings row (left column) -->
+    <Style x:Key="SettingText" TargetType="{x:Type TextBlock}">
+        <Setter Property="Margin" Value="4,6,12,6" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+        <Setter Property="TextWrapping" Value="Wrap" />
+    </Style>
+
+    <!-- Main window: explanatory text below a group header -->
+    <Style x:Key="HintText" TargetType="{x:Type TextBlock}">
+        <Setter Property="Margin" Value="4,2,4,6" />
+        <Setter Property="TextWrapping" Value="Wrap" />
+        <Setter Property="Foreground" Value="{DynamicResource MahApps.Brushes.Gray2}" />
+        <Setter Property="FontSize" Value="11" />
+    </Style>
+
+    <!-- Main window: a section title inside a group (e.g. the Controls tab) -->
+    <Style x:Key="SectionText" TargetType="{x:Type TextBlock}">
+        <Setter Property="Margin" Value="4,10,4,4" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="FontSize" Value="13" />
+        <Setter Property="Foreground" Value="{DynamicResource MahApps.Brushes.Accent}" />
+    </Style>
+
+</ResourceDictionary>

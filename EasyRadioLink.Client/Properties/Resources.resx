@@ -1,0 +1,1293 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <!-- 
+    Microsoft ResX Schema 
+    
+    Version 2.0
+    
+    The primary goals of this format is to allow a simple XML format 
+    that is mostly human readable. The generation and parsing of the 
+    various data types are done through the TypeConverter classes 
+    associated with the data types.
+    
+    Example:
+    
+    ... ado.net/XML headers & schema ...
+    <resheader name="resmimetype">text/microsoft-resx</resheader>
+    <resheader name="version">2.0</resheader>
+    <resheader name="reader">System.Resources.ResXResourceReader, System.Windows.Forms, ...</resheader>
+    <resheader name="writer">System.Resources.ResXResourceWriter, System.Windows.Forms, ...</resheader>
+    <data name="Name1"><value>this is my long string</value><comment>this is a comment</comment></data>
+    <data name="Color1" type="System.Drawing.Color, System.Drawing">Blue</data>
+    <data name="Bitmap1" mimetype="application/x-microsoft.net.object.binary.base64">
+        <value>[base64 mime encoded serialized .NET Framework object]</value>
+    </data>
+    <data name="Icon1" type="System.Drawing.Icon, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
+        <value>[base64 mime encoded string representing a byte array form of the .NET Framework object]</value>
+        <comment>This is a comment</comment>
+    </data>
+                
+    There are any number of "resheader" rows that contain simple 
+    name/value pairs.
+    
+    Each data row contains a name, and value. The row also contains a 
+    type or mimetype. Type corresponds to a .NET class that support 
+    text/value conversion through the TypeConverter architecture. 
+    Classes that don't support this are serialized and stored with the 
+    mimetype set.
+    
+    The mimetype is used for serialized objects, and tells the 
+    ResXResourceReader how to depersist the object. This is currently not 
+    extensible. For a given mimetype the value must be set accordingly:
+    
+    Note - application/x-microsoft.net.object.binary.base64 is the format 
+    that the ResXResourceWriter will generate, however the reader can 
+    read any of the formats listed below.
+    
+    mimetype: application/x-microsoft.net.object.binary.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Binary.BinaryFormatter
+            : and then encoded with base64 encoding.
+    
+    mimetype: application/x-microsoft.net.object.soap.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Soap.SoapFormatter
+            : and then encoded with base64 encoding.
+
+    mimetype: application/x-microsoft.net.object.bytearray.base64
+    value   : The object must be serialized into a byte array 
+            : using a System.ComponentModel.TypeConverter
+            : and then encoded with base64 encoding.
+    -->
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="AboutCredit" xml:space="preserve">
+    <value>Based on DCS-SimpleRadio Standalone by Ciribob and contributors (GPL-3.0)</value>
+  </data>
+  <data name="AboutDescription" xml:space="preserve">
+    <value>Digital radio voice communication with realistic radio effects. Connect to an EasyRadioLink server, tune your radios and talk to everybody on the same frequency.</value>
+  </data>
+  <data name="AboutFilesHeader" xml:space="preserve">
+    <value>Files and folders</value>
+  </data>
+  <data name="AboutLicense" xml:space="preserve">
+    <value>EasyRadioLink is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License version 3 as published by the Free Software Foundation. It comes with ABSOLUTELY NO WARRANTY. For details see the </value>
+  </data>
+  <data name="AboutLicenseHeader" xml:space="preserve">
+    <value>License</value>
+  </data>
+  <data name="AboutLicenseLink" xml:space="preserve">
+    <value>GNU General Public License v3</value>
+  </data>
+  <data name="AboutLogFolder" xml:space="preserve">
+    <value>Log files: </value>
+  </data>
+  <data name="AboutQuickStart1" xml:space="preserve">
+    <value>Choose your microphone and speakers on the Radio tab and check them with Audio Preview.</value>
+  </data>
+  <data name="AboutQuickStart2" xml:space="preserve">
+    <value>Enter your name and the server address (and the password, if the server has one), then click Connect.</value>
+  </data>
+  <data name="AboutQuickStart3" xml:space="preserve">
+    <value>The Radio Panel opens. Click a radio to select it and set its frequency by typing it or with the arrow buttons.</value>
+  </data>
+  <data name="AboutQuickStart4" xml:space="preserve">
+    <value>Set a Push-To-Talk key on the Controls tab and hold it to talk on the selected radio. Everybody tuned to the same frequency and mode hears you.</value>
+  </data>
+  <data name="AboutQuickStartHeader" xml:space="preserve">
+    <value>Quick start</value>
+  </data>
+  <data name="AboutRadioModelsFolder" xml:space="preserve">
+    <value>Custom radio sounds: </value>
+  </data>
+  <data name="AboutRecordingsFolder" xml:space="preserve">
+    <value>Recordings: </value>
+  </data>
+  <data name="AboutSettingsFolder" xml:space="preserve">
+    <value>Settings, favourites and radios: </value>
+  </data>
+  <data name="AboutTab" xml:space="preserve">
+    <value>About</value>
+  </data>
+  <data name="AboutTipAudio" xml:space="preserve">
+    <value>Speaker boost makes up for the volume the radio effects take away - lower it if the audio distorts. Pick a preview sound to hear yourself through that radio.</value>
+  </data>
+  <data name="AboutTipInputDevices" xml:space="preserve">
+    <value>Controller not detected? Enable "Allow more controller input devices" in Settings and restart EasyRadioLink.</value>
+  </data>
+  <data name="AboutTipPresets" xml:space="preserve">
+    <value>Preset channels: put a text file named after the radio (letters and digits only, e.g. "vhfairband.txt" for "VHF Airband") into the presets folder, with one channel per line as Name|MHz or just MHz, e.g. "Channel 19|27.185". Click Reload on the channel tab after editing it.</value>
+  </data>
+  <data name="AboutTipRadioPanel" xml:space="preserve">
+    <value>Radio Panel: the dot of the selected radio is green. Right-click the display or use the G button to switch the guard receiver on or off. Sound sets how your transmissions on that radio sound to the others. Drag the bottom-right corner to resize the panel.</value>
+  </data>
+  <data name="AboutTipRadios" xml:space="preserve">
+    <value>Your own radios: copy radios.json from the program folder to radios-custom.json in the settings folder and edit it. A server can also provide the radio layout (see Settings).</value>
+  </data>
+  <data name="AboutTipsHeader" xml:space="preserve">
+    <value>Tips</value>
+  </data>
+  <data name="AboutVersion" xml:space="preserve">
+    <value>Version {0} (network protocol {1})</value>
+  </data>
+  <data name="AllowRotaryIncrement" xml:space="preserve">
+    <value>Rotary style frequency steps</value>
+  </data>
+  <data name="AllowServerRadioPreset" xml:space="preserve">
+    <value>Use the server's radio layout (if the server has one)</value>
+  </data>
+  <data name="AllowTransmissionsRecord" xml:space="preserve">
+    <value>Allow others to record my transmissions</value>
+  </data>
+  <data name="AllowXInputController" xml:space="preserve">
+    <value>Allow XInput controllers, e.g. Xbox controllers (restart required)</value>
+  </data>
+  <data name="AmbientEffectToggle" xml:space="preserve">
+    <value>Play the background sounds of other users</value>
+  </data>
+  <data name="AmbientEffectVolume" xml:space="preserve">
+    <value>Volume of other users' background sounds</value>
+  </data>
+  <data name="audio_headset" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\audio-headset.ico;System.Drawing.Icon, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="AudioHeader" xml:space="preserve">
+    <value>Audio Channels (Left / Right)</value>
+  </data>
+  <data name="AutoOpenRadioPanel" xml:space="preserve">
+    <value>Open the Radio Panel when connected</value>
+  </data>
+  <data name="AutoSelectChannel" xml:space="preserve">
+    <value>Select the first preset channel when the radios are loaded</value>
+  </data>
+  <data name="BackgroundRadioNoise" xml:space="preserve">
+    <value>Radio static (background noise)</value>
+  </data>
+  <data name="BackgroundSound" xml:space="preserve">
+    <value>My background sound</value>
+  </data>
+  <data name="BackgroundSoundHeader" xml:space="preserve">
+    <value>Background Sound</value>
+  </data>
+  <data name="BackgroundSoundVolume" xml:space="preserve">
+    <value>Volume of my background sound</value>
+  </data>
+  <data name="BtnCancel" xml:space="preserve">
+    <value>Cancel</value>
+  </data>
+  <data name="BtnClose" xml:space="preserve">
+    <value>Close</value>
+  </data>
+  <data name="BtnDisable" xml:space="preserve">
+    <value>Disable</value>
+  </data>
+  <data name="BtnEnable" xml:space="preserve">
+    <value>Enable</value>
+  </data>
+  <data name="ButtonLabel" xml:space="preserve">
+    <value>Button</value>
+  </data>
+  <data name="ClientListCount" xml:space="preserve">
+    <value>{0} user(s) connected. Muting a user only affects what you hear.</value>
+  </data>
+  <data name="ClientListMute" xml:space="preserve">
+    <value>Mute</value>
+  </data>
+  <data name="ClientListMuted" xml:space="preserve">
+    <value>Muted</value>
+  </data>
+  <data name="ClientListMutedValue" xml:space="preserve">
+    <value>Muted</value>
+  </data>
+  <data name="ClientListName" xml:space="preserve">
+    <value>Name</value>
+  </data>
+  <data name="ClientListRecording" xml:space="preserve">
+    <value>Recording</value>
+  </data>
+  <data name="ClientListTitle" xml:space="preserve">
+    <value>Connected Users</value>
+  </data>
+  <data name="ClientListUnmute" xml:space="preserve">
+    <value>Unmute</value>
+  </data>
+  <data name="ClientListYou" xml:space="preserve">
+    <value>{0} (you)</value>
+  </data>
+  <data name="ClientWindowTitle" xml:space="preserve">
+    <value>EasyRadioLink</value>
+  </data>
+  <data name="ConnectionHeader" xml:space="preserve">
+    <value>Connection</value>
+  </data>
+  <data name="ControlsEncryptionHeader" xml:space="preserve">
+    <value>Encryption of the selected radio</value>
+  </data>
+  <data name="ControlsFrequencyHeader" xml:space="preserve">
+    <value>Frequency of the selected radio</value>
+  </data>
+  <data name="ControlsHeader" xml:space="preserve">
+    <value>Controls</value>
+  </data>
+  <data name="ControlsHint" xml:space="preserve">
+    <value>Click Set and press a key or a controller button. A modifier is an optional second button that has to be held as well. Bindings are saved in the current profile.</value>
+  </data>
+  <data name="ControlsRadioHeader" xml:space="preserve">
+    <value>Selected radio</value>
+  </data>
+  <data name="ControlsTab" xml:space="preserve">
+    <value>Controls</value>
+  </data>
+  <data name="ControlsTalkHeader" xml:space="preserve">
+    <value>Push-To-Talk and radio selection</value>
+  </data>
+  <data name="ControlsWindowsHeader" xml:space="preserve">
+    <value>Windows</value>
+  </data>
+  <data name="CopyProfile" xml:space="preserve">
+    <value>Copy</value>
+  </data>
+  <data name="CreateProfile" xml:space="preserve">
+    <value>New</value>
+  </data>
+  <data name="DefaultMicrophone" xml:space="preserve">
+    <value>Default Microphone</value>
+  </data>
+  <data name="DefaultNoPassthru" xml:space="preserve">
+    <value>None (no mic output)</value>
+  </data>
+  <data name="DefaultSpeakers" xml:space="preserve">
+    <value>Default Speakers</value>
+  </data>
+  <data name="DeleteProfile" xml:space="preserve">
+    <value>Delete</value>
+  </data>
+  <data name="DeviceClear" xml:space="preserve">
+    <value>Clear</value>
+  </data>
+  <data name="DeviceLabel" xml:space="preserve">
+    <value>Device</value>
+  </data>
+  <data name="DeviceSet" xml:space="preserve">
+    <value>Set</value>
+  </data>
+  <data name="DisallowedAudioTone" xml:space="preserve">
+    <value>Record a tone instead of users who don't allow recording</value>
+  </data>
+  <data name="DisplayNameLabel" xml:space="preserve">
+    <value>Name</value>
+  </data>
+  <data name="ExpandInputDevices" xml:space="preserve">
+    <value>Allow more controller input devices (restart required)</value>
+  </data>
+  <data name="FavAdd" xml:space="preserve">
+    <value>Add</value>
+  </data>
+  <data name="FavAddName" xml:space="preserve">
+    <value>Name</value>
+  </data>
+  <data name="FavAddPassword" xml:space="preserve">
+    <value>Password (optional)</value>
+  </data>
+  <data name="FavAddServer" xml:space="preserve">
+    <value>Server address</value>
+  </data>
+  <data name="FavListDefault" xml:space="preserve">
+    <value>Default</value>
+  </data>
+  <data name="FavListName" xml:space="preserve">
+    <value>Name</value>
+  </data>
+  <data name="FavListPassword" xml:space="preserve">
+    <value>Password (optional)</value>
+  </data>
+  <data name="FavListServer" xml:space="preserve">
+    <value>Server address</value>
+  </data>
+  <data name="FavNameWatermark" xml:space="preserve">
+    <value>My server</value>
+  </data>
+  <data name="FavouritesSeversHeader" xml:space="preserve">
+    <value>Favourite Servers</value>
+  </data>
+  <data name="FavouritesSeversTab" xml:space="preserve">
+    <value>Favourites</value>
+  </data>
+  <data name="FavouritesWatermark" xml:space="preserve">
+    <value>Favourites</value>
+  </data>
+  <data name="FavRmSelected" xml:space="preserve">
+    <value>Remove selected</value>
+  </data>
+  <data name="FavTitle" xml:space="preserve">
+    <value>Saved servers appear in the favourites list on the Radio tab. Drag rows to reorder them, double-click a cell to edit it and use the flag column to choose the default server.</value>
+  </data>
+  <data name="GlobalSettingsHeader" xml:space="preserve">
+    <value>Application Settings</value>
+  </data>
+  <data name="HFNoiseGainDB" xml:space="preserve">
+    <value>HF static level (dB)</value>
+  </data>
+  <data name="IncomingAudioAGC" xml:space="preserve">
+    <value>Automatic gain control</value>
+  </data>
+  <data name="IncomingAudioAGCMaxDB" xml:space="preserve">
+    <value>Maximum gain</value>
+  </data>
+  <data name="IncomingAudioAGCMaxDBToolTip" xml:space="preserve">
+    <value>How much quiet voices are boosted. Recommended: 40 dB</value>
+  </data>
+  <data name="IncomingAudioAGCTargetLevel" xml:space="preserve">
+    <value>Target level (loudness)</value>
+  </data>
+  <data name="IncomingAudioAGCTargetLevelToolTip" xml:space="preserve">
+    <value>How loud incoming voices are made. Recommended: 14000 - 20000</value>
+  </data>
+  <data name="IncomingAudioDenoise" xml:space="preserve">
+    <value>Noise suppression</value>
+  </data>
+  <data name="IncomingAudioHeader" xml:space="preserve">
+    <value>Incoming Audio</value>
+  </data>
+  <data name="InputDevicesHeader" xml:space="preserve">
+    <value>Controllers</value>
+  </data>
+  <data name="InputDown0001" xml:space="preserve">
+    <value>Frequency down 0.001 MHz</value>
+  </data>
+  <data name="InputDown001" xml:space="preserve">
+    <value>Frequency down 0.01 MHz</value>
+  </data>
+  <data name="InputDown01" xml:space="preserve">
+    <value>Frequency down 0.1 MHz</value>
+  </data>
+  <data name="InputDown1" xml:space="preserve">
+    <value>Frequency down 1 MHz</value>
+  </data>
+  <data name="InputDown10" xml:space="preserve">
+    <value>Frequency down 10 MHz</value>
+  </data>
+  <data name="InputDown100" xml:space="preserve">
+    <value>Frequency down 100 MHz</value>
+  </data>
+  <data name="InputEncryptionDecrease" xml:space="preserve">
+    <value>Encryption key down</value>
+  </data>
+  <data name="InputEncryptionIncrease" xml:space="preserve">
+    <value>Encryption key up</value>
+  </data>
+  <data name="InputModifier" xml:space="preserve">
+    <value>Modifier</value>
+  </data>
+  <data name="InputNextRadio" xml:space="preserve">
+    <value>Select next radio</value>
+  </data>
+  <data name="InputPreviousRadio" xml:space="preserve">
+    <value>Select previous radio</value>
+  </data>
+  <data name="InputPTT" xml:space="preserve">
+    <value>Push-To-Talk (PTT)</value>
+  </data>
+  <data name="InputRadio1" xml:space="preserve">
+    <value>Select radio 1</value>
+  </data>
+  <data name="InputRadio10" xml:space="preserve">
+    <value>Select radio 10</value>
+  </data>
+  <data name="InputRadio2" xml:space="preserve">
+    <value>Select radio 2</value>
+  </data>
+  <data name="InputRadio3" xml:space="preserve">
+    <value>Select radio 3</value>
+  </data>
+  <data name="InputRadio4" xml:space="preserve">
+    <value>Select radio 4</value>
+  </data>
+  <data name="InputRadio5" xml:space="preserve">
+    <value>Select radio 5</value>
+  </data>
+  <data name="InputRadio6" xml:space="preserve">
+    <value>Select radio 6</value>
+  </data>
+  <data name="InputRadio7" xml:space="preserve">
+    <value>Select radio 7</value>
+  </data>
+  <data name="InputRadio8" xml:space="preserve">
+    <value>Select radio 8</value>
+  </data>
+  <data name="InputRadio9" xml:space="preserve">
+    <value>Select radio 9</value>
+  </data>
+  <data name="InputRadioChannelDown" xml:space="preserve">
+    <value>Previous preset channel</value>
+  </data>
+  <data name="InputRadioChannelUp" xml:space="preserve">
+    <value>Next preset channel</value>
+  </data>
+  <data name="InputRadioPanelToggle" xml:space="preserve">
+    <value>Show / hide the Radio Panel</value>
+  </data>
+  <data name="InputRadioVolumeDown" xml:space="preserve">
+    <value>Radio volume down</value>
+  </data>
+  <data name="InputRadioVolumeUp" xml:space="preserve">
+    <value>Radio volume up</value>
+  </data>
+  <data name="InputTextNone" xml:space="preserve">
+    <value>None</value>
+  </data>
+  <data name="InputToggleEncryption" xml:space="preserve">
+    <value>Encryption on / off</value>
+  </data>
+  <data name="InputToggleGuard" xml:space="preserve">
+    <value>Guard receiver on / off</value>
+  </data>
+  <data name="InputUp0001" xml:space="preserve">
+    <value>Frequency up 0.001 MHz</value>
+  </data>
+  <data name="InputUp001" xml:space="preserve">
+    <value>Frequency up 0.01 MHz</value>
+  </data>
+  <data name="InputUp01" xml:space="preserve">
+    <value>Frequency up 0.1 MHz</value>
+  </data>
+  <data name="InputUp1" xml:space="preserve">
+    <value>Frequency up 1 MHz</value>
+  </data>
+  <data name="InputUp10" xml:space="preserve">
+    <value>Frequency up 10 MHz</value>
+  </data>
+  <data name="InputUp100" xml:space="preserve">
+    <value>Frequency up 100 MHz</value>
+  </data>
+  <data name="IntegrationHeader" xml:space="preserve">
+    <value>Push-To-Talk and Controls</value>
+  </data>
+  <data name="InterfaceHeader" xml:space="preserve">
+    <value>Interface</value>
+  </data>
+  <data name="MicDenoise" xml:space="preserve">
+    <value>Microphone noise suppression</value>
+  </data>
+  <data name="MicLabel" xml:space="preserve">
+    <value>Microphone</value>
+  </data>
+  <data name="MicOutputLabel" xml:space="preserve">
+    <value>Mic output</value>
+  </data>
+  <data name="MicrophoneHeader" xml:space="preserve">
+    <value>Microphone</value>
+  </data>
+  <data name="Minimisetotray" xml:space="preserve">
+    <value>Minimise to the system tray</value>
+  </data>
+  <data name="MsgBoxAdmin" xml:space="preserve">
+    <value>Run as administrator</value>
+  </data>
+  <data name="MsgBoxAdminText" xml:space="preserve">
+    <value>EasyRadioLink does not need administrator rights. Only enable this if your keys or controller buttons are not detected while a program that runs as administrator has the focus.
+
+Restart EasyRadioLink for the change to take effect.
+
+Run EasyRadioLink as administrator?</value>
+  </data>
+  <data name="MsgBoxAudioError" xml:space="preserve">
+    <value>Audio Error</value>
+  </data>
+  <data name="MsgBoxAudioErrorHeading" xml:space="preserve">
+    <value>The audio devices could not be started</value>
+  </data>
+  <data name="MsgBoxAudioStartFailedText" xml:space="preserve">
+    <value>Try a different audio device and check the Windows privacy settings for the microphone.
+
+Details are in the log file in {0}</value>
+  </data>
+  <data name="MsgBoxAuthFailed" xml:space="preserve">
+    <value>Connection refused</value>
+  </data>
+  <data name="MsgBoxAuthFailedHeading" xml:space="preserve">
+    <value>Wrong server password</value>
+  </data>
+  <data name="MsgBoxAuthFailedText" xml:space="preserve">
+    <value>The server {0} rejected the password.
+
+Check the password and connect again. Leave the password empty for servers without a password.</value>
+  </data>
+  <data name="MsgBoxConfirm" xml:space="preserve">
+    <value>Delete profile</value>
+  </data>
+  <data name="MsgBoxConfirmDeleteText" xml:space="preserve">
+    <value>Delete the profile "{0}"?</value>
+  </data>
+  <data name="MsgBoxConnectFailed" xml:space="preserve">
+    <value>Connection failed</value>
+  </data>
+  <data name="MsgBoxConnectFailedHeading" xml:space="preserve">
+    <value>Could not connect to the server</value>
+  </data>
+  <data name="MsgBoxConnectFailedText" xml:space="preserve">
+    <value>No EasyRadioLink server answered at {0}.
+
+Check the address and the port (default {1}), that the server is running and that no firewall blocks TCP and UDP on that port.</value>
+  </data>
+  <data name="MsgBoxError" xml:space="preserve">
+    <value>Error</value>
+  </data>
+  <data name="MsgBoxErrorInputText" xml:space="preserve">
+    <value>The default profile can't be deleted.</value>
+  </data>
+  <data name="MsgBoxErrorRenameText" xml:space="preserve">
+    <value>The default profile can't be renamed.</value>
+  </data>
+  <data name="MsgBoxFavSaveFailed" xml:space="preserve">
+    <value>Favourites</value>
+  </data>
+  <data name="MsgBoxFavSaveFailedText" xml:space="preserve">
+    <value>The favourite servers could not be saved. The log file has the details.</value>
+  </data>
+  <data name="MsgBoxInvalidIP" xml:space="preserve">
+    <value>Invalid server address</value>
+  </data>
+  <data name="MsgBoxInvalidIPHeading" xml:space="preserve">
+    <value>The server address could not be resolved</value>
+  </data>
+  <data name="MsgBoxInvalidIPText" xml:space="preserve">
+    <value>"{0}" is not a valid host name or IP address.
+
+Enter the host name or IP address of the server, optionally followed by :port (default port {1}), e.g. 192.168.1.20:5010.</value>
+  </data>
+  <data name="MsgBoxInvalidServerHeading" xml:space="preserve">
+    <value>The server did not answer</value>
+  </data>
+  <data name="MsgBoxInvalidServerText" xml:space="preserve">
+    <value>{0} accepted the connection but did not complete the EasyRadioLink handshake.
+
+Check the address and the port (default {1}).</value>
+  </data>
+  <data name="MsgBoxMicPassthru" xml:space="preserve">
+    <value>Mic output and speakers are the same device</value>
+  </data>
+  <data name="MsgBoxMicPassthruCaption" xml:space="preserve">
+    <value>Audio Devices</value>
+  </data>
+  <data name="MsgBoxMicPassthruText" xml:space="preserve">
+    <value>Mic output is meant for recording or streaming, not as a side tone - you would hear yourself with a delay.
+
+Select "None (no mic output)" or a different device as mic output.</value>
+  </data>
+  <data name="MsgBoxNotVisible" xml:space="preserve">
+    <value>Window position reset</value>
+  </data>
+  <data name="MsgBoxNotVisibleText" xml:space="preserve">
+    <value>The EasyRadioLink window was outside the visible screen area (for example after a monitor change). Its position has been reset.</value>
+  </data>
+  <data name="MsgBoxPresetCreated" xml:space="preserve">
+    <value>Preset channels</value>
+  </data>
+  <data name="MsgBoxPresetCreatedText" xml:space="preserve">
+    <value>The preset file was created:
+{0}
+
+Add one channel per line as Name|MHz or just MHz (e.g. Channel 19|27.185), save the file and click Reload.
+
+Open the file now?</value>
+  </data>
+  <data name="MsgBoxRadioPanelNotVisibleText" xml:space="preserve">
+    <value>The Radio Panel was outside the visible screen area (for example after a monitor change). Its position has been reset.</value>
+  </data>
+  <data name="MsgBoxRescan" xml:space="preserve">
+    <value>Controllers rescanned</value>
+  </data>
+  <data name="MsgBoxRescanText" xml:space="preserve">
+    <value>Newly connected controllers and input devices can be used now.</value>
+  </data>
+  <data name="MsgBoxRestart" xml:space="preserve">
+    <value>Restart required</value>
+  </data>
+  <data name="MsgBoxRestartExpandText" xml:space="preserve">
+    <value>Restart EasyRadioLink for this setting to take effect.
+
+This allows almost any DirectInput device (except a mouse) to be used as input, but it may cause problems with the detection of other devices. Only turn it on if your controller is not detected otherwise.</value>
+  </data>
+  <data name="MsgBoxRestartXInputText" xml:space="preserve">
+    <value>Restart EasyRadioLink for this setting to take effect.</value>
+  </data>
+  <data name="MsgBoxServerMismatch" xml:space="preserve">
+    <value>Incompatible server</value>
+  </data>
+  <data name="MsgBoxServerMismatchHeading" xml:space="preserve">
+    <value>This server can't be used with this client</value>
+  </data>
+  <data name="MsgBoxServerMismatchText" xml:space="preserve">
+    <value>{0} is not an EasyRadioLink server or runs a version that is not supported.
+
+Server protocol version: {1}
+This client: protocol {2} (servers with protocol {3} or newer are supported)</value>
+  </data>
+  <data name="NATORadioTone" xml:space="preserve">
+    <value>FM tone</value>
+  </data>
+  <data name="NoiseGainDB" xml:space="preserve">
+    <value>Static level (dB)</value>
+  </data>
+  <data name="OverlayAM" xml:space="preserve">
+    <value>AM</value>
+  </data>
+  <data name="OverlayChannelTab" xml:space="preserve">
+    <value>Ch.</value>
+  </data>
+  <data name="OverlayDIG" xml:space="preserve">
+    <value>DIG</value>
+  </data>
+  <data name="OverlayEncryptionKey" xml:space="preserve">
+    <value>Encryption key</value>
+  </data>
+  <data name="OverlayEncryptionNotAllowed" xml:space="preserve">
+    <value>Not allowed on this server</value>
+  </data>
+  <data name="OverlayEncryptionOff" xml:space="preserve">
+    <value>Not encrypted</value>
+  </data>
+  <data name="OverlayEncryptionOn" xml:space="preserve">
+    <value>Encrypted (key {0})</value>
+  </data>
+  <data name="OverlayEncryptionTab" xml:space="preserve">
+    <value>Enc</value>
+  </data>
+  <data name="OverlayFM" xml:space="preserve">
+    <value>FM</value>
+  </data>
+  <data name="OverlayGuard" xml:space="preserve">
+    <value>G</value>
+  </data>
+  <data name="OverlayNoRadio" xml:space="preserve">
+    <value>No Radio</value>
+  </data>
+  <data name="OverlayPresetCreate" xml:space="preserve">
+    <value>Create</value>
+  </data>
+  <data name="OverlayPresetReload" xml:space="preserve">
+    <value>Reload</value>
+  </data>
+  <data name="OverlayRadioTab" xml:space="preserve">
+    <value>Radio</value>
+  </data>
+  <data name="OverlaySimulTransOFF" xml:space="preserve">
+    <value>Simultaneous TX: Off</value>
+  </data>
+  <data name="OverlaySimulTransON" xml:space="preserve">
+    <value>Simultaneous TX: On</value>
+  </data>
+  <data name="OverlaySimulTransST" xml:space="preserve">
+    <value>ST</value>
+  </data>
+  <data name="OverlaySound" xml:space="preserve">
+    <value>Sound</value>
+  </data>
+  <data name="PerRadioModelEffects" xml:space="preserve">
+    <value>Use the sender's radio sound</value>
+  </data>
+  <data name="PlayConnectionSounds" xml:space="preserve">
+    <value>Play connect and disconnect sounds</value>
+  </data>
+  <data name="PresetsFolderBrowseButton" xml:space="preserve">
+    <value>Browse...</value>
+  </data>
+  <data name="PresetsFolderDefault" xml:space="preserve">
+    <value>(default)</value>
+  </data>
+  <data name="PresetsFolderLabel" xml:space="preserve">
+    <value>Presets folder</value>
+  </data>
+  <data name="PresetsFolderResetButton" xml:space="preserve">
+    <value>Reset</value>
+  </data>
+  <data name="PresetsUseClientAndServer" xml:space="preserve">
+    <value>My presets and the server's</value>
+  </data>
+  <data name="PresetsUseClientOnly" xml:space="preserve">
+    <value>My presets only</value>
+  </data>
+  <data name="PresetsUseServerIfSet" xml:space="preserve">
+    <value>The server's presets (mine if it has none)</value>
+  </data>
+  <data name="PreviewAudio" xml:space="preserve">
+    <value>Audio Preview</value>
+  </data>
+  <data name="PreviewAudioStop" xml:space="preserve">
+    <value>Stop Preview</value>
+  </data>
+  <data name="PreviewModelLabel" xml:space="preserve">
+    <value>Preview sound</value>
+  </data>
+  <data name="ProfileCreateButton" xml:space="preserve">
+    <value>Create</value>
+  </data>
+  <data name="ProfileHeader" xml:space="preserve">
+    <value>Profile</value>
+  </data>
+  <data name="ProfileHint" xml:space="preserve">
+    <value>A profile holds the key bindings and the profile settings below (radio effects, background sound, push-to-talk, audio channels).</value>
+  </data>
+  <data name="ProfileNamePrompt" xml:space="preserve">
+    <value>Profile name</value>
+  </data>
+  <data name="ProfileRenameButton" xml:space="preserve">
+    <value>Rename</value>
+  </data>
+  <data name="ProfileSettingsHeader" xml:space="preserve">
+    <value>Profile Settings</value>
+  </data>
+  <data name="ProfileWindowTitle" xml:space="preserve">
+    <value>Profile</value>
+  </data>
+  <data name="PTTReleaseDelay" xml:space="preserve">
+    <value>Push-To-Talk release delay (ms)</value>
+  </data>
+  <data name="PTTReleaseDelay0" xml:space="preserve">
+    <value>0</value>
+  </data>
+  <data name="PTTReleaseDelay1000" xml:space="preserve">
+    <value>1000</value>
+  </data>
+  <data name="PTTReleaseDelay500" xml:space="preserve">
+    <value>500</value>
+  </data>
+  <data name="PTTStartDelay" xml:space="preserve">
+    <value>Push-To-Talk start delay (ms)</value>
+  </data>
+  <data name="PTTStartDelay0" xml:space="preserve">
+    <value>0</value>
+  </data>
+  <data name="PTTStartDelay1000" xml:space="preserve">
+    <value>1000</value>
+  </data>
+  <data name="PTTStartDelay500" xml:space="preserve">
+    <value>500</value>
+  </data>
+  <data name="Radio10Config" xml:space="preserve">
+    <value>Radio 10</value>
+  </data>
+  <data name="Radio1Config" xml:space="preserve">
+    <value>Radio 1</value>
+  </data>
+  <data name="Radio2Config" xml:space="preserve">
+    <value>Radio 2</value>
+  </data>
+  <data name="Radio3Config" xml:space="preserve">
+    <value>Radio 3</value>
+  </data>
+  <data name="Radio4Config" xml:space="preserve">
+    <value>Radio 4</value>
+  </data>
+  <data name="Radio5Config" xml:space="preserve">
+    <value>Radio 5</value>
+  </data>
+  <data name="Radio6Config" xml:space="preserve">
+    <value>Radio 6</value>
+  </data>
+  <data name="Radio7Config" xml:space="preserve">
+    <value>Radio 7</value>
+  </data>
+  <data name="Radio8Config" xml:space="preserve">
+    <value>Radio 8</value>
+  </data>
+  <data name="Radio9Config" xml:space="preserve">
+    <value>Radio 9</value>
+  </data>
+  <data name="RadioChannelEqual" xml:space="preserve">
+    <value>Centre</value>
+  </data>
+  <data name="RadioChannelLeft" xml:space="preserve">
+    <value>Left</value>
+  </data>
+  <data name="RadioChannelRight" xml:space="preserve">
+    <value>Right</value>
+  </data>
+  <data name="RadioEffectHeader" xml:space="preserve">
+    <value>Radio Effects</value>
+  </data>
+  <data name="RadioEncryptionEffectsToggle" xml:space="preserve">
+    <value>Encryption sound effects</value>
+  </data>
+  <data name="RadioEndTransmitEffect" xml:space="preserve">
+    <value>Transmit end click</value>
+  </data>
+  <data name="RadioOverlayTaskbarItem" xml:space="preserve">
+    <value>Hide the Radio Panel from the taskbar</value>
+  </data>
+  <data name="RadioPanelHeader" xml:space="preserve">
+    <value>Radio Panel</value>
+  </data>
+  <data name="RadioPanelNotConnected" xml:space="preserve">
+    <value>No radios yet - connect to a server in the EasyRadioLink window.</value>
+  </data>
+  <data name="RadioPanelOpacity" xml:space="preserve">
+    <value>Opacity</value>
+  </data>
+  <data name="RadioPanelTitle" xml:space="preserve">
+    <value>EasyRadioLink - Radio Panel</value>
+  </data>
+  <data name="RadioRxEffects" xml:space="preserve">
+    <value>Receive clicks</value>
+  </data>
+  <data name="RadioRxEnd" xml:space="preserve">
+    <value>End</value>
+  </data>
+  <data name="RadioRxSquelchTail" xml:space="preserve">
+    <value>Squelch tail after received AM / FM transmissions</value>
+  </data>
+  <data name="RadioRxStart" xml:space="preserve">
+    <value>Start</value>
+  </data>
+  <data name="RadiosHeader" xml:space="preserve">
+    <value>Radios</value>
+  </data>
+  <data name="RadioSoundEffects" xml:space="preserve">
+    <value>Radio effect strength</value>
+  </data>
+  <data name="RadioSoundEffectsClipping" xml:space="preserve">
+    <value>Clipping (needs a radio effect strength above 0%)</value>
+  </data>
+  <data name="RadioStartTransmitEffect" xml:space="preserve">
+    <value>Transmit start click</value>
+  </data>
+  <data name="RadioSwitchIsPTT" xml:space="preserve">
+    <value>Radio select keys also work as Push-To-Talk</value>
+  </data>
+  <data name="RadioTab" xml:space="preserve">
+    <value>Radio</value>
+  </data>
+  <data name="RadioTxEffects" xml:space="preserve">
+    <value>Transmit clicks</value>
+  </data>
+  <data name="RadioTxEnd" xml:space="preserve">
+    <value>End</value>
+  </data>
+  <data name="RadioTxStart" xml:space="preserve">
+    <value>Start</value>
+  </data>
+  <data name="RecordingFormat" xml:space="preserve">
+    <value>Recording format (restart required)</value>
+  </data>
+  <data name="RecordingHeader" xml:space="preserve">
+    <value>Recording</value>
+  </data>
+  <data name="RecordingQuality" xml:space="preserve">
+    <value>Recording quality (mp3 only)</value>
+  </data>
+  <data name="RecordingQuality0" xml:space="preserve">
+    <value>0 - Highest</value>
+  </data>
+  <data name="RecordingQuality9" xml:space="preserve">
+    <value>Lowest - 9</value>
+  </data>
+  <data name="RecordTransmissions" xml:space="preserve">
+    <value>Record received transmissions</value>
+  </data>
+  <data name="RenameProfile" xml:space="preserve">
+    <value>Rename</value>
+  </data>
+  <data name="RequireAdminToggle" xml:space="preserve">
+    <value>Run as administrator</value>
+  </data>
+  <data name="RescanInputDevices" xml:space="preserve">
+    <value>Rescan Controllers</value>
+  </data>
+  <data name="Reset" xml:space="preserve">
+    <value>Reset</value>
+  </data>
+  <data name="ResetRadioOverlay" xml:space="preserve">
+    <value>Reset the position and size of the Radio Panel</value>
+  </data>
+  <data name="Server" xml:space="preserve">
+    <value>Server</value>
+  </data>
+  <data name="ServerAddressWatermark" xml:space="preserve">
+    <value>host or IP[:port]</value>
+  </data>
+  <data name="ServerConnectionStatusLabel" xml:space="preserve">
+    <value>Server</value>
+  </data>
+  <data name="ServerInfoHint" xml:space="preserve">
+    <value>Settings of the connected server that affect your radios.</value>
+  </data>
+  <data name="ServerPasswordLabel" xml:space="preserve">
+    <value>Password</value>
+  </data>
+  <data name="ServerPasswordWatermark" xml:space="preserve">
+    <value>optional</value>
+  </data>
+  <data name="ServerPresetsConfiguration" xml:space="preserve">
+    <value>Preset channels</value>
+  </data>
+  <data name="ServerWindowTitle" xml:space="preserve">
+    <value>Server Info</value>
+  </data>
+  <data name="SettingsTab" xml:space="preserve">
+    <value>Settings</value>
+  </data>
+  <data name="SetupHeader" xml:space="preserve">
+    <value>Audio Devices</value>
+  </data>
+  <data name="ShowClientList" xml:space="preserve">
+    <value>Users ({0})</value>
+  </data>
+  <data name="ShowRadioPanel" xml:space="preserve">
+    <value>Radio Panel</value>
+  </data>
+  <data name="ShowTransmitterName" xml:space="preserve">
+    <value>Show who is transmitting (if the server allows it)</value>
+  </data>
+  <data name="SingleFileMixdown" xml:space="preserve">
+    <value>Record all radios into a single file</value>
+  </data>
+  <data name="SpeakerBoost" xml:space="preserve">
+    <value>Speaker boost</value>
+  </data>
+  <data name="SpeakerLabel" xml:space="preserve">
+    <value>Speakers</value>
+  </data>
+  <data name="SrvAllowRadioEncryption" xml:space="preserve">
+    <value>Radio encryption allowed</value>
+  </data>
+  <data name="SrvCleanFrequencies" xml:space="preserve">
+    <value>Clean frequencies (no radio effects)</value>
+  </data>
+  <data name="SrvPresetsEnabled" xml:space="preserve">
+    <value>Server preset channels</value>
+  </data>
+  <data name="SrvRadioPresetEnabled" xml:space="preserve">
+    <value>Server radio layout</value>
+  </data>
+  <data name="SrvRadioRXInterference" xml:space="preserve">
+    <value>Radio interference (simultaneous transmissions)</value>
+  </data>
+  <data name="SrvRealRadio" xml:space="preserve">
+    <value>Half-duplex radios (can't receive while transmitting)</value>
+  </data>
+  <data name="SrvServerVersion" xml:space="preserve">
+    <value>Server protocol version</value>
+  </data>
+  <data name="SrvShowTransmitterName" xml:space="preserve">
+    <value>Show transmitter name</value>
+  </data>
+  <data name="SrvStrictRadioEncryption" xml:space="preserve">
+    <value>Strict encryption (the key must match)</value>
+  </data>
+  <data name="SrvTestFrequencies" xml:space="preserve">
+    <value>Radio check (echo) frequencies</value>
+  </data>
+  <data name="SrvTunedClientCount" xml:space="preserve">
+    <value>Show the number of users on a frequency</value>
+  </data>
+  <data name="Startminimised" xml:space="preserve">
+    <value>Start minimised</value>
+  </data>
+  <data name="StartStop" xml:space="preserve">
+    <value>Connect</value>
+  </data>
+  <data name="StartStopConnecting" xml:space="preserve">
+    <value>Connecting...</value>
+  </data>
+  <data name="StartStopDisconnect" xml:space="preserve">
+    <value>Disconnect</value>
+  </data>
+  <data name="StatusProfile" xml:space="preserve">
+    <value>Profile: {0}</value>
+  </data>
+  <data name="StatusUsersOnline" xml:space="preserve">
+    <value>Users online: {0}</value>
+  </data>
+  <data name="ToggleOff" xml:space="preserve">
+    <value>Off</value>
+  </data>
+  <data name="ToggleOn" xml:space="preserve">
+    <value>On</value>
+  </data>
+  <data name="ToggleServerSettings" xml:space="preserve">
+    <value>Server Info</value>
+  </data>
+  <data name="ToolTipAllowRecording" xml:space="preserve">
+    <value>Other users can only record your voice if this is on. The setting is sent to the server when you connect.</value>
+  </data>
+  <data name="ToolTipAllowServerRadioPreset" xml:space="preserve">
+    <value>The server can define your radios (names, frequency ranges, guard). Applied when you connect.</value>
+  </data>
+  <data name="ToolTipAmbientEffect" xml:space="preserve">
+    <value>Other users can mix a background sound (jet, prop, helicopter) into their transmissions</value>
+  </data>
+  <data name="ToolTipAutoOpenRadioPanel" xml:space="preserve">
+    <value>Shows the Radio Panel automatically after connecting to a server</value>
+  </data>
+  <data name="ToolTipBackgroundSound" xml:space="preserve">
+    <value>A background sound mixed into your transmissions, e.g. an engine. Everybody who hears you hears it too.</value>
+  </data>
+  <data name="ToolTipClientList" xml:space="preserve">
+    <value>Users connected to the server</value>
+  </data>
+  <data name="ToolTipClientListMute" xml:space="preserve">
+    <value>Mute or unmute this user for you - the others still hear them</value>
+  </data>
+  <data name="ToolTipClientListRecording" xml:space="preserve">
+    <value>Whether the user allows others to record their transmissions</value>
+  </data>
+  <data name="ToolTipClose" xml:space="preserve">
+    <value>Close</value>
+  </data>
+  <data name="ToolTipDisplayName" xml:space="preserve">
+    <value>Your name - shown to other users and in the server's user list</value>
+  </data>
+  <data name="ToolTipEncryptionKey" xml:space="preserve">
+    <value>Encryption key 1-252 - both sides need the same key</value>
+  </data>
+  <data name="ToolTipFavAdd" xml:space="preserve">
+    <value>Add this server to the favourites</value>
+  </data>
+  <data name="ToolTipFavDefault" xml:space="preserve">
+    <value>Make this the default server</value>
+  </data>
+  <data name="ToolTipFavouritePicker" xml:space="preserve">
+    <value>Pick a saved server (fills in the address and the password)</value>
+  </data>
+  <data name="ToolTipFmTone" xml:space="preserve">
+    <value>The quiet tone heard on FM radios while receiving</value>
+  </data>
+  <data name="ToolTipGlobalSimulTrans" xml:space="preserve">
+    <value>Simultaneous transmission: Push-To-Talk also transmits on every radio with ST switched on (up to 3 more radios)</value>
+  </data>
+  <data name="ToolTipGuard" xml:space="preserve">
+    <value>Guard receiver</value>
+  </data>
+  <data name="ToolTipGuardFrequency" xml:space="preserve">
+    <value>Guard receiver: also listen on {0} MHz. Click to switch it on or off (orange = on).</value>
+  </data>
+  <data name="ToolTipHFNoiseGainDB" xml:space="preserve">
+    <value>Extra static for frequencies below 30 MHz (e.g. CB and HF radios)</value>
+  </data>
+  <data name="ToolTipMicOutput" xml:space="preserve">
+    <value>Optional: also sends your microphone to this device, e.g. for streaming or recording. This is not a side tone - don't select your speakers here.</value>
+  </data>
+  <data name="ToolTipMinimise" xml:space="preserve">
+    <value>Minimise</value>
+  </data>
+  <data name="ToolTipNoMic" xml:space="preserve">
+    <value>No microphone available</value>
+  </data>
+  <data name="ToolTipNoMicL1" xml:space="preserve">
+    <value>No valid microphone is available - others will not be able to hear you.</value>
+  </data>
+  <data name="ToolTipNoMicL2" xml:space="preserve">
+    <value>You can still listen to the radios, but you can't transmit.</value>
+  </data>
+  <data name="ToolTipOpacity" xml:space="preserve">
+    <value>Opacity of the Radio Panel</value>
+  </data>
+  <data name="ToolTipOpenFolder" xml:space="preserve">
+    <value>Open the folder in Explorer</value>
+  </data>
+  <data name="ToolTipPerRadioModelEffects" xml:space="preserve">
+    <value>Transmissions sound like the radio the sender selected (Sound on the Radio Panel). Off: every transmission uses the standard sound.</value>
+  </data>
+  <data name="ToolTipPresetChannels" xml:space="preserve">
+    <value>Preset channels of this radio</value>
+  </data>
+  <data name="ToolTipPresetCreate" xml:space="preserve">
+    <value>Create the preset file of this radio in the presets folder</value>
+  </data>
+  <data name="ToolTipPresetReload" xml:space="preserve">
+    <value>Reload the preset channels</value>
+  </data>
+  <data name="ToolTipPresetsFolder" xml:space="preserve">
+    <value>Folder with the preset channel files of your radios (&lt;radio name&gt;.txt)</value>
+  </data>
+  <data name="ToolTipPreviewModel" xml:space="preserve">
+    <value>Radio sound used by Audio Preview - hear yourself through that radio</value>
+  </data>
+  <data name="ToolTipRadioFrequency" xml:space="preserve">
+    <value>Frequency in MHz - type a frequency and press Enter. Click to select this radio, right-click to switch the guard receiver on or off.</value>
+  </data>
+  <data name="ToolTipRadioModel" xml:space="preserve">
+    <value>Sound: how your transmissions on this radio sound to the other users</value>
+  </data>
+  <data name="ToolTipRadioPanel" xml:space="preserve">
+    <value>Show or hide the Radio Panel</value>
+  </data>
+  <data name="ToolTipRadioRxSquelchTail" xml:space="preserve">
+    <value>Plays a short burst of static when a received AM or FM transmission ends, like a CB radio</value>
+  </data>
+  <data name="ToolTipRadioSoundEffects" xml:space="preserve">
+    <value>0% = clean voice, 100% = full radio effect</value>
+  </data>
+  <data name="ToolTipRadioVolume" xml:space="preserve">
+    <value>Volume {0}%</value>
+  </data>
+  <data name="ToolTipRecordQuality" xml:space="preserve">
+    <value>The quality can only be changed while recording is off</value>
+  </data>
+  <data name="ToolTipResetRadioPanel" xml:space="preserve">
+    <value>Moves the Radio Panel back to its default position and size (an open panel is closed)</value>
+  </data>
+  <data name="ToolTipRotaryIncrement" xml:space="preserve">
+    <value>The frequency step buttons and keys change only their digit and roll over from 9 to 0, like a rotary knob</value>
+  </data>
+  <data name="ToolTipSavedAddressTab" xml:space="preserve">
+    <value>Edit the favourite servers</value>
+  </data>
+  <data name="ToolTipSelectedRadio" xml:space="preserve">
+    <value>Green: selected radio (Push-To-Talk transmits on it). Click to select this radio.</value>
+  </data>
+  <data name="ToolTipServerAddress" xml:space="preserve">
+    <value>Host name or IP address of the server, optionally followed by :port (default port 5010)</value>
+  </data>
+  <data name="ToolTipServerInfo" xml:space="preserve">
+    <value>Settings of the connected server</value>
+  </data>
+  <data name="ToolTipServerPassword" xml:space="preserve">
+    <value>Only needed if the server is password protected.
+The password is sent to the server unencrypted.</value>
+  </data>
+  <data name="ToolTipServerPresetsConfiguration" xml:space="preserve">
+    <value>Which preset channels the channel tab offers: your preset files, the server's presets, or both</value>
+  </data>
+  <data name="ToolTipServerStatus" xml:space="preserve">
+    <value>Connection to the server</value>
+  </data>
+  <data name="ToolTipSimulTrans" xml:space="preserve">
+    <value>Also transmit on this radio (needs simultaneous transmission on)</value>
+  </data>
+  <data name="ToolTipSpeakerBoost" xml:space="preserve">
+    <value>Boosts all received audio</value>
+  </data>
+  <data name="ToolTipVoiceStatus" xml:space="preserve">
+    <value>Voice connection (UDP) to the server</value>
+  </data>
+  <data name="ToolTipVOXEnabled" xml:space="preserve">
+    <value>Transmits on the selected radio while you speak - no Push-To-Talk needed</value>
+  </data>
+  <data name="ToolTipVOXSensitivity" xml:space="preserve">
+    <value>The higher the sensitivity the less likely speech is missed, but the higher the chance that noise starts a transmission</value>
+  </data>
+  <data name="ToolTipVOXThreshold" xml:space="preserve">
+    <value>Minimum loudness that counts as speech</value>
+  </data>
+  <data name="ValueDISABLED" xml:space="preserve">
+    <value>Disabled</value>
+  </data>
+  <data name="ValueENABLED" xml:space="preserve">
+    <value>Enabled</value>
+  </data>
+  <data name="ValueNo" xml:space="preserve">
+    <value>No</value>
+  </data>
+  <data name="ValueNone" xml:space="preserve">
+    <value>None</value>
+  </data>
+  <data name="ValueOFF" xml:space="preserve">
+    <value>Off</value>
+  </data>
+  <data name="ValueON" xml:space="preserve">
+    <value>On</value>
+  </data>
+  <data name="ValueUnknown" xml:space="preserve">
+    <value>Unknown</value>
+  </data>
+  <data name="ValueYes" xml:space="preserve">
+    <value>Yes</value>
+  </data>
+  <data name="VOIPConnectionStatusLabel" xml:space="preserve">
+    <value>Voice</value>
+  </data>
+  <data name="VOXEnabled" xml:space="preserve">
+    <value>Transmit on the selected radio when speaking (VOX)</value>
+  </data>
+  <data name="VOXHeader" xml:space="preserve">
+    <value>Voice Activation (VOX)</value>
+  </data>
+  <data name="VOXMinimimumTXTime" xml:space="preserve">
+    <value>Minimum transmission length (ms)</value>
+  </data>
+  <data name="VOXMinimimumTXTime0" xml:space="preserve">
+    <value>0</value>
+  </data>
+  <data name="VOXMinimimumTXTime1000" xml:space="preserve">
+    <value>1000</value>
+  </data>
+  <data name="VOXMinimimumTXTime2000" xml:space="preserve">
+    <value>2000</value>
+  </data>
+  <data name="VOXMinimumRMS" xml:space="preserve">
+    <value>Voice level threshold</value>
+  </data>
+  <data name="VOXMinimumRMSHigher" xml:space="preserve">
+    <value>Higher</value>
+  </data>
+  <data name="VOXMinimumRMSLower" xml:space="preserve">
+    <value>Lower</value>
+  </data>
+  <data name="VOXMode" xml:space="preserve">
+    <value>Voice detection sensitivity</value>
+  </data>
+  <data name="VOXModeHigher" xml:space="preserve">
+    <value>Higher</value>
+  </data>
+  <data name="VOXModeLower" xml:space="preserve">
+    <value>Lower</value>
+  </data>
+</root>

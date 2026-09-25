@@ -1,0 +1,26 @@
+Sound effect sources
+====================
+
+All effects used by the radio pipeline are 16-bit PCM, 48000 Hz, mono WAV files (anything else is ignored).
+Most of them come from DCS-SimpleRadio Standalone (GPL-3.0), the project EasyRadioLink is based on.
+
+ENCRYPTION_TX.wav, ENCRYPTION_RX.wav
+    KY-58 TX/RX preamble tones from the SimPhonics tones collection
+    (http://www.simphonics.com/library/WaveFiles/SimPhonics%20Tones%20Collection/Generic%20Tones/KY58/).
+
+RADIO_TRANS_START*.wav, RADIO_TRANS_END*.wav
+    PTT tones and effects by "Bimbac".
+
+NATO_TONE.wav
+    FM background tone, from DCS-SimpleRadio Standalone.
+
+SQUELCH_TAIL_AM.wav, SQUELCH_TAIL_FM.wav
+    0.6 s excerpts (level normalised to -22 dBFS RMS) of the HF and FM noise recordings shipped with
+    DCS-SimpleRadio Standalone.
+
+Background\jet.wav, Background\prop.wav, Background\helicopter.wav
+    Generic JET / PROP / HELICOPTER ambience from DCS-SimpleRadio Standalone.
+
+beep-connected.wav, beep-disconnected.wav
+    https://freesound.org/people/pan14/sounds/263124/ and https://freesound.org/people/pan14/sounds/263123/
+    (taken 2018-10-03).
