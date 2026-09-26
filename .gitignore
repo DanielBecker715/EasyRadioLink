@@ -1,14 +1,14 @@
 # EasyRadioLink - release output of publish.ps1
 dist/
 
-# EasyRadioLink - files the programs write into their working directory (when started from the repository)
+# EasyRadioLink - files the programs write when started from the repository (e.g. dotnet run, --cfg=server.cfg)
 default.cfg
 global.cfg
-/server.cfg
-/server.cfg.bak
-/banned.txt
-/clients-list.json
-/TransmissionLogArchive/
+server.cfg
+server.cfg.bak
+banned.txt
+clients-list.json
+TransmissionLogArchive/
 /Recordings/
 *-transmissionlog.csv
 clientlog*.txt

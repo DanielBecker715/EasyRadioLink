@@ -109,9 +109,13 @@ public class PresetChannelsViewModel : INotifyPropertyChanged, IHandle<ProfileCh
             RadioHelper.SelectRadioChannel(SelectedPresetChannel, RadioId);
     }
 
+    /// <summary>
+    ///     Reads the preset channels again. Also called from the radio state sync thread: the collection is only
+    ///     changed under the lock given to <c>BindingOperations.EnableCollectionSynchronization</c>.
+    /// </summary>
     public void Reload()
     {
-        PresetChannels.Clear();
+        Clear();
         ShowPresetCreate = Visibility.Collapsed;
 
         var radios = ClientStateSingleton.Instance.PlayerRadioInfo.radios;
@@ -163,10 +167,14 @@ public class PresetChannelsViewModel : INotifyPropertyChanged, IHandle<ProfileCh
         {
             presetChannel.Channel = channelNumber++;
             NameChannel(presetChannel);
-            PresetChannels.Add(presetChannel);
         }
 
-        ShowPresetCreate = PresetChannels.Count > 0 ? Visibility.Collapsed : Visibility.Visible;
+        lock (_presetChannelLock)
+        {
+            foreach (var presetChannel in channels) PresetChannels.Add(presetChannel);
+        }
+
+        ShowPresetCreate = channels.Count > 0 ? Visibility.Collapsed : Visibility.Visible;
     }
 
     private static void NameChannel(PresetChannel presetChannel)
@@ -210,6 +218,9 @@ public class PresetChannelsViewModel : INotifyPropertyChanged, IHandle<ProfileCh
 
     public void Clear()
     {
-        PresetChannels.Clear();
+        lock (_presetChannelLock)
+        {
+            PresetChannels.Clear();
+        }
     }
 }

@@ -34,7 +34,7 @@ namespace EasyRadioLink.Common.Network.Client;
 ///     (FullUpdate = RADIO_UPDATE, otherwise UPDATE); unchanged state is only re-sent after
 ///     <see cref="Constants.CLIENT_UPDATE_INTERVAL_LIMIT" /> seconds.
 /// </summary>
-public class TCPClientHandler : IHandle<DisconnectRequestMessage>, IHandle<UnitUpdateMessage>
+public class TCPClientHandler : IHandle<UnitUpdateMessage>
 {
     private static readonly Logger Logger = LogManager.GetCurrentClassLogger();
 
@@ -76,11 +76,6 @@ public class TCPClientHandler : IHandle<DisconnectRequestMessage>, IHandle<UnitU
 
     /// <summary>True once the server accepted the SYNC handshake (until disconnected).</summary>
     public bool IsConnected => _handshakeComplete;
-
-    public async Task HandleAsync(DisconnectRequestMessage message, CancellationToken cancellationToken)
-    {
-        await RequestDisconnectAsync(true);
-    }
 
     public async Task HandleAsync(UnitUpdateMessage message, CancellationToken cancellationToken)
     {

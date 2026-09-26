@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Net;
 using EasyRadioLink.Common.Models;
@@ -269,5 +270,43 @@ public class VoiceRoutingTests
         foreach (var radio in info.radios) Assert.IsNotNull(radio);
 
         Assert.IsNull(info.CanHearTransmission(Cb19, Modulation.AM, 0, false, null, out _, out _));
+    }
+
+    [TestMethod]
+    public void UdpIsOnlyAcceptedFromTheAuthenticatedAddress()
+    {
+        var client = new ClientInfo
+        {
+            ClientGuid = "client_______________1",
+            SessionAddress = IPAddress.Parse("192.168.1.20")
+        };
+
+        // same IP, any port (the UDP port differs from the TCP one)
+        Assert.IsTrue(VoiceRouting.IsFromClientAddress(client, new IPEndPoint(IPAddress.Parse("192.168.1.20"), 50123)));
+        Assert.IsTrue(VoiceRouting.IsFromClientAddress(client,
+            new IPEndPoint(IPAddress.Parse("192.168.1.20").MapToIPv6(), 50123)));
+
+        // somebody else who knows the client id
+        Assert.IsFalse(VoiceRouting.IsFromClientAddress(client, new IPEndPoint(IPAddress.Parse("192.168.1.21"), 50123)));
+        Assert.IsFalse(VoiceRouting.IsFromClientAddress(client, null));
+
+        // not authenticated on TCP
+        Assert.IsFalse(VoiceRouting.IsFromClientAddress(new ClientInfo { ClientGuid = client.ClientGuid },
+            new IPEndPoint(IPAddress.Parse("192.168.1.20"), 50123)));
+        Assert.IsFalse(VoiceRouting.IsFromClientAddress(null, new IPEndPoint(IPAddress.Loopback, 1)));
+    }
+
+    [TestMethod]
+    public void VoicePacketsAreRateLimitedPerSender()
+    {
+        var sender = new ClientInfo { ClientGuid = "sender" };
+        var start = DateTime.UtcNow.Ticks;
+
+        for (var i = 0; i < VoiceRouting.MaxVoicePacketsPerSecond; i++)
+            Assert.IsTrue(VoiceRouting.AllowVoicePacket(sender, start + i), $"packet {i + 1}");
+
+        Assert.IsFalse(VoiceRouting.AllowVoicePacket(sender, start + 1000), "one packet too many in the same second");
+        Assert.IsTrue(VoiceRouting.AllowVoicePacket(sender, start + TimeSpan.TicksPerSecond), "next second starts fresh");
+        Assert.IsTrue(VoiceRouting.AllowVoicePacket(new ClientInfo { ClientGuid = "other" }, start), "limit is per sender");
     }
 }

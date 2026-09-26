@@ -65,12 +65,6 @@ public sealed class RadioStateSyncService : IHandle<ServerSettingsUpdatedMessage
 
     private RadioLayout _layout;
 
-    /// <summary>True once the radios are loaded for this connection.</summary>
-    public bool IsActivated => _activated;
-
-    /// <summary>Where the current radio layout came from (null before activation).</summary>
-    public RadioLayoutSource? LayoutSource => _layout?.Source;
-
     public Task HandleAsync(ServerSettingsUpdatedMessage message, CancellationToken cancellationToken)
     {
         var cts = _cts;

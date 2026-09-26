@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Runtime;
 using System.Threading;
 using System.Windows;
@@ -52,14 +53,18 @@ public class Bootstrapper : BootstrapperBase
 
     private void InitCfgPath()
     {
-        //check commandline: -cfg=<path to server.cfg> (or --cfg=)
+        //check commandline: -cfg=<path to server.cfg> (or --cfg=). Default: server.cfg next to the executable
         var args = Environment.GetCommandLineArgs();
 
         foreach (var arg in args)
             if (arg.StartsWith("-cfg="))
-                ServerSettingsStore.CFG_FILE_NAME = arg.Substring("-cfg=".Length).Trim().Trim('"');
+                ServerSettingsStore.SetConfigFile(arg.Substring("-cfg=".Length));
             else if (arg.StartsWith("--cfg="))
-                ServerSettingsStore.CFG_FILE_NAME = arg.Substring("--cfg=".Length).Trim().Trim('"');
+                ServerSettingsStore.SetConfigFile(arg.Substring("--cfg=".Length));
+
+        // every server file (logs included) lives next to the configuration file - NLog.config uses this too
+        GlobalDiagnosticsContext.Set("ServerDataDirectory",
+            Path.GetDirectoryName(ServerSettingsStore.CFG_FILE_NAME) + Path.DirectorySeparatorChar);
     }
 
     private void SetupLogging()
@@ -68,14 +73,17 @@ public class Bootstrapper : BootstrapperBase
         if (LogManager.Configuration != null)
         {
             loggingReady = true;
+            LogConfigLocation();
             return;
         }
+
+        var dataDirectory = Path.GetDirectoryName(ServerSettingsStore.CFG_FILE_NAME) ?? "";
 
         var config = new LoggingConfiguration();
         var fileTarget = new FileTarget
         {
-            FileName = "serverlog.txt",
-            ArchiveFileName = "serverlog.old.txt",
+            FileName = Path.Combine(dataDirectory, "serverlog.txt"),
+            ArchiveFileName = Path.Combine(dataDirectory, "serverlog.old.txt"),
             MaxArchiveFiles = 1,
             ArchiveAboveSize = 104857600,
             Layout =
@@ -86,15 +94,23 @@ public class Bootstrapper : BootstrapperBase
         config.AddTarget("asyncFileTarget", wrapper);
         config.LoggingRules.Add(new LoggingRule("*", LogLevel.Info, wrapper));
 
-        // only add transmission logging at launch if its enabled, defer rule and target creation otherwise
-        if (ServerSettingsStore.Instance.GetGeneralSetting(ServerSettingsKeys.TRANSMISSION_LOG_ENABLED).BoolValue)
-        {
-            config = LoggingHelper.GenerateTransmissionLoggingConfig(config,
-                ServerSettingsStore.Instance.GetGeneralSetting(ServerSettingsKeys.TRANSMISSION_LOG_RETENTION).IntValue);
-        }
-
         LogManager.Configuration = config;
         loggingReady = true;
+
+        // only add transmission logging at launch if its enabled, defer rule and target creation otherwise
+        var store = ServerSettingsStore.Instance;
+        if (store.GetGeneralSetting(ServerSettingsKeys.TRANSMISSION_LOG_ENABLED).BoolValue)
+        {
+            LogManager.Configuration = LoggingHelper.GenerateTransmissionLoggingConfig(LogManager.Configuration,
+                store.GetGeneralSetting(ServerSettingsKeys.TRANSMISSION_LOG_RETENTION).IntValue, store.ConfigDirectory);
+        }
+
+        LogConfigLocation();
+    }
+
+    private static void LogConfigLocation()
+    {
+        LogManager.GetCurrentClassLogger().Info($"Configuration file: {ServerSettingsStore.Instance.ConfigFilePath}");
     }
 
 
@@ -130,6 +146,9 @@ public class Bootstrapper : BootstrapperBase
             { "Icon", new BitmapImage(new Uri("pack://application:,,,/server-10.ico")) },
             { "ResizeMode", ResizeMode.CanMinimize }
         };
+        // create the main view model first: it must be subscribed before the server can report a start failure
+        _simpleContainer.GetInstance(typeof(MainViewModel), null);
+
         //create an instance of serverState to actually start the server
         _simpleContainer.GetInstance(typeof(ServerState), null);
 

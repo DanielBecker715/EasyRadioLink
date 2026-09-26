@@ -159,6 +159,14 @@ Please extract the entire EasyRadioLink zip file into a folder and run EasyRadio
   <data name="MsgBoxFolder" xml:space="preserve">
     <value>Invalid install location</value>
   </data>
+  <data name="MsgBoxFolderNotEmptyText" xml:space="preserve">
+    <value>The folder
+{0}
+already contains files of another program. EasyRadioLink is not installed there, because an update or uninstall could replace or remove those files.
+
+Please choose an empty or new folder, for example:
+{1}</value>
+  </data>
   <data name="MsgBoxFolderText" xml:space="preserve">
     <value>Please choose a different install folder.
 
@@ -202,6 +210,13 @@ Some files were kept in:
 
 You can delete this folder if you no longer need them.</value>
   </data>
+  <data name="MsgBoxRemovedLockedText" xml:space="preserve">
+    <value>EasyRadioLink could not be uninstalled completely: {0} program files in
+{1}
+are in use by another program.
+
+Close the program that uses them (or restart Windows) and uninstall EasyRadioLink again.</value>
+  </data>
   <data name="MsgBoxRemovedText" xml:space="preserve">
     <value>EasyRadioLink was uninstalled successfully.</value>
   </data>
@@ -229,7 +244,7 @@ To install or update EasyRadioLink, run EasyRadioLink-Setup.exe from the extract
 Your personal settings (%AppData%\EasyRadioLink) and recordings (Documents\EasyRadioLink\Recordings) are not deleted.</value>
   </data>
   <data name="MsgBoxUninstallDataText" xml:space="preserve">
-    <value>The install folder contains files that were created while EasyRadioLink was used, for example server settings (server.cfg), presets or log files:
+    <value>The install folder contains files that were not installed by the setup, for example server settings (server.cfg), presets or log files:
 
 {0}
 

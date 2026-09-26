@@ -60,6 +60,15 @@ namespace EasyRadioLink.Client.Properties {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to Source code: .
+        /// </summary>
+        public static string AboutSourceCode {
+            get {
+                return ResourceManager.GetString("AboutSourceCode", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to Based on DCS-SimpleRadio Standalone by Ciribob and contributors (GPL-3.0).
         /// </summary>
         public static string AboutCredit {
@@ -1589,6 +1598,15 @@ namespace EasyRadioLink.Client.Properties {
                 return ResourceManager.GetString("MsgBoxPresetCreatedText", resourceCulture);
             }
         }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to A profile named &quot;{0}&quot; already exists.
+        /// </summary>
+        public static string MsgBoxProfileExistsText {
+            get {
+                return ResourceManager.GetString("MsgBoxProfileExistsText", resourceCulture);
+            }
+        }
 
         /// <summary>
         ///   Looks up a localized string similar to The Radio Panel was outside the visible screen area (for example after a monitor change). Its positi....
@@ -2241,9 +2259,9 @@ namespace EasyRadioLink.Client.Properties {
         /// <summary>
         ///   Looks up a localized string similar to Hide the Radio Panel from the taskbar.
         /// </summary>
-        public static string RadioOverlayTaskbarItem {
+        public static string RadioPanelTaskbarItem {
             get {
-                return ResourceManager.GetString("RadioOverlayTaskbarItem", resourceCulture);
+                return ResourceManager.GetString("RadioPanelTaskbarItem", resourceCulture);
             }
         }
 
@@ -2253,6 +2271,24 @@ namespace EasyRadioLink.Client.Properties {
         public static string RadioPanelHeader {
             get {
                 return ResourceManager.GetString("RadioPanelHeader", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Loading radios....
+        /// </summary>
+        public static string RadioPanelLoading {
+            get {
+                return ResourceManager.GetString("RadioPanelLoading", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Connected, but the radio layout has no radio switched on. Check radios-custom.json or the server&apos;s radio layout.
+        /// </summary>
+        public static string RadioPanelNoRadiosEnabled {
+            get {
+                return ResourceManager.GetString("RadioPanelNoRadiosEnabled", resourceCulture);
             }
         }
 
@@ -2493,9 +2529,9 @@ namespace EasyRadioLink.Client.Properties {
         /// <summary>
         ///   Looks up a localized string similar to Reset the position and size of the Radio Panel.
         /// </summary>
-        public static string ResetRadioOverlay {
+        public static string ResetRadioPanel {
             get {
-                return ResourceManager.GetString("ResetRadioOverlay", resourceCulture);
+                return ResourceManager.GetString("ResetRadioPanel", resourceCulture);
             }
         }
 
@@ -2914,7 +2950,7 @@ namespace EasyRadioLink.Client.Properties {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to Encryption key 1-252 - both sides need the same key.
+        ///   Looks up a localized string similar to Encryption key 1-252 (type it, or use the mouse wheel / arrow keys) - both sides need the same key.
         /// </summary>
         public static string ToolTipEncryptionKey {
             get {
@@ -2932,7 +2968,7 @@ namespace EasyRadioLink.Client.Properties {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to Make this the default server.
+        ///   Looks up a localized string similar to Make this the default server (filled in at start-up if the last server used is not a favourite).
         /// </summary>
         public static string ToolTipFavDefault {
             get {

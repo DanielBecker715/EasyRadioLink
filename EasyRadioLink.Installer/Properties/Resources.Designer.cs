@@ -169,6 +169,17 @@ namespace EasyRadioLink.Installer.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to The folder
+        ///{0}
+        ///already contains files of another program. [rest of string was truncated]&quot;;.
+        /// </summary>
+        internal static string MsgBoxFolderNotEmptyText {
+            get {
+                return ResourceManager.GetString("MsgBoxFolderNotEmptyText", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to Please choose a different install folder. [rest of string was truncated]&quot;;.
         /// </summary>
         internal static string MsgBoxFolderText {
@@ -250,6 +261,17 @@ namespace EasyRadioLink.Installer.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to EasyRadioLink could not be uninstalled completely: {0} program files in
+        ///{1}
+        ///are in use by another program. [rest of string was truncated]&quot;;.
+        /// </summary>
+        internal static string MsgBoxRemovedLockedText {
+            get {
+                return ResourceManager.GetString("MsgBoxRemovedLockedText", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to EasyRadioLink was uninstalled successfully..
         /// </summary>
         internal static string MsgBoxRemovedText {
@@ -304,7 +326,7 @@ namespace EasyRadioLink.Installer.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to The install folder contains files that were created while EasyRadioLink was used, for example server settings (server.cfg), presets or log files: [rest of string was truncated]&quot;;.
+        ///   Looks up a localized string similar to The install folder contains files that were not installed by the setup, for example server settings (server.cfg), presets or log files: [rest of string was truncated]&quot;;.
         /// </summary>
         internal static string MsgBoxUninstallDataText {
             get {

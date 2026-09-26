@@ -117,6 +117,9 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
+  <data name="AboutSourceCode" xml:space="preserve">
+    <value>Source code: </value>
+  </data>
   <data name="AboutCredit" xml:space="preserve">
     <value>Based on DCS-SimpleRadio Standalone by Ciribob and contributors (GPL-3.0)</value>
   </data>
@@ -648,6 +651,9 @@ Add one channel per line as Name|MHz or just MHz (e.g. Channel 19|27.185), save 
 
 Open the file now?</value>
   </data>
+  <data name="MsgBoxProfileExistsText" xml:space="preserve">
+    <value>A profile named "{0}" already exists.</value>
+  </data>
   <data name="MsgBoxRadioPanelNotVisibleText" xml:space="preserve">
     <value>The Radio Panel was outside the visible screen area (for example after a monitor change). Its position has been reset.</value>
   </data>
@@ -869,11 +875,17 @@ This client: protocol {2} (servers with protocol {3} or newer are supported)</va
   <data name="RadioEndTransmitEffect" xml:space="preserve">
     <value>Transmit end click</value>
   </data>
-  <data name="RadioOverlayTaskbarItem" xml:space="preserve">
+  <data name="RadioPanelTaskbarItem" xml:space="preserve">
     <value>Hide the Radio Panel from the taskbar</value>
   </data>
   <data name="RadioPanelHeader" xml:space="preserve">
     <value>Radio Panel</value>
+  </data>
+  <data name="RadioPanelLoading" xml:space="preserve">
+    <value>Loading radios...</value>
+  </data>
+  <data name="RadioPanelNoRadiosEnabled" xml:space="preserve">
+    <value>Connected, but the radio layout has no radio switched on. Check radios-custom.json or the server's radio layout.</value>
   </data>
   <data name="RadioPanelNotConnected" xml:space="preserve">
     <value>No radios yet - connect to a server in the EasyRadioLink window.</value>
@@ -953,7 +965,7 @@ This client: protocol {2} (servers with protocol {3} or newer are supported)</va
   <data name="Reset" xml:space="preserve">
     <value>Reset</value>
   </data>
-  <data name="ResetRadioOverlay" xml:space="preserve">
+  <data name="ResetRadioPanel" xml:space="preserve">
     <value>Reset the position and size of the Radio Panel</value>
   </data>
   <data name="Server" xml:space="preserve">
@@ -1095,13 +1107,13 @@ This client: protocol {2} (servers with protocol {3} or newer are supported)</va
     <value>Your name - shown to other users and in the server's user list</value>
   </data>
   <data name="ToolTipEncryptionKey" xml:space="preserve">
-    <value>Encryption key 1-252 - both sides need the same key</value>
+    <value>Encryption key 1-252 (type it, or use the mouse wheel / arrow keys) - both sides need the same key</value>
   </data>
   <data name="ToolTipFavAdd" xml:space="preserve">
     <value>Add this server to the favourites</value>
   </data>
   <data name="ToolTipFavDefault" xml:space="preserve">
-    <value>Make this the default server</value>
+    <value>Make this the default server (filled in at start-up if the last server used is not a favourite)</value>
   </data>
   <data name="ToolTipFavouritePicker" xml:space="preserve">
     <value>Pick a saved server (fills in the address and the password)</value>

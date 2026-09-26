@@ -43,6 +43,16 @@ public class ClientInfo : PropertyChangedBaseClass
 
     [JsonIgnore] public IPEndPoint VoipPort { get; set; }
 
+    /// <summary>
+    ///     Server only: IP address of the TCP connection this client authenticated on. UDP voice and pings for this
+    ///     client are only accepted from this address.
+    /// </summary>
+    [JsonIgnore] public IPAddress SessionAddress { get; set; }
+
+    // server side: voice packet rate limit (see VoiceRouting.AllowVoicePacket)
+    [JsonIgnore] internal long VoiceWindowStartTicks { get; set; }
+    [JsonIgnore] internal int VoicePacketsInWindow { get; set; }
+
     [JsonIgnore]
     public string TransmittingFrequency
     {

@@ -104,11 +104,33 @@ namespace EasyRadioLink.Installer
         public static readonly string[] ProgramFolders = { ClientFolder, ServerFolder, CliWindowsFolder, CliLinuxFolder };
 
         /// <summary>
-        ///     Sub folders whose programs write files next to their executable: the servers (server.cfg, banned.txt, logs,
-        ///     client export) and the client (clientlog.txt). The install folder itself, which holds the elevated setup,
-        ///     stays write-protected.
+        ///     Sub folders whose programs write files next to their executable: the servers (server.cfg, Presets\,
+        ///     server-radios.json, banned.txt, logs, client export). The client keeps all its data in %AppData%\EasyRadioLink
+        ///     and Documents, so Client\ and the install folder itself, which holds the elevated setup, stay write-protected.
+        ///     Because the user can create junctions in these folders, the setup never follows junctions or symbolic links
+        ///     below the install folder (see <see cref="IsLinkedPath" /> and <see cref="RemoveLinksOnPath" />).
         /// </summary>
-        private static readonly string[] UserWritableFolders = { ClientFolder, ServerFolder, CliWindowsFolder };
+        private static readonly string[] UserWritableFolders = { ServerFolder, CliWindowsFolder };
+
+        /// <summary>Folders that older setups made user-writable although their programs write nothing there.</summary>
+        private static readonly string[] WriteProtectedFolders = { ClientFolder };
+
+        /// <summary>
+        ///     Titles of the main windows ("EasyRadioLink v1.0.0", "EasyRadioLink Server v1.0.0"), used to close the
+        ///     programs the way the user would, so the client can save its radio state.
+        /// </summary>
+        private static readonly string[] MainWindowTitlePrefixes = { ProductName + " v", ProductName + " Server v" };
+
+        /// <summary>
+        ///     Top-level entries of an EasyRadioLink install folder. A folder that contains anything else and has no install
+        ///     manifest belongs to another program and is never installed into.
+        /// </summary>
+        private static readonly string[] InstallFolderEntries =
+        {
+            ClientFolder, ServerFolder, CliWindowsFolder, CliLinuxFolder, "README.txt", "LICENSE.txt",
+            "THIRD-PARTY-NOTICES.txt", ManifestFileName, InstallerLogFileName, InstallerOldLogFileName, SetupExeName,
+            "EasyRadioLink-Setup.dll", "EasyRadioLink-Setup.runtimeconfig.json", "EasyRadioLink-Setup.deps.json", "NLog.dll"
+        };
 
         /// <summary>Text files in the package root that are copied to the install folder (if present).</summary>
         private static readonly string[] RootDocuments = { "README.txt", "LICENSE.txt", "THIRD-PARTY-NOTICES.txt" };
@@ -347,6 +369,22 @@ namespace EasyRadioLink.Installer
                    File.Exists(Path.Combine(directory, ClientFolder, ClientExe));
         }
 
+        /// <summary>
+        ///     True if the folder exists, is not an EasyRadioLink installation and contains files or folders that do not
+        ///     belong to EasyRadioLink (installing there could replace or remove files of another program).
+        /// </summary>
+        public static bool IsForeignFolder(string directory)
+        {
+            if (directory == null || !Directory.Exists(directory) || LooksLikeInstallation(directory))
+            {
+                return false;
+            }
+
+            return Directory.EnumerateFileSystemEntries(directory)
+                .Select(Path.GetFileName)
+                .Any(name => !InstallFolderEntries.Contains(name, StringComparer.OrdinalIgnoreCase));
+        }
+
         #endregion
 
         #region Registry
@@ -480,9 +518,9 @@ namespace EasyRadioLink.Installer
                     Logger.Info($"Closing {process.ProcessName} (PID {process.Id})");
 
                     // Ask nicely first so the client can save its radio state, then terminate.
-                    if (process.CloseMainWindow())
+                    if (RequestMainWindowClose(process) || process.CloseMainWindow())
                     {
-                        process.WaitForExit(5000);
+                        process.WaitForExit(10000);
                     }
 
                     if (!process.HasExited)
@@ -503,6 +541,40 @@ namespace EasyRadioLink.Installer
             }
         }
 
+        /// <summary>
+        ///     Sends WM_CLOSE to the main window of an EasyRadioLink program, also while it is hidden in the notification
+        ///     area. Process.CloseMainWindow is not enough: it picks the first visible window, which is often the Radio
+        ///     Panel, and finds nothing while the client is hidden. Returns true if a main window was found.
+        /// </summary>
+        private static bool RequestMainWindowClose(Process process)
+        {
+            var windows = new List<IntPtr>();
+            NativeMethods.EnumWindowsProc callback = (hWnd, _) =>
+            {
+                NativeMethods.GetWindowThreadProcessId(hWnd, out var processId);
+                if (processId == (uint)process.Id)
+                {
+                    var title = NativeMethods.GetWindowTitle(hWnd);
+                    if (MainWindowTitlePrefixes.Any(prefix => title.StartsWith(prefix, StringComparison.Ordinal)))
+                    {
+                        windows.Add(hWnd);
+                    }
+                }
+
+                return true;
+            };
+
+            NativeMethods.EnumWindows(callback, IntPtr.Zero);
+            GC.KeepAlive(callback);
+
+            foreach (var window in windows)
+            {
+                NativeMethods.PostMessage(window, NativeMethods.WM_CLOSE, IntPtr.Zero, IntPtr.Zero);
+            }
+
+            return windows.Count > 0;
+        }
+
         #endregion
 
         #region Install
@@ -517,6 +589,20 @@ namespace EasyRadioLink.Installer
             Logger.Info($"Installing EasyRadioLink {Version} from {source} to {target} " +
                         $"(Start menu: {options.StartMenuShortcuts}, desktop: {options.DesktopShortcut})");
 
+            // Installing from an installation would remove the files it is about to copy (and copy the user's server
+            // files as program files); installing into another program's folder could replace or delete its files.
+            var previous = ReadInstalledPath();
+            if (LooksLikeInstallation(source) || previous != "" && PathsEqual(previous, source))
+            {
+                throw new InvalidOperationException($"Refusing to install from the installation folder {source}");
+            }
+
+            if (IsForeignFolder(target))
+            {
+                throw new InvalidOperationException(
+                    $"Refusing to install into {target}: the folder contains files of another program");
+            }
+
             progress(Resources.ProgressClosingApps);
             CloseRunningApps();
 
@@ -529,7 +615,6 @@ namespace EasyRadioLink.Installer
             progress(Resources.ProgressRemovingOld);
 
             // A previous installation in another folder is removed (program files only), so it does not stay orphaned.
-            var previous = ReadInstalledPath();
             if (previous != "" && !PathsEqual(previous, target) && LooksLikeInstallation(previous) &&
                 IsSafeInstallDirectory(previous))
             {
@@ -554,6 +639,8 @@ namespace EasyRadioLink.Installer
             foreach (var file in files)
             {
                 var destination = Path.Combine(target, file.RelativePath);
+                RemoveLinksOnPath(target, destination);
+
                 var destinationDirectory = Path.GetDirectoryName(destination);
                 if (!string.IsNullOrEmpty(destinationDirectory))
                 {
@@ -574,6 +661,11 @@ namespace EasyRadioLink.Installer
             foreach (var folder in UserWritableFolders)
             {
                 GrantUserModifyAccess(Path.Combine(target, folder));
+            }
+
+            foreach (var folder in WriteProtectedFolders)
+            {
+                RemoveUserModifyAccess(Path.Combine(target, folder));
             }
 
             progress(Resources.ProgressRegistry);
@@ -689,6 +781,42 @@ namespace EasyRadioLink.Installer
             catch (Exception ex)
             {
                 Logger.Warn(ex, $"Unable to set permissions on {directory}");
+            }
+        }
+
+        /// <summary>Removes the write access an older setup gave the installing user on a program folder.</summary>
+        private static void RemoveUserModifyAccess(string directory)
+        {
+            if (!Directory.Exists(directory))
+            {
+                return;
+            }
+
+            try
+            {
+                var user = WindowsIdentity.GetCurrent().User;
+                if (user == null)
+                {
+                    return;
+                }
+
+                var directoryInfo = new DirectoryInfo(directory);
+                var security = directoryInfo.GetAccessControl();
+                var explicitRules = security.GetAccessRules(true, false, typeof(SecurityIdentifier))
+                    .OfType<FileSystemAccessRule>()
+                    .Any(rule => user.Equals(rule.IdentityReference));
+                if (!explicitRules)
+                {
+                    return;
+                }
+
+                security.PurgeAccessRules(user);
+                directoryInfo.SetAccessControl(security);
+                Logger.Info($"Removed the write access of {user.Value} on {directory}");
+            }
+            catch (Exception ex)
+            {
+                Logger.Warn(ex, $"Unable to reset permissions on {directory}");
             }
         }
 
@@ -881,9 +1009,14 @@ namespace EasyRadioLink.Installer
                     continue;
                 }
 
+                if (IsLinkedPath(installDirectory, folderPath))
+                {
+                    continue;
+                }
+
                 try
                 {
-                    foreach (var path in Directory.EnumerateFiles(folderPath, "*", SearchOption.AllDirectories))
+                    foreach (var path in Directory.EnumerateFiles(folderPath, "*", ProgramFolderEnumeration))
                     {
                         var relative = Path.GetRelativePath(installDirectory, path);
                         var installedBySetup = manifest != null
@@ -919,18 +1052,21 @@ namespace EasyRadioLink.Installer
             CloseRunningApps();
 
             progress(Resources.ProgressRemoving);
-            try
-            {
-                RemoveShortcuts();
-            }
-            catch (Exception ex)
-            {
-                Logger.Warn(ex, "Unable to remove the shortcuts");
-            }
-
             if (Directory.Exists(installDirectory))
             {
-                result.FailedFiles = RemoveProgramFiles(installDirectory);
+                // The setup in the install folder goes last: if program files are left (locked), it stays together with
+                // the manifest, the shortcuts and the "Apps & Features" entry, so the uninstall can simply be run again.
+                result.FailedFiles = RemoveProgramFiles(installDirectory, true);
+                if (result.FailedFiles == 0)
+                {
+                    foreach (var setupFile in SetupFiles)
+                    {
+                        if (!DeleteFile(Path.Combine(installDirectory, setupFile)))
+                        {
+                            result.FailedFiles++;
+                        }
+                    }
+                }
 
                 if (deleteUserFiles)
                 {
@@ -955,10 +1091,9 @@ namespace EasyRadioLink.Installer
                 if (result.FailedFiles == 0)
                 {
                     DeleteFile(Path.Combine(installDirectory, ManifestFileName));
+                    DeleteFile(Path.Combine(installDirectory, InstallerLogFileName));
+                    DeleteFile(Path.Combine(installDirectory, InstallerOldLogFileName));
                 }
-
-                DeleteFile(Path.Combine(installDirectory, InstallerLogFileName));
-                DeleteFile(Path.Combine(installDirectory, InstallerOldLogFileName));
 
                 RemoveEmptyDirectories(installDirectory, true);
 
@@ -967,6 +1102,22 @@ namespace EasyRadioLink.Installer
                     result.RemainingDirectory = installDirectory;
                     Logger.Info($"Folder kept (not empty): {installDirectory}");
                 }
+            }
+
+            if (result.FailedFiles > 0)
+            {
+                Logger.Warn($"{result.FailedFiles} program files could not be deleted - " +
+                            "the shortcuts and the registration are kept so the uninstall can be run again");
+                return result;
+            }
+
+            try
+            {
+                RemoveShortcuts();
+            }
+            catch (Exception ex)
+            {
+                Logger.Warn(ex, "Unable to remove the shortcuts");
             }
 
             progress(Resources.ProgressRegistry);
@@ -1032,10 +1183,22 @@ namespace EasyRadioLink.Installer
         }
 
         /// <summary>
-        ///     Deletes the program files of an installation (from its manifest, or by known names for an installation without
-        ///     manifest). Files created by the user or the programs stay. Returns the number of files that could not be deleted.
+        ///     Recursive listing of a program folder that does not descend into junctions or symbolic links (the user can
+        ///     create them in the writable server folders, and the elevated setup must not follow them).
         /// </summary>
-        private static int RemoveProgramFiles(string installDirectory)
+        private static readonly EnumerationOptions ProgramFolderEnumeration = new()
+        {
+            RecurseSubdirectories = true,
+            AttributesToSkip = FileAttributes.ReparsePoint,
+            IgnoreInaccessible = true
+        };
+
+        /// <summary>
+        ///     Deletes the program files of an installation (from its manifest, or by known names for the registered
+        ///     installation without manifest). Files created by the user or the programs stay, and so do the setup files in
+        ///     the install folder if <paramref name="keepSetup" /> is set. Returns the number of files that could not be deleted.
+        /// </summary>
+        private static int RemoveProgramFiles(string installDirectory, bool keepSetup = false)
         {
             var failed = 0;
             var manifest = ReadManifest(installDirectory);
@@ -1045,23 +1208,42 @@ namespace EasyRadioLink.Installer
                 Logger.Info($"Removing {manifest.Count} program files listed in {ManifestFileName}");
                 foreach (var relative in manifest)
                 {
-                    if (string.Equals(relative, ManifestFileName, StringComparison.OrdinalIgnoreCase))
+                    if (string.Equals(relative, ManifestFileName, StringComparison.OrdinalIgnoreCase) ||
+                        keepSetup && SetupFiles.Contains(relative, StringComparer.OrdinalIgnoreCase))
                     {
                         continue;
                     }
 
-                    if (!DeleteFile(Path.Combine(installDirectory, relative)))
+                    var path = Path.Combine(installDirectory, relative);
+                    if (IsLinkedPath(installDirectory, path))
+                    {
+                        Logger.Warn($"Skipped {path}: it is or lies behind a junction or symbolic link");
+                        continue;
+                    }
+
+                    if (!DeleteFile(path))
                     {
                         failed++;
                     }
                 }
+            }
+            else if (!LooksLikeInstallation(installDirectory))
+            {
+                // Without a manifest only the registered installation is cleaned up by file names; any other folder may
+                // contain files of another program.
+                Logger.Info($"No {ManifestFileName} in {installDirectory} and not the registered installation - " +
+                            "no program files removed");
+                return 0;
             }
             else
             {
                 Logger.Info($"No {ManifestFileName} in {installDirectory} - removing known program files");
                 foreach (var setupFile in SetupFiles)
                 {
-                    DeleteFile(Path.Combine(installDirectory, setupFile));
+                    if (!keepSetup)
+                    {
+                        DeleteFile(Path.Combine(installDirectory, setupFile));
+                    }
                 }
 
                 foreach (var document in RootDocuments)
@@ -1072,13 +1254,12 @@ namespace EasyRadioLink.Installer
                 foreach (var folder in ProgramFolders)
                 {
                     var folderPath = Path.Combine(installDirectory, folder);
-                    if (!Directory.Exists(folderPath))
+                    if (!Directory.Exists(folderPath) || IsLinkedPath(installDirectory, folderPath))
                     {
                         continue;
                     }
 
-                    foreach (var path in Directory.EnumerateFiles(folderPath, "*", SearchOption.AllDirectories)
-                                 .ToList())
+                    foreach (var path in Directory.EnumerateFiles(folderPath, "*", ProgramFolderEnumeration).ToList())
                     {
                         if (IsKnownProgramFile(Path.GetRelativePath(installDirectory, path)) && !DeleteFile(path))
                         {
@@ -1157,6 +1338,12 @@ namespace EasyRadioLink.Installer
         {
             try
             {
+                // Never descend into a junction or symbolic link: its target lies outside the install folder.
+                if (new DirectoryInfo(directory).Attributes.HasFlag(FileAttributes.ReparsePoint))
+                {
+                    return;
+                }
+
                 foreach (var subDirectory in Directory.GetDirectories(directory))
                 {
                     RemoveEmptyDirectoriesRecursive(subDirectory);
@@ -1182,6 +1369,77 @@ namespace EasyRadioLink.Installer
             catch (Exception ex)
             {
                 Logger.Warn(ex, $"Unable to delete folder {directory}");
+            }
+        }
+
+        /// <summary>
+        ///     True if <paramref name="path" /> or one of its parent folders below <paramref name="installDirectory" /> is a
+        ///     junction or symbolic link. The server folders are writable for the user, so the elevated setup must never
+        ///     delete through such a link.
+        /// </summary>
+        private static bool IsLinkedPath(string installDirectory, string path)
+        {
+            var root = NormalizeDirectory(installDirectory);
+            var current = NormalizeDirectory(path);
+            while (current != null && current.Length > root.Length && IsInsideDirectory(current, root))
+            {
+                try
+                {
+                    if (File.GetAttributes(current).HasFlag(FileAttributes.ReparsePoint))
+                    {
+                        return true;
+                    }
+                }
+                catch (Exception ex) when (ex is FileNotFoundException or DirectoryNotFoundException)
+                {
+                    // does not exist (yet)
+                }
+
+                current = Path.GetDirectoryName(current);
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        ///     Removes junctions and symbolic links (only the links, never their targets) on the way from the install folder
+        ///     to <paramref name="path" />, so the elevated setup cannot be redirected out of the install folder when it
+        ///     creates folders and copies files.
+        /// </summary>
+        private static void RemoveLinksOnPath(string installDirectory, string path)
+        {
+            var current = NormalizeDirectory(installDirectory);
+            var relative = Path.GetRelativePath(current, NormalizeDirectory(path));
+            foreach (var segment in relative.Split(Path.DirectorySeparatorChar))
+            {
+                current = Path.Combine(current, segment);
+
+                FileAttributes attributes;
+                try
+                {
+                    attributes = File.GetAttributes(current);
+                }
+                catch (Exception ex) when (ex is FileNotFoundException or DirectoryNotFoundException)
+                {
+                    return;
+                }
+
+                if (!attributes.HasFlag(FileAttributes.ReparsePoint))
+                {
+                    continue;
+                }
+
+                Logger.Warn($"Removing the junction or symbolic link {current}");
+                if (attributes.HasFlag(FileAttributes.Directory))
+                {
+                    Directory.Delete(current);
+                }
+                else
+                {
+                    File.Delete(current);
+                }
+
+                return;
             }
         }
 

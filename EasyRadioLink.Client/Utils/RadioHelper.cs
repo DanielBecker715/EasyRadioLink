@@ -220,17 +220,6 @@ public static class RadioHelper
         }
     }
 
-    public static void SetEncryption(int radioId, bool enabled)
-    {
-        var radio = GetUserRadio(radioId);
-
-        if (IsEncryptionAllowed(radio) && radio.enc != enabled)
-        {
-            radio.enc = enabled;
-            MarkDirty();
-        }
-    }
-
     public static void SetEncryptionKey(int radioId, int encKey)
     {
         var radio = GetUserRadio(radioId);
@@ -390,15 +379,5 @@ public static class RadioHelper
         var radio = GetUserRadio(radioId);
 
         if (radio != null && !radio.rxOnly) radio.simul = !radio.simul;
-    }
-
-    public static void SetSimultaneous(int radioId, bool enabled)
-    {
-        var playerRadioInfo = ClientStateSingleton.Instance.PlayerRadioInfo;
-        if (!playerRadioInfo.simultaneousTransmission) return;
-
-        var radio = GetUserRadio(radioId);
-
-        if (radio != null && !radio.rxOnly) radio.simul = enabled;
     }
 }

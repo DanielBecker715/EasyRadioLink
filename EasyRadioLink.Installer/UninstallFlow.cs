@@ -142,6 +142,14 @@ namespace EasyRadioLink.Installer
 
             progressDialog.UpdateProgress(true, Resources.MsgBoxRemovedText2);
 
+            if (result.FailedFiles > 0)
+            {
+                // Program files are in use: the registration is kept, so the uninstall can simply be run again.
+                Show(owner, string.Format(Resources.MsgBoxRemovedLockedText, result.FailedFiles, installDirectory),
+                    Resources.MsgBoxInstallTitle, MessageBoxButton.OK, MessageBoxImage.Warning);
+                return UninstallOutcome.Failed;
+            }
+
             if (result.RemainingDirectory != null)
             {
                 Show(owner, string.Format(Resources.MsgBoxRemovedKeptText, result.RemainingDirectory),

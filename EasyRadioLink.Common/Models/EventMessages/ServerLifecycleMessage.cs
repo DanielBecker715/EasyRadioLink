@@ -32,6 +32,20 @@ public class ServerStateMessage
     public int Count => _srClients.Count;
 }
 
+/// <summary>
+///     Published when the server could not be started, e.g. because its port is already in use. The server is
+///     stopped again; <see cref="Error" /> is a message for the admin.
+/// </summary>
+public class ServerStartFailedMessage
+{
+    public ServerStartFailedMessage(string error)
+    {
+        Error = error;
+    }
+
+    public string Error { get; }
+}
+
 public class KickClientMessage
 {
     public KickClientMessage(ClientInfo client)

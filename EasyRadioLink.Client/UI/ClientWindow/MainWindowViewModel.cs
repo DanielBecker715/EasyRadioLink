@@ -49,7 +49,7 @@ public class MainWindowViewModel : PropertyChangedBaseClass, IHandle<TCPClientSt
     IHandle<VOIPStatusMessage>, IHandle<ProfileChangedMessage>, IHandle<InvalidServerVersionMessage>,
     IHandle<ToggleRadioPanelMessage>
 {
-    private static readonly long OVERLAY_DEBOUNCE = 500;
+    private static readonly long RADIO_PANEL_DEBOUNCE = 500;
 
     // re-enable the connect button if the old connection never reports its disconnect
     private static readonly TimeSpan DisconnectWaitTimeout = TimeSpan.FromSeconds(3);
@@ -211,12 +211,39 @@ public class MainWindowViewModel : PropertyChangedBaseClass, IHandle<TCPClientSt
         {
             _selectedServerAddress = value;
 
-            // the drop down pushes null when the selected favourite is removed
+            // the drop down pushes null when the selected favourite is removed (and when it is cleared below)
             if (value == null) return;
 
             ServerAddress = value.Address;
             ServerPassword = value.Password ?? "";
+
+            // the drop down is only a picker: clear it again, so picking the same favourite again (e.g. after the
+            // address was edited by hand) fills in its address and password again
+            Application.Current?.Dispatcher.InvokeAsync(() =>
+            {
+                if (!ReferenceEquals(_selectedServerAddress, value)) return;
+
+                _selectedServerAddress = null;
+                NotifyPropertyChanged(nameof(SelectedServerAddress));
+            });
         }
+    }
+
+    /// <summary>
+    ///     Fills in the favourite of the last server (with its password), or else the favourite flagged as default.
+    ///     Called once at start-up.
+    /// </summary>
+    public void SelectStartFavourite()
+    {
+        var favourites = FavouriteServersViewModel?.Addresses;
+        if (favourites == null || favourites.Count == 0) return;
+
+        var lastServer = ServerAddress.Trim();
+        var favourite = favourites.FirstOrDefault(address =>
+                            string.Equals(address.Address?.Trim(), lastServer, StringComparison.OrdinalIgnoreCase))
+                        ?? FavouriteServersViewModel.DefaultServerAddress;
+
+        if (favourite != null) SelectedServerAddress = favourite;
     }
 
     /// <summary>Password of the server to connect to ("" = open server). Not persisted - comes from a favourite.</summary>
@@ -319,7 +346,7 @@ public class MainWindowViewModel : PropertyChangedBaseClass, IHandle<TCPClientSt
 
     public Task HandleAsync(ToggleRadioPanelMessage message, CancellationToken cancellationToken)
     {
-        if (TimeSpan.FromTicks(DateTime.Now.Ticks - _lastRadioPanelToggleTime).TotalMilliseconds > OVERLAY_DEBOUNCE)
+        if (TimeSpan.FromTicks(DateTime.Now.Ticks - _lastRadioPanelToggleTime).TotalMilliseconds > RADIO_PANEL_DEBOUNCE)
         {
             _lastRadioPanelToggleTime = DateTime.Now.Ticks;
             //Debounce
@@ -345,6 +372,8 @@ public class MainWindowViewModel : PropertyChangedBaseClass, IHandle<TCPClientSt
             return;
         }
 
+        var client = _client;
+
         IsConnecting = false;
         IsConnected = true;
         ConnectIsEnabled = true;
@@ -367,16 +396,32 @@ public class MainWindowViewModel : PropertyChangedBaseClass, IHandle<TCPClientSt
             return;
         }
 
-        if (!StartAudio(address))
+        // on the UI thread like the Disconnect button (Stop): a disconnect right after connecting must not leave audio
+        // and the radio sync running without a connection
+        var started = false;
+        Application.Current.Dispatcher.Invoke(() =>
         {
-            Stop();
-            return;
-        }
+            if (!ReferenceEquals(client, _client) || !IsConnected)
+            {
+                Logger.Info("Disconnected while the connection was set up - not starting audio and radios");
+                return;
+            }
 
-        // loads the radios once the server settings are known and keeps the server up to date
-        _radioSync?.Stop();
-        _radioSync = new RadioStateSyncService();
-        _radioSync.Start();
+            if (!StartAudio(address))
+            {
+                Stop();
+                return;
+            }
+
+            // loads the radios once the server settings are known and keeps the server up to date
+            _radioSync?.Stop();
+            _radioSync = new RadioStateSyncService();
+            _radioSync.Start();
+
+            started = true;
+        });
+
+        if (!started) return;
 
         if (_globalSettings.GetClientSettingBool(GlobalSettingsKeys.AutoOpenRadioPanel))
             Application.Current.Dispatcher.InvokeAsync(() =>
@@ -730,7 +775,7 @@ public class MainWindowViewModel : PropertyChangedBaseClass, IHandle<TCPClientSt
 
             _radioPanel = new RadioPanelWindow();
             _radioPanel.ShowInTaskbar =
-                !_globalSettings.GetClientSettingBool(GlobalSettingsKeys.RadioOverlayTaskbarHide);
+                !_globalSettings.GetClientSettingBool(GlobalSettingsKeys.RadioPanelTaskbarHide);
             _radioPanel.Show();
         }
         else

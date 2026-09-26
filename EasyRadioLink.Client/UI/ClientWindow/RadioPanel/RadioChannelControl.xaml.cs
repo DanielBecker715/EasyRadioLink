@@ -44,12 +44,16 @@ public partial class RadioChannelControl : UserControl
     // the user drags the volume slider - don't overwrite it from the radio state
     private bool _dragging;
 
+    // the user typed into the frequency box - the repaint keeps the text until Enter / Escape / focus loss
+    private bool _frequencyEdited;
+
     // last guard frequency shown in the "G" tooltip
     private double _guardTooltipFrequency = -1;
 
     private int _radioId;
 
-    // the combo box / slider are changed by the repaint, not by the user
+    // the combo box / slider / frequency text are changed by the repaint, not by the user
+    private bool _updatingFrequency;
     private bool _updatingModel;
     private bool _updatingVolume;
 
@@ -66,6 +70,7 @@ public partial class RadioChannelControl : UserControl
         RadioFrequency.LostFocus += RadioFrequencyOnLostFocus;
         RadioFrequency.KeyDown += RadioFrequencyOnKeyDown;
         RadioFrequency.GotFocus += RadioFrequencyOnGotFocus;
+        RadioFrequency.TextChanged += RadioFrequencyOnTextChanged;
 
         try
         {
@@ -137,91 +142,150 @@ public partial class RadioChannelControl : UserControl
         if (radio == null || !radio.IsEnabled) ClearFrequencyFocus();
     }
 
+    private void RadioFrequencyOnTextChanged(object sender, TextChangedEventArgs e)
+    {
+        // typed by the user (not the repaint): keep it until it is applied or discarded
+        if (!_updatingFrequency) _frequencyEdited = true;
+    }
+
     private void RadioFrequencyOnKeyDown(object sender, KeyEventArgs keyEventArgs)
     {
         if (keyEventArgs.Key == Key.Enter)
         {
+            ApplyTypedFrequency();
             ClearFrequencyFocus();
+            keyEventArgs.Handled = true;
         }
         else if (keyEventArgs.Key == Key.Escape)
         {
-            // discard the typed text
-            var radio = CurrentRadio();
-            if (radio != null) RadioFrequency.Text = RadioCalculator.FormatMHz(radio.freq);
+            DiscardTypedFrequency();
             ClearFrequencyFocus();
+            keyEventArgs.Handled = true;
         }
-    }
-
-    private void ClearFrequencyFocus()
-    {
-        //remove focus to somewhere else, then clear altogether
-        RadioVolume.Focus();
-        Keyboard.ClearFocus();
     }
 
     private void RadioFrequencyOnLostFocus(object sender, RoutedEventArgs routedEventArgs)
     {
+        ApplyTypedFrequency();
+    }
+
+    /// <summary>
+    ///     Removes the logical and the keyboard focus from the frequency box. The other controls of the panel are
+    ///     not focusable, so the focus can't simply be moved to one of them.
+    /// </summary>
+    private void ClearFrequencyFocus()
+    {
+        var focusScope = FocusManager.GetFocusScope(RadioFrequency);
+        if (focusScope != null && ReferenceEquals(FocusManager.GetFocusedElement(focusScope), RadioFrequency))
+            FocusManager.SetFocusedElement(focusScope, null);
+
+        if (RadioFrequency.IsKeyboardFocused) Keyboard.ClearFocus();
+    }
+
+    /// <summary>Sets the frequency typed into the box (Enter or focus loss). Invalid text is replaced by the current frequency.</summary>
+    private void ApplyTypedFrequency()
+    {
+        if (!_frequencyEdited) return;
+        _frequencyEdited = false;
+
         var radio = CurrentRadio();
-        if (radio == null) return;
+        if (radio == null || !radio.IsEnabled) return;
 
         // unchanged text - keep the exact frequency (the text may be rounded)
-        if (RadioFrequency.Text.Trim() == RadioCalculator.FormatMHz(radio.freq)) return;
-
-        // Invariant culture: "123.45" is always 123.45 MHz, also with a German Windows ("123,45" is accepted too)
-        if (RadioCalculator.TryParseMHz(RadioFrequency.Text, out var frequencyHz))
+        if (RadioFrequency.Text.Trim() != RadioCalculator.FormatMHz(radio.freq)
+            // Invariant culture: "123.45" is always 123.45 MHz, also with a German Windows ("123,45" is accepted too)
+            && RadioCalculator.TryParseMHz(RadioFrequency.Text, out var frequencyHz))
             RadioHelper.UpdateRadioFrequency(frequencyHz, RadioId, false, false);
-        else
-            RadioFrequency.Text = RadioCalculator.FormatMHz(radio.freq);
+
+        // show what was set (clamped to the radio's range) or the old frequency if the text was invalid
+        SetFrequencyText(RadioCalculator.FormatMHz(radio.freq));
+    }
+
+    /// <summary>Drops typed text that was not applied yet and shows the radio's frequency again.</summary>
+    private void DiscardTypedFrequency()
+    {
+        if (!_frequencyEdited) return;
+        _frequencyEdited = false;
+
+        var radio = CurrentRadio();
+        SetFrequencyText(radio != null && radio.IsEnabled
+            ? RadioCalculator.FormatMHz(radio.freq)
+            : Properties.Resources.ValueUnknown);
+    }
+
+    /// <summary>Changes the frequency text from code (not counted as typed by the user).</summary>
+    private void SetFrequencyText(string text)
+    {
+        if (string.Equals(RadioFrequency.Text, text, StringComparison.Ordinal)) return;
+
+        _updatingFrequency = true;
+        try
+        {
+            RadioFrequency.Text = text;
+        }
+        finally
+        {
+            _updatingFrequency = false;
+        }
+    }
+
+    /// <summary>A step button: typed text that was not applied yet is discarded, then the step is added.</summary>
+    private void StepFrequency(double stepMHz)
+    {
+        DiscardTypedFrequency();
+        ClearFrequencyFocus();
+
+        RadioHelper.UpdateRadioFrequency(stepMHz, RadioId);
     }
 
     private void Up0001_Click(object sender, RoutedEventArgs e)
     {
-        RadioHelper.UpdateRadioFrequency(0.001, RadioId);
+        StepFrequency(0.001);
     }
 
     private void Up001_Click(object sender, RoutedEventArgs e)
     {
-        RadioHelper.UpdateRadioFrequency(0.01, RadioId);
+        StepFrequency(0.01);
     }
 
     private void Up01_Click(object sender, RoutedEventArgs e)
     {
-        RadioHelper.UpdateRadioFrequency(0.1, RadioId);
+        StepFrequency(0.1);
     }
 
     private void Up1_Click(object sender, RoutedEventArgs e)
     {
-        RadioHelper.UpdateRadioFrequency(1, RadioId);
+        StepFrequency(1);
     }
 
     private void Up10_Click(object sender, RoutedEventArgs e)
     {
-        RadioHelper.UpdateRadioFrequency(10, RadioId);
+        StepFrequency(10);
     }
 
     private void Down10_Click(object sender, RoutedEventArgs e)
     {
-        RadioHelper.UpdateRadioFrequency(-10, RadioId);
+        StepFrequency(-10);
     }
 
     private void Down1_Click(object sender, RoutedEventArgs e)
     {
-        RadioHelper.UpdateRadioFrequency(-1, RadioId);
+        StepFrequency(-1);
     }
 
     private void Down01_Click(object sender, RoutedEventArgs e)
     {
-        RadioHelper.UpdateRadioFrequency(-0.1, RadioId);
+        StepFrequency(-0.1);
     }
 
     private void Down001_Click(object sender, RoutedEventArgs e)
     {
-        RadioHelper.UpdateRadioFrequency(-0.01, RadioId);
+        StepFrequency(-0.01);
     }
 
     private void Down0001_Click(object sender, RoutedEventArgs e)
     {
-        RadioHelper.UpdateRadioFrequency(-0.001, RadioId);
+        StepFrequency(-0.001);
     }
 
     #endregion
@@ -350,7 +414,8 @@ public partial class RadioChannelControl : UserControl
         {
             RadioActive.Fill = RedBrush;
             RadioLabel.Text = Properties.Resources.OverlayNoRadio;
-            if (!RadioFrequency.IsFocused) RadioFrequency.Text = Properties.Resources.ValueUnknown;
+            _frequencyEdited = false;
+            SetFrequencyText(Properties.Resources.ValueUnknown);
 
             RadioMetaData.Text = "";
 
@@ -384,9 +449,10 @@ public partial class RadioChannelControl : UserControl
                     RadioActive.Fill = OrangeBrush;
             }
 
-            if (!RadioFrequency.IsFocused)
+            // text typed by the user is kept until it is applied (Enter / focus loss) or discarded
+            if (!_frequencyEdited)
                 //make number UK / US style with decimals not commas!
-                RadioFrequency.Text = RadioCalculator.FormatMHz(currentRadio.freq);
+                SetFrequencyText(RadioCalculator.FormatMHz(currentRadio.freq));
 
             RadioMetaData.Text = BuildMetaData(currentRadio);
             RadioLabel.Text = currentRadio.name;
@@ -558,7 +624,7 @@ public partial class RadioChannelControl : UserControl
             return;
         }
 
-        if (!string.IsNullOrEmpty(receiveState.SentBy) && !RadioFrequency.IsFocused)
+        if (!string.IsNullOrEmpty(receiveState.SentBy) && !_frequencyEdited)
         {
             TransmitterName.Text = receiveState.SentBy;
 
@@ -589,10 +655,10 @@ public partial class RadioChannelControl : UserControl
                 : Properties.Resources.BtnEnable;
     }
 
-    private void EncryptionKeySpinner_OnValueChanged(object sender, RoutedPropertyChangedEventArgs<object> e)
+    private void EncryptionKeySpinner_OnValueChanged(object sender, RoutedPropertyChangedEventArgs<double?> e)
     {
         if (EncryptionKeySpinner?.Value != null)
-            RadioHelper.SetEncryptionKey(RadioId, EncryptionKeySpinner.Value.Value);
+            RadioHelper.SetEncryptionKey(RadioId, (int)Math.Round(EncryptionKeySpinner.Value.Value));
     }
 
     #endregion

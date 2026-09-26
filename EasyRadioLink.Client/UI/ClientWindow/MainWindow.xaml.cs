@@ -72,6 +72,9 @@ public partial class MainWindow : MetroWindow
 
         FavouriteServersView.DataContext = ((MainWindowViewModel)DataContext).FavouriteServersViewModel;
 
+        // before the password box is bound, so it starts with the favourite's password (-password= still wins)
+        ((MainWindowViewModel)DataContext).SelectStartFavourite();
+
         BindServerPassword((MainWindowViewModel)DataContext);
 
         UpdatePresetsFolderLabel();
@@ -169,35 +172,29 @@ public partial class MainWindow : MetroWindow
             return;
         }
 
-        var mainWindowX = (int)_globalSettings.GetPositionSetting(GlobalSettingsKeys.ClientX).DoubleValue;
-        var mainWindowY = (int)_globalSettings.GetPositionSetting(GlobalSettingsKeys.ClientY).DoubleValue;
-        var radioWindowX = (int)_globalSettings.GetPositionSetting(GlobalSettingsKeys.RadioX).DoubleValue;
-        var radioWindowY = (int)_globalSettings.GetPositionSetting(GlobalSettingsKeys.RadioY).DoubleValue;
+        var mainWindowX = _globalSettings.GetPositionSetting(GlobalSettingsKeys.ClientX).DoubleValue;
+        var mainWindowY = _globalSettings.GetPositionSetting(GlobalSettingsKeys.ClientY).DoubleValue;
+        var radioWindowX = _globalSettings.GetPositionSetting(GlobalSettingsKeys.RadioX).DoubleValue;
+        var radioWindowY = _globalSettings.GetPositionSetting(GlobalSettingsKeys.RadioY).DoubleValue;
+        var radioWindowWidth = _globalSettings.GetPositionSetting(GlobalSettingsKeys.RadioWidth).DoubleValue;
 
         Logger.Info($"Checking window visibility for main client window {{X={mainWindowX},Y={mainWindowY}}}");
         Logger.Info($"Checking window visibility for radio panel {{X={radioWindowX},Y={radioWindowY}}}");
 
-        // Use WPF's virtual screen bounds so that the check runs in the same
-        // DPI-independent coordinate space as the stored window positions.
-        var virtualLeft = SystemParameters.VirtualScreenLeft;
-        var virtualTop = SystemParameters.VirtualScreenTop;
-        var virtualRight = virtualLeft + SystemParameters.VirtualScreenWidth;
-        var virtualBottom = virtualTop + SystemParameters.VirtualScreenHeight;
+        // The title bar (the panel's header) must be on one of the connected monitors, so the window can be dragged.
+        // The virtual screen is not enough: with monitors of different sizes it contains areas no monitor shows.
+        var mainWindowVisible = ScreenHelper.IsTitleVisible(mainWindowX, mainWindowY, Width);
 
-        Logger.Info(
-            $"VirtualScreen bounds for visibility check: Left={virtualLeft}, Top={virtualTop}, Right={virtualRight}, Bottom={virtualBottom}");
+        // 0 = natural size of the panel (at least one radio wide)
+        var radioWindowVisible = ScreenHelper.IsTitleVisible(radioWindowX, radioWindowY,
+            double.IsFinite(radioWindowWidth) && radioWindowWidth > 0 ? radioWindowWidth : 200);
 
-        var mainWindowVisible = mainWindowX >= virtualLeft && mainWindowX <= virtualRight &&
-                                mainWindowY >= virtualTop && mainWindowY <= virtualBottom;
-
-        var radioWindowVisible = radioWindowX >= virtualLeft && radioWindowX <= virtualRight &&
-                                 radioWindowY >= virtualTop && radioWindowY <= virtualBottom;
-
-        // Use DPI-independent default positions based on virtual screen origin
-        var defaultMainX = (int)(virtualLeft + 50);
-        var defaultMainY = (int)(virtualTop + 50);
-        var defaultRadioPanelX = (int)(virtualLeft + 100);
-        var defaultRadioPanelY = (int)(virtualTop + 100);
+        // defaults on the primary monitor (WPF units, like the stored positions)
+        var primaryArea = SystemParameters.WorkArea;
+        var defaultMainX = (int)(primaryArea.Left + 50);
+        var defaultMainY = (int)(primaryArea.Top + 50);
+        var defaultRadioPanelX = (int)(primaryArea.Left + 100);
+        var defaultRadioPanelY = (int)(primaryArea.Top + 100);
 
         if (!mainWindowVisible)
         {

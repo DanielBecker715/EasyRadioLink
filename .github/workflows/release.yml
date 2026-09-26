@@ -1,0 +1,80 @@
+name: Release
+
+# Push a version tag (e.g. v1.0.0) to build the downloads and publish a GitHub release.
+# The tag must match <Version> in Directory.Build.props. Release notes are taken from
+# docs/release-notes/<tag>.md when that file exists. The release gets exactly three files:
+#   EasyRadioLink-Client-<version>.zip
+#   EasyRadioLink-Server-<version>-Windows.zip
+#   EasyRadioLink-Server-<version>-Linux.tar.gz
+on:
+  push:
+    tags: [ 'v*' ]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing tag to (re)build and publish, e.g. v1.0.0
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Build and publish release
+    runs-on: windows-latest
+    env:
+      DOTNET_NOLOGO: true
+      DOTNET_CLI_TELEMETRY_OPTOUT: true
+      DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
+      TAG: ${{ github.event.inputs.tag || github.ref_name }}
+
+    steps:
+      - name: Check out
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.TAG }}
+
+      - name: Set up .NET 10
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Check tag matches the product version
+        shell: pwsh
+        run: |
+          [xml]$props = Get-Content Directory.Build.props
+          $version = ($props.Project.PropertyGroup | Where-Object { $_.Version } | Select-Object -First 1).Version
+          if ("v$version" -ne $env:TAG) {
+            throw "Tag $env:TAG does not match Version $version in Directory.Build.props"
+          }
+          "VERSION=$version" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+
+      - name: Test
+        run: dotnet test EasyRadioLink.Tests/EasyRadioLink.Tests.csproj --configuration Release
+
+      - name: Build downloads
+        shell: pwsh
+        run: ./publish.ps1 -Zip
+
+      - name: Publish GitHub release
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          $assets = @(
+            "dist/EasyRadioLink-Client-$env:VERSION.zip",
+            "dist/EasyRadioLink-Server-$env:VERSION-Windows.zip",
+            "dist/EasyRadioLink-Server-$env:VERSION-Linux.tar.gz"
+          )
+          foreach ($asset in $assets) {
+            if (-not (Test-Path $asset)) { throw "Release file missing: $asset" }
+          }
+          $notes = "docs/release-notes/$env:TAG.md"
+          $notesArgs = if (Test-Path $notes) { @("--notes-file", $notes) } else { @("--generate-notes") }
+          gh release view $env:TAG *> $null
+          if ($LASTEXITCODE -eq 0) {
+            gh release upload $env:TAG @assets --clobber
+          } else {
+            gh release create $env:TAG @assets --title "EasyRadioLink $env:VERSION" @notesArgs
+          }
+          if ($LASTEXITCODE -ne 0) { throw "gh release failed" }

@@ -30,6 +30,9 @@ public class ServerSync : TcpServer, IHandle<ServerSettingsChangedMessage>
     // Unregistered connections are closed after this time
     private static readonly TimeSpan HandshakeTimeout = TimeSpan.FromSeconds(15);
 
+    // AUTH_FAILED is only sent after this delay - slows down password guessing
+    private static readonly TimeSpan AuthFailedDelay = TimeSpan.FromSeconds(1);
+
     private const int MaxNameLength = 64;
 
     private static readonly Logger Logger = LogManager.GetCurrentClassLogger();
@@ -43,6 +46,12 @@ public class ServerSync : TcpServer, IHandle<ServerSettingsChangedMessage>
     private readonly ServerSettingsStore _serverSettings;
 
     private readonly object _registrationLock = new();
+
+    private readonly AuthFailureThrottle _authFailures = new();
+
+    // guards Start()/RequestStop() so a stop during start-up can't leave a listening server behind
+    private readonly object _lifecycleLock = new();
+    private volatile bool _stopRequested;
 
     private Timer _handshakeTimer;
 
@@ -88,48 +97,88 @@ public class ServerSync : TcpServer, IHandle<ServerSettingsChangedMessage>
         Logger.Error($"TCP SERVER ERROR: {error} ");
     }
 
+    // Connection limits - generous for players behind one NAT, small enough that one address can't tie up the server.
+    internal const int MaxConnectionsPerAddress = 32;
+    internal const int MaxPendingHandshakesPerAddress = 8;
+    internal const int MaxConnections = 1000;
+
+    /// <summary>
+    ///     True if accepting <paramref name="newSession" /> would exceed the connection limits (per address, pending
+    ///     handshakes per address, total).
+    /// </summary>
+    public bool ExceedsConnectionLimits(RadioClientSession newSession, out string reason)
+    {
+        int total = 0, fromAddress = 0, pendingFromAddress = 0;
+        foreach (var session in Sessions.Values)
+        {
+            if (session is not RadioClientSession other || !other.IsConnected) continue;
+
+            total++;
+            if (other == newSession || !Equals(other.RemoteIp, newSession.RemoteIp)) continue;
+
+            fromAddress++;
+            if (other.ClientGuid == null) pendingFromAddress++;
+        }
+
+        reason = total > MaxConnections ? $"server full ({MaxConnections} connections)"
+            : fromAddress >= MaxConnectionsPerAddress ? $"too many connections from this address ({MaxConnectionsPerAddress})"
+            : pendingFromAddress >= MaxPendingHandshakesPerAddress ? "too many unfinished handshakes from this address"
+            : null;
+
+        return reason != null;
+    }
+
+    /// <summary>True while connections from <paramref name="address" /> are refused after too many wrong passwords.</summary>
+    public bool IsLockedOut(IPAddress address)
+    {
+        return _authFailures.IsLockedOut(address, DateTime.UtcNow);
+    }
+
+    /// <summary>
+    ///     Starts listening, then opens the port on the router (UPnP/NAT-PMP) if enabled.
+    ///     Throws <see cref="ServerStartException" /> if the TCP port can't be bound; does nothing if
+    ///     <see cref="RequestStop" /> was called before.
+    /// </summary>
     public async Task StartListeningAsync()
     {
         OptionKeepAlive = true;
-        try
+
+        lock (_lifecycleLock)
         {
-            var handler = _natHandler;
-            if (handler != null)
+            if (_stopRequested) return;
+
+            Exception error = null;
+            bool started;
+            try
             {
-                await handler.OpenNATAsync();
+                started = Start();
+            }
+            catch (Exception ex)
+            {
+                error = ex;
+                started = false;
             }
 
-            if (!Start()) throw new InvalidOperationException("TCP server did not start");
+            if (!started)
+                throw new ServerStartException(
+                    $"Unable to start the server on TCP {Endpoint}: the port is already in use (is another EasyRadioLink server running?) or the bind IP is wrong.",
+                    error);
 
             _handshakeTimer = new Timer(_ => DisconnectStaleHandshakes(), null, TimeSpan.FromSeconds(5),
                 TimeSpan.FromSeconds(5));
-
-            Logger.Info(
-                $"EasyRadioLink server {AppVersion.Version} (protocol {AppVersion.ProtocolVersion}) listening on {Endpoint} - " +
-                (_serverSettings.IsPasswordProtected ? "password protected" : "open server (no password)"));
         }
-        catch (Exception ex)
-        {
-            try
-            {
-                var handler = _natHandler;
-                if (handler != null)
-                {
-                    await handler.CloseNATAsync();
-                }
-            }
-            catch
-            {
-            }
 
-            var error =
-                $"Unable to start the EasyRadioLink server on TCP {Endpoint} - is another server already running or the bind IP wrong?";
-            Logger.Error(ex, error);
-            Console.Error.WriteLine(error);
-            LogManager.Flush();
+        Logger.Info(
+            $"EasyRadioLink server {AppVersion.Version} (protocol {AppVersion.ProtocolVersion}) listening on {Endpoint} - " +
+            (_serverSettings.IsPasswordProtected ? "password protected" : "open server (no password)"));
 
-            Environment.Exit(1);
-        }
+        var handler = _natHandler;
+        if (handler == null) return;
+
+        await handler.OpenNATAsync();
+
+        // stopped while the router was being asked - remove the port mapping again
+        if (_stopRequested) await handler.CloseNATAsync();
     }
 
     public void HandleDisconnect(RadioClientSession state)
@@ -174,7 +223,7 @@ public class ServerSync : TcpServer, IHandle<ServerSettingsChangedMessage>
     {
         try
         {
-            if (message == null) return;
+            if (message == null || state.Rejected) return;
 
             Logger.Debug($"Received:  Msg - {message.MsgType} from {state.ClientGuid}");
 
@@ -262,19 +311,29 @@ public class ServerSync : TcpServer, IHandle<ServerSettingsChangedMessage>
             return;
         }
 
-        if (!_serverSettings.CheckPassword(message.Password))
+        // connections opened before the address was locked out get no further attempts either
+        if (IsLockedOut(state.RemoteIp))
         {
-            Logger.Warn($"Disconnecting {remote} ({SanitiseName(srClient.Name)}) - wrong server password");
-            state.Send(new NetworkMessage { MsgType = NetworkMessage.MessageType.AUTH_FAILED }.Encode());
+            Logger.Info($"Disconnecting {remote} - too many wrong passwords, try again later");
+            state.Rejected = true;
             state.Disconnect();
             return;
         }
+
+        if (!_serverSettings.CheckPassword(message.Password))
+        {
+            RejectWrongPassword(state, srClient);
+            return;
+        }
+
+        _authFailures.RecordSuccess(state.RemoteIp);
 
         srClient.Name = SanitiseName(srClient.Name);
         srClient.RadioInfo ??= new PlayerRadioInfoBase();
         srClient.RadioInfo.EnsureValid();
         srClient.Muted = false;
         srClient.VoipPort = null;
+        srClient.SessionAddress = state.RemoteIp;
         srClient.ClientSession = state.Id;
 
         RadioClientSession previousSession = null;
@@ -293,7 +352,7 @@ public class ServerSync : TcpServer, IHandle<ServerSettingsChangedMessage>
 
         if (previousSession != null)
         {
-            Logger.Info($"Client {srClient} reconnected - closing its previous connection");
+            Logger.Info($"Client {srClient} reconnected from {remote} (previously {previousSession.RemoteAddress}) - closing its previous connection");
             previousSession.Disconnect();
         }
 
@@ -319,6 +378,34 @@ public class ServerSync : TcpServer, IHandle<ServerSettingsChangedMessage>
 
         MulticastToRegistered(update.Encode());
         state.LastFullRadioSent = DateTime.Now.Ticks;
+    }
+
+    /// <summary>
+    ///     Wrong password: ignore everything else on this connection, answer AUTH_FAILED after a short delay and close
+    ///     it. Too many failures lock the IP address out for a while (<see cref="AuthFailureThrottle" />).
+    /// </summary>
+    private void RejectWrongPassword(RadioClientSession state, ClientInfo srClient)
+    {
+        state.Rejected = true;
+
+        var lockedOut = _authFailures.RecordFailure(state.RemoteIp, DateTime.UtcNow);
+        Logger.Warn($"Disconnecting {state.RemoteAddress} ({SanitiseName(srClient.Name)}) - wrong server password" +
+                    (lockedOut
+                        ? $" - too many attempts, connections from this address are refused for {AuthFailureThrottle.LockoutDuration.TotalMinutes} minutes"
+                        : ""));
+
+        Task.Delay(AuthFailedDelay).ContinueWith(_ =>
+        {
+            try
+            {
+                state.Send(new NetworkMessage { MsgType = NetworkMessage.MessageType.AUTH_FAILED }.Encode());
+                state.Disconnect();
+            }
+            catch (Exception ex)
+            {
+                Logger.Debug(ex, "Unable to send AUTH_FAILED");
+            }
+        });
     }
 
     private void SendSyncReply(RadioClientSession session)
@@ -534,31 +621,40 @@ public class ServerSync : TcpServer, IHandle<ServerSettingsChangedMessage>
         {
         }
 
-        try
+        lock (_lifecycleLock)
         {
-            _handshakeTimer?.Dispose();
-            _handshakeTimer = null;
-        }
-        catch
-        {
-        }
+            _stopRequested = true;
 
-        try
-        {
-            _natHandler?.CloseNATAsync();
-        }
-        catch
-        {
-        }
+            try
+            {
+                _handshakeTimer?.Dispose();
+                _handshakeTimer = null;
+            }
+            catch
+            {
+            }
 
-        try
-        {
-            DisconnectAll();
-            Stop();
-            _clients.Clear();
-        }
-        catch (Exception)
-        {
+            try
+            {
+                _natHandler?.CloseNATAsync();
+            }
+            catch
+            {
+            }
+
+            try
+            {
+                if (IsStarted)
+                {
+                    DisconnectAll();
+                    Stop();
+                }
+
+                _clients.Clear();
+            }
+            catch (Exception)
+            {
+            }
         }
     }
 }

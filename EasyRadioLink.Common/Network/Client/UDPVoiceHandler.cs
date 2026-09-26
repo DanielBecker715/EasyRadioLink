@@ -15,6 +15,13 @@ namespace EasyRadioLink.Common.Network.Client;
 public class UDPVoiceHandler
 {
     private static readonly TimeSpan UDP_VOIP_TIMEOUT = TimeSpan.FromSeconds(42); // seconds for timeout before redoing VoIP
+
+    // pause after a socket error (e.g. network unreachable while the Wi-Fi reconnects) before trying again
+    private static readonly TimeSpan ErrorBackoff = TimeSpan.FromSeconds(1);
+
+    // WSAIoctl SIO_UDP_CONNRESET (Windows only)
+    private const int SIO_UDP_CONNRESET = unchecked((int)0x9800000C);
+
     private static readonly Logger Logger = LogManager.GetCurrentClassLogger();
 
     // FIFO so voice packets leave in the order they were recorded
@@ -59,7 +66,6 @@ public class UDPVoiceHandler
     {
         Ready = false;
         var listener = new UdpClient();
-        listener.Connect(_serverEndpoint);
 
         if (OperatingSystem.IsWindows())
         {
@@ -71,7 +77,19 @@ public class UDPVoiceHandler
             {
                 Logger.Warn(ex, $"Unable to set NAT traversal for UDP voice socket");
             }
+
+            try
+            {
+                // don't fail the pending receive with WSAECONNRESET when an ICMP "port unreachable" comes back
+                listener.Client.IOControl(SIO_UDP_CONNRESET, new byte[] { 0, 0, 0, 0 }, null);
+            }
+            catch (Exception ex)
+            {
+                Logger.Warn(ex, "Unable to disable UDP connection reset errors");
+            }
         }
+
+        listener.Connect(_serverEndpoint);
 
         return listener;
     }
@@ -144,16 +162,17 @@ public class UDPVoiceHandler
                     }
 
 
-                    // Process send queue if in ready state.
-                    if (Ready && outgoingAvailableTask.IsCompletedSuccessfully)
+                    // Process the send queue. While not ready the packet is dropped - otherwise the completed wait
+                    // would make the loop below spin until the server answers.
+                    if (outgoingAvailableTask.IsCompletedSuccessfully)
                     {
-                        // Drain the queue.
-                        if (_outgoing.TryDequeue(out var outgoing))
+                        // replace the wait first: if the send throws, the catch below must not start a second one
+                        outgoingAvailableTask = _outgoingSemaphore.WaitAsync(token);
+
+                        if (_outgoing.TryDequeue(out var outgoing) && Ready)
                         {
                             await listener.SendAsync(outgoing, token);
                         }
-
-                        outgoingAvailableTask = _outgoingSemaphore.WaitAsync(token);
                     }
 
                     // Reset the socket on a timeout.
@@ -161,11 +180,12 @@ public class UDPVoiceHandler
                     {
                         Logger.Error("VoIP Timeout - Recreating VoIP Connection");
 
+                        // reset the clock first: if recreating the socket fails it is retried on the next timeout
+                        timeoutTask = Task.Delay(UDP_VOIP_TIMEOUT, token);
 
                         CloseListener(listener);
                         listener = SetupListener();
                         pingTask = Task.CompletedTask;
-                        timeoutTask = Task.Delay(UDP_VOIP_TIMEOUT, token);
                         receiveTask = listener.ReceiveAsync(token).AsTask();
                     }
 
@@ -173,11 +193,28 @@ public class UDPVoiceHandler
                 }
                 catch (Exception ex)
                 {
+                    if (token.IsCancellationRequested) break;
+
                     Logger.Warn(ex, "Voice handler exception");
                     // Reset everything but the timeout.
                     receiveTask = Task.FromException<UdpReceiveResult>(new Exception());
-                    pingTask = Task.CompletedTask;
-                    outgoingAvailableTask = _outgoingSemaphore.WaitAsync(_stopRequest.Token);
+
+                    // Re-ping after a short pause - pinging again at once would spin while the network is down.
+                    pingTask = Task.Delay(ErrorBackoff, token);
+
+                    // Keep a pending (or completed, not yet processed) wait: an abandoned waiter would swallow a later
+                    // Release() and leave a voice packet stuck in the queue.
+                    if (outgoingAvailableTask.IsFaulted || outgoingAvailableTask.IsCanceled)
+                        outgoingAvailableTask = _outgoingSemaphore.WaitAsync(token);
+
+                    try
+                    {
+                        await Task.Delay(ErrorBackoff, token);
+                    }
+                    catch (OperationCanceledException)
+                    {
+                        break;
+                    }
                 }
             }
 

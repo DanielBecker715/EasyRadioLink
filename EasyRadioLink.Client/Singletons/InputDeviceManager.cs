@@ -64,7 +64,11 @@ public class InputDeviceManager : IDisposable
     private readonly DirectInput _directInput;
 
     private readonly GlobalSettingsStore _globalSettings = GlobalSettingsStore.Instance;
-    private readonly Dictionary<Guid, dynamic> _inputDevices = new();
+    // replaced as a whole by InitDevices (rescan) - never changed while another thread may read it
+    private volatile Dictionary<Guid, dynamic> _inputDevices = new();
+
+    // incremented by every StartPTTListening - an older listener thread stops when it sees a newer generation
+    private int _pttListenerGeneration;
 
     private volatile bool _detectPtt;
 
@@ -121,9 +125,10 @@ public class InputDeviceManager : IDisposable
 
         var deviceInstances = _directInput.GetDevices();
 
-        _inputDevices.Clear();
+        // built aside and then swapped in: the PTT thread may be reading the current devices right now
+        var inputDevices = new Dictionary<Guid, dynamic>();
 
-        if (allowXInput) _inputDevices.Add(XInputController.DeviceGuid, new XInputController());
+        if (allowXInput) inputDevices.Add(XInputController.DeviceGuid, new XInputController());
 
 
         foreach (var deviceInstance in deviceInstances)
@@ -142,7 +147,7 @@ public class InputDeviceManager : IDisposable
                         deviceInstance.ProductName.Trim().Replace("\0", "") + " Usage: " +
                         deviceInstance.UsagePage + " Type: " +
                         deviceInstance.Type);
-            if (_inputDevices.ContainsKey(deviceInstance.InstanceGuid))
+            if (inputDevices.ContainsKey(deviceInstance.InstanceGuid))
             {
                 Logger.Info("Already have device:" + deviceInstance.ProductGuid +
                             " " +
@@ -162,7 +167,7 @@ public class InputDeviceManager : IDisposable
                     CooperativeLevel.Background | CooperativeLevel.NonExclusive);
                 device.Acquire();
 
-                _inputDevices.Add(deviceInstance.InstanceGuid, device);
+                inputDevices.Add(deviceInstance.InstanceGuid, device);
             }
             else if (deviceInstance.Type == DeviceType.Mouse)
             {
@@ -174,7 +179,7 @@ public class InputDeviceManager : IDisposable
                     CooperativeLevel.Background | CooperativeLevel.NonExclusive);
                 device.Acquire();
 
-                _inputDevices.Add(deviceInstance.InstanceGuid, device);
+                inputDevices.Add(deviceInstance.InstanceGuid, device);
             }
             else if ((deviceInstance.Type >= DeviceType.Joystick &&
                       deviceInstance.Type <= DeviceType.FirstPerson) ||
@@ -189,7 +194,7 @@ public class InputDeviceManager : IDisposable
                     CooperativeLevel.Background | CooperativeLevel.NonExclusive);
                 device.Acquire();
 
-                _inputDevices.Add(deviceInstance.InstanceGuid, device);
+                inputDevices.Add(deviceInstance.InstanceGuid, device);
             }
             else if (GlobalSettingsStore.Instance.GetClientSettingBool(GlobalSettingsKeys.ExpandControls))
             {
@@ -202,12 +207,14 @@ public class InputDeviceManager : IDisposable
                     CooperativeLevel.Background | CooperativeLevel.NonExclusive);
                 device.Acquire();
 
-                _inputDevices.Add(deviceInstance.InstanceGuid, device);
+                inputDevices.Add(deviceInstance.InstanceGuid, device);
 
                 Logger.Info("Added (Expanded Device) ID:" + deviceInstance.ProductGuid + " " +
                             deviceInstance.ProductName.Trim().Replace("\0", ""));
             }
         }
+
+        _inputDevices = inputDevices;
     }
 
     // whitelist.txt / blacklist.txt: one device product GUID per line, next to the executable or in the
@@ -346,7 +353,7 @@ public class InputDeviceManager : IDisposable
             {
                 await Task.Delay(TimeSpan.FromMilliseconds(100));
 
-                for (var i = 0; i < _inputDevices.Count; i++)
+                for (var i = 0; i < deviceList.Count; i++)
                 {
                     if (deviceList[i] == null || deviceList[i].IsDisposed) continue;
 
@@ -502,180 +509,209 @@ public class InputDeviceManager : IDisposable
 
     public void StartPTTListening(DetectPttCallback callback)
     {
+        var generation = Interlocked.Increment(ref _pttListenerGeneration);
         _detectPtt = true;
+
+        var errors = 0;
+
         //detect the state of all current buttons
         var pttInputThread = new Thread(() =>
         {
-            while (_detectPtt)
+            while (_detectPtt && generation == Volatile.Read(ref _pttListenerGeneration))
             {
-                var bindStates = GenerateBindStateList();
-
-                for (var i = 0; i < bindStates.Count; i++)
+                try
                 {
-                    //contains main binding and optional modifier binding + states of each
-                    var bindState = bindStates[i];
-
-                    bindState.MainDeviceState = GetButtonState(bindState.MainDevice);
-
-                    if (bindState.ModifierDevice != null)
-                    {
-                        bindState.ModifierState = GetButtonState(bindState.ModifierDevice);
-
-                        bindState.IsActive = bindState.MainDeviceState && bindState.ModifierState;
-                    }
-                    else
-                    {
-                        bindState.IsActive = bindState.MainDeviceState;
-                    }
-
-                    //now check this is the best binding and no previous ones are better
-                    //Means you can have better binds like PTT  = Space and Radio 1 is Space +1 - holding space +1 will actually trigger radio 1 not PTT
-                    if (bindState.IsActive)
-                        for (var j = 0; j < i; j++)
-                        {
-                            //check previous bindings
-                            var previousBind = bindStates[j];
-
-                            if (!previousBind.IsActive) continue;
-
-                            if (previousBind.ModifierDevice == null && bindState.ModifierDevice != null)
-                            {
-                                //set previous bind to off if previous bind Main == main or modifier of bindstate
-                                if (previousBind.MainDevice.IsSameBind(bindState.MainDevice))
-                                {
-                                    previousBind.IsActive = false;
-                                    break;
-                                }
-
-                                if (previousBind.MainDevice.IsSameBind(bindState.ModifierDevice))
-                                {
-                                    previousBind.IsActive = false;
-                                    break;
-                                }
-                            }
-                            else if (previousBind.ModifierDevice != null && bindState.ModifierDevice == null)
-                            {
-                                if (previousBind.MainDevice.IsSameBind(bindState.MainDevice))
-                                {
-                                    bindState.IsActive = false;
-                                    break;
-                                }
-
-                                if (previousBind.ModifierDevice.IsSameBind(bindState.MainDevice))
-                                {
-                                    bindState.IsActive = false;
-                                    break;
-                                }
-                            }
-                        }
+                    PollInputs(callback);
+                    errors = 0;
                 }
-
-                callback?.Invoke(bindStates);
-
-                //handle overlay
-
-                foreach (var bindState in bindStates)
+                catch (Exception ex)
                 {
-                    if (bindState.IsActive && bindState.MainDevice.InputBind == InputBinding.RadioPanelToggle)
+                    // never end the loop: PTT would stay keyed (and an exception here would end the process)
+                    if (errors++ < 5) Logger.Error(ex, "Failed to poll the input devices");
+
+                    try
                     {
-                        EventBus.Instance.PublishOnUIThreadAsync(new ToggleRadioPanelMessage());
-                        break;
+                        // nothing is pressed - releases PTT
+                        callback?.Invoke(new List<InputBindState>());
                     }
-
-                    if ((int)bindState.MainDevice.InputBind >= (int)InputBinding.Up100 &&
-                        (int)bindState.MainDevice.InputBind <= (int)LastBinding)
+                    catch (Exception)
                     {
-                        if (bindState.MainDevice.InputBind == _lastActiveBinding && !bindState.IsActive)
-                            //released - the next press fires again
-                            _lastActiveBinding = null;
-                        //key repeat
-                        if (bindState.IsActive && bindState.MainDevice.InputBind != _lastActiveBinding)
-                        {
-                            _lastActiveBinding = bindState.MainDevice.InputBind;
-
-                            var playerRadioInfo = ClientStateSingleton.Instance.PlayerRadioInfo;
-
-                            if (RadioHelper.RadiosAvailable())
-                                switch (bindState.MainDevice.InputBind)
-                                {
-                                    case InputBinding.Up100:
-                                        RadioHelper.UpdateRadioFrequency(100, playerRadioInfo.selected);
-                                        break;
-                                    case InputBinding.Up10:
-                                        RadioHelper.UpdateRadioFrequency(10, playerRadioInfo.selected);
-                                        break;
-                                    case InputBinding.Up1:
-                                        RadioHelper.UpdateRadioFrequency(1, playerRadioInfo.selected);
-                                        break;
-                                    case InputBinding.Up01:
-                                        RadioHelper.UpdateRadioFrequency(0.1, playerRadioInfo.selected);
-                                        break;
-                                    case InputBinding.Up001:
-                                        RadioHelper.UpdateRadioFrequency(0.01, playerRadioInfo.selected);
-                                        break;
-                                    case InputBinding.Up0001:
-                                        RadioHelper.UpdateRadioFrequency(0.001, playerRadioInfo.selected);
-                                        break;
-                                    case InputBinding.Down100:
-                                        RadioHelper.UpdateRadioFrequency(-100, playerRadioInfo.selected);
-                                        break;
-                                    case InputBinding.Down10:
-                                        RadioHelper.UpdateRadioFrequency(-10, playerRadioInfo.selected);
-                                        break;
-                                    case InputBinding.Down1:
-                                        RadioHelper.UpdateRadioFrequency(-1, playerRadioInfo.selected);
-                                        break;
-                                    case InputBinding.Down01:
-                                        RadioHelper.UpdateRadioFrequency(-0.1, playerRadioInfo.selected);
-                                        break;
-                                    case InputBinding.Down001:
-                                        RadioHelper.UpdateRadioFrequency(-0.01, playerRadioInfo.selected);
-                                        break;
-                                    case InputBinding.Down0001:
-                                        RadioHelper.UpdateRadioFrequency(-0.001, playerRadioInfo.selected);
-                                        break;
-                                    case InputBinding.ToggleGuard:
-                                        RadioHelper.ToggleGuard(playerRadioInfo.selected);
-                                        break;
-                                    case InputBinding.ToggleEncryption:
-                                        RadioHelper.ToggleEncryption(playerRadioInfo.selected);
-                                        break;
-                                    case InputBinding.NextRadio:
-                                        RadioHelper.SelectNextRadio();
-                                        break;
-                                    case InputBinding.PreviousRadio:
-                                        RadioHelper.SelectPreviousRadio();
-                                        break;
-                                    case InputBinding.EncryptionKeyIncrease:
-                                        RadioHelper.IncreaseEncryptionKey(playerRadioInfo.selected);
-                                        break;
-                                    case InputBinding.EncryptionKeyDecrease:
-                                        RadioHelper.DecreaseEncryptionKey(playerRadioInfo.selected);
-                                        break;
-                                    case InputBinding.RadioChannelUp:
-                                        RadioHelper.RadioChannelUp(playerRadioInfo.selected);
-                                        break;
-                                    case InputBinding.RadioChannelDown:
-                                        RadioHelper.RadioChannelDown(playerRadioInfo.selected);
-                                        break;
-                                    case InputBinding.RadioVolumeUp:
-                                        RadioHelper.RadioVolumeUp(playerRadioInfo.selected);
-                                        break;
-                                    case InputBinding.RadioVolumeDown:
-                                        RadioHelper.RadioVolumeDown(playerRadioInfo.selected);
-                                        break;
-                                }
-
-
-                            break;
-                        }
+                        // logged above
                     }
                 }
 
                 Thread.Sleep(40);
             }
-        });
+        }) { IsBackground = true, Name = "Input polling" };
         pttInputThread.Start();
+    }
+
+    /// <summary>One poll of the bindings: PTT state (<paramref name="callback" />) and the hotkeys.</summary>
+    private void PollInputs(DetectPttCallback callback)
+    {
+        var bindStates = GenerateBindStateList();
+
+        for (var i = 0; i < bindStates.Count; i++)
+        {
+            //contains main binding and optional modifier binding + states of each
+            var bindState = bindStates[i];
+
+            bindState.MainDeviceState = GetButtonState(bindState.MainDevice);
+
+            if (bindState.ModifierDevice != null)
+            {
+                bindState.ModifierState = GetButtonState(bindState.ModifierDevice);
+
+                bindState.IsActive = bindState.MainDeviceState && bindState.ModifierState;
+            }
+            else
+            {
+                bindState.IsActive = bindState.MainDeviceState;
+            }
+
+            //now check this is the best binding and no previous ones are better
+            //Means you can have better binds like PTT  = Space and Radio 1 is Space +1 - holding space +1 will actually trigger radio 1 not PTT
+            if (bindState.IsActive)
+                for (var j = 0; j < i; j++)
+                {
+                    //check previous bindings
+                    var previousBind = bindStates[j];
+
+                    if (!previousBind.IsActive) continue;
+
+                    if (previousBind.ModifierDevice == null && bindState.ModifierDevice != null)
+                    {
+                        //set previous bind to off if previous bind Main == main or modifier of bindstate
+                        if (previousBind.MainDevice.IsSameBind(bindState.MainDevice))
+                        {
+                            previousBind.IsActive = false;
+                            break;
+                        }
+
+                        if (previousBind.MainDevice.IsSameBind(bindState.ModifierDevice))
+                        {
+                            previousBind.IsActive = false;
+                            break;
+                        }
+                    }
+                    else if (previousBind.ModifierDevice != null && bindState.ModifierDevice == null)
+                    {
+                        if (previousBind.MainDevice.IsSameBind(bindState.MainDevice))
+                        {
+                            bindState.IsActive = false;
+                            break;
+                        }
+
+                        if (previousBind.ModifierDevice.IsSameBind(bindState.MainDevice))
+                        {
+                            bindState.IsActive = false;
+                            break;
+                        }
+                    }
+                }
+        }
+
+        callback?.Invoke(bindStates);
+
+        // hotkeys: radio panel toggle and radio actions
+
+        foreach (var bindState in bindStates)
+        {
+            if (bindState.IsActive && bindState.MainDevice.InputBind == InputBinding.RadioPanelToggle)
+            {
+                EventBus.Instance.PublishOnUIThreadAsync(new ToggleRadioPanelMessage());
+                break;
+            }
+
+            if ((int)bindState.MainDevice.InputBind >= (int)InputBinding.Up100 &&
+                (int)bindState.MainDevice.InputBind <= (int)LastBinding)
+            {
+                if (bindState.MainDevice.InputBind == _lastActiveBinding && !bindState.IsActive)
+                    //released - the next press fires again
+                    _lastActiveBinding = null;
+                //key repeat
+                if (bindState.IsActive && bindState.MainDevice.InputBind != _lastActiveBinding)
+                {
+                    _lastActiveBinding = bindState.MainDevice.InputBind;
+
+                    var playerRadioInfo = ClientStateSingleton.Instance.PlayerRadioInfo;
+
+                    if (RadioHelper.RadiosAvailable())
+                        switch (bindState.MainDevice.InputBind)
+                        {
+                            case InputBinding.Up100:
+                                RadioHelper.UpdateRadioFrequency(100, playerRadioInfo.selected);
+                                break;
+                            case InputBinding.Up10:
+                                RadioHelper.UpdateRadioFrequency(10, playerRadioInfo.selected);
+                                break;
+                            case InputBinding.Up1:
+                                RadioHelper.UpdateRadioFrequency(1, playerRadioInfo.selected);
+                                break;
+                            case InputBinding.Up01:
+                                RadioHelper.UpdateRadioFrequency(0.1, playerRadioInfo.selected);
+                                break;
+                            case InputBinding.Up001:
+                                RadioHelper.UpdateRadioFrequency(0.01, playerRadioInfo.selected);
+                                break;
+                            case InputBinding.Up0001:
+                                RadioHelper.UpdateRadioFrequency(0.001, playerRadioInfo.selected);
+                                break;
+                            case InputBinding.Down100:
+                                RadioHelper.UpdateRadioFrequency(-100, playerRadioInfo.selected);
+                                break;
+                            case InputBinding.Down10:
+                                RadioHelper.UpdateRadioFrequency(-10, playerRadioInfo.selected);
+                                break;
+                            case InputBinding.Down1:
+                                RadioHelper.UpdateRadioFrequency(-1, playerRadioInfo.selected);
+                                break;
+                            case InputBinding.Down01:
+                                RadioHelper.UpdateRadioFrequency(-0.1, playerRadioInfo.selected);
+                                break;
+                            case InputBinding.Down001:
+                                RadioHelper.UpdateRadioFrequency(-0.01, playerRadioInfo.selected);
+                                break;
+                            case InputBinding.Down0001:
+                                RadioHelper.UpdateRadioFrequency(-0.001, playerRadioInfo.selected);
+                                break;
+                            case InputBinding.ToggleGuard:
+                                RadioHelper.ToggleGuard(playerRadioInfo.selected);
+                                break;
+                            case InputBinding.ToggleEncryption:
+                                RadioHelper.ToggleEncryption(playerRadioInfo.selected);
+                                break;
+                            case InputBinding.NextRadio:
+                                RadioHelper.SelectNextRadio();
+                                break;
+                            case InputBinding.PreviousRadio:
+                                RadioHelper.SelectPreviousRadio();
+                                break;
+                            case InputBinding.EncryptionKeyIncrease:
+                                RadioHelper.IncreaseEncryptionKey(playerRadioInfo.selected);
+                                break;
+                            case InputBinding.EncryptionKeyDecrease:
+                                RadioHelper.DecreaseEncryptionKey(playerRadioInfo.selected);
+                                break;
+                            case InputBinding.RadioChannelUp:
+                                RadioHelper.RadioChannelUp(playerRadioInfo.selected);
+                                break;
+                            case InputBinding.RadioChannelDown:
+                                RadioHelper.RadioChannelDown(playerRadioInfo.selected);
+                                break;
+                            case InputBinding.RadioVolumeUp:
+                                RadioHelper.RadioVolumeUp(playerRadioInfo.selected);
+                                break;
+                            case InputBinding.RadioVolumeDown:
+                                RadioHelper.RadioVolumeDown(playerRadioInfo.selected);
+                                break;
+                        }
+
+
+                    break;
+                }
+            }
+        }
     }
 
 
@@ -770,11 +806,12 @@ public class InputDeviceManager : IDisposable
             // ignored
         }
 
-        Application.Current.Dispatcher.Invoke(() =>
+        // not Invoke: the input thread must not wait for the dialog (a pressed PTT would stay keyed meanwhile)
+        Application.Current?.Dispatcher.InvokeAsync(() =>
         {
             MessageBox.Show(
                 $"An error occurred while querying your {deviceName} input device.\nThis could for example be caused by unplugging " +
-                $"your joystick or disabling it in the Windows settings.\n\nAll controls bound to this input device will not work anymore until you press 'Rescan Controller Input' on the Controls tab or restart EasyRadioLink.",
+                $"your joystick or disabling it in the Windows settings.\n\nAll controls bound to this input device will not work anymore until you press 'Rescan Controllers' on the Controls tab or restart EasyRadioLink.",
                 "Input device error",
                 MessageBoxButton.OK,
                 MessageBoxImage.Error);

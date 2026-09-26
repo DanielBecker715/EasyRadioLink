@@ -62,8 +62,8 @@ internal class AudioRecordingStreamHydrated : AudioRecordingStream
     // sample buffer size set at construction/instantiation (sample buffer size should be set
     // to the max interval + guardband).
     //
-    // the hydration process here is accurate enough for most usage models (such as pairing
-    // an srs recording with tacview), but will likely not produce an exact match of the actual
+    // the hydration process here is accurate enough for most usage models (such as syncing a
+    // recording with other captured media or logs), but will likely not produce an exact match of the actual
     // audio. there are a number of sources of error that will cause deviations in the
     // recording. for example, we use a stopwatch with ms accuracy for the main time base. in
     // addition, the algorithm makes simplifying assumptions that can lead to some inaccuracies

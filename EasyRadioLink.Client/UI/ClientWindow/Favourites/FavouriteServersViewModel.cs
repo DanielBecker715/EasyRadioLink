@@ -51,15 +51,8 @@ public class FavouriteServersViewModel : PropertyChangedBaseClass
 
     public ServerAddress SelectedItem { get; set; }
 
-    public ServerAddress DefaultServerAddress
-    {
-        get
-        {
-            var defaultAddress = Addresses.FirstOrDefault(x => x.IsDefault);
-            if (defaultAddress == null && Addresses.Count > 0) defaultAddress = Addresses.First();
-            return defaultAddress;
-        }
-    }
+    /// <summary>The favourite flagged as default (filled in at start-up if the last server is not a favourite), or null.</summary>
+    public ServerAddress DefaultServerAddress => Addresses.FirstOrDefault(x => x.IsDefault);
 
     private void OnNewAddress()
     {

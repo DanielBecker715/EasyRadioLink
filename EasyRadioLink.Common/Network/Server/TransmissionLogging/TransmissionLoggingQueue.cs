@@ -73,7 +73,8 @@ internal class TransmissionLoggingQueue
                     var config = LogManager.Configuration;
 
                     config = LoggingHelper.GenerateTransmissionLoggingConfig(config,
-                        _serverSettings.GetGeneralSetting(ServerSettingsKeys.TRANSMISSION_LOG_RETENTION).IntValue);
+                        _serverSettings.GetGeneralSetting(ServerSettingsKeys.TRANSMISSION_LOG_RETENTION).IntValue,
+                        _serverSettings.ConfigDirectory);
 
                     LogManager.Configuration = config;
 

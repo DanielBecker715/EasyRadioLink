@@ -18,7 +18,8 @@ namespace EasyRadioLink.Client.UI.ClientWindow.RadioPanel;
 ///     The radio panel: an always-on-top window with the user's radios 1..10.
 ///     <list type="bullet">
 ///         <item>Only switched-on radios are shown (disabled slots are hidden) and the window fits them: up to five in a row,
-///             more in two rows. While radios are not available (not connected) a short hint is shown instead.</item>
+///             more in two rows. Without radios a short hint is shown instead: not connected, radios loading (just
+///             connected), or connected but the radio layout has no switched-on radio.</item>
 ///         <item>The content has a fixed natural size and is scaled uniformly with the window (resize grip, the aspect
 ///             ratio is kept). Position, size and opacity are saved in global.cfg (RadioX/RadioY/RadioWidth/RadioHeight/RadioOpacity).</item>
 ///         <item><see cref="ResetRadioPanelMessage" /> closes the panel without saving (settings reset / off-screen check).</item>
@@ -36,6 +37,8 @@ public partial class RadioPanelWindow : Window, IHandle<ResetRadioPanelMessage>
 
     // largest scale restored from a saved size
     private const double MaxRestoredScale = 4.0;
+
+    private static readonly NLog.Logger Logger = NLog.LogManager.GetCurrentClassLogger();
 
     private static readonly SolidColorBrush WhiteBrush = Freeze(new SolidColorBrush(Colors.White));
     private static readonly SolidColorBrush OrangeBrush = Freeze(new SolidColorBrush(Colors.Orange));
@@ -165,6 +168,9 @@ public partial class RadioPanelWindow : Window, IHandle<ResetRadioPanelMessage>
             }
         }
 
+        // the signature is 0 both while not connected and while connected without radios - update the hint first
+        UpdateHintText();
+
         if (signature == _layoutSignature) return;
 
         var previousScale = CurrentScale();
@@ -222,6 +228,18 @@ public partial class RadioPanelWindow : Window, IHandle<ResetRadioPanelMessage>
         ApplyNaturalSize(natural, scale);
     }
 
+    /// <summary>Hint shown instead of the radios: not connected, radios still loading, or no radio switched on.</summary>
+    private void UpdateHintText()
+    {
+        var hint = !_clientStateSingleton.IsConnected
+            ? Properties.Resources.RadioPanelNotConnected
+            : !_clientStateSingleton.PlayerRadioInfo.IsActive
+                ? Properties.Resources.RadioPanelLoading
+                : Properties.Resources.RadioPanelNoRadiosEnabled;
+
+        if (!string.Equals(NoRadiosText.Text, hint, StringComparison.Ordinal)) NoRadiosText.Text = hint;
+    }
+
     /// <summary>Current scale of the content (1 = natural size).</summary>
     private double CurrentScale()
     {
@@ -247,6 +265,18 @@ public partial class RadioPanelWindow : Window, IHandle<ResetRadioPanelMessage>
             return 1.0;
 
         var scale = Math.Min(savedWidth / natural.Width, savedHeight / natural.Height);
+
+        // not larger than the monitor the panel is on (e.g. saved on a bigger monitor that is gone now)
+        try
+        {
+            var area = ScreenHelper.WorkingAreaAt(Left, Top);
+            if (area.Width > 0 && area.Height > 0)
+                scale = Math.Min(scale, Math.Min(area.Width / natural.Width, area.Height / natural.Height));
+        }
+        catch (Exception ex)
+        {
+            Logger.Warn(ex, "Unable to check the size of the radio panel against the monitor");
+        }
 
         return double.IsFinite(scale) ? Math.Clamp(scale, 1.0, MaxRestoredScale) : 1.0;
     }
@@ -335,7 +365,7 @@ public partial class RadioPanelWindow : Window, IHandle<ResetRadioPanelMessage>
     {
         // Minimising a window without a taskbar icon leaves a small part of the window at the bottom of the screen,
         // so the panel is closed instead (like the toggle).
-        if (_globalSettings.GetClientSettingBool(GlobalSettingsKeys.RadioOverlayTaskbarHide))
+        if (_globalSettings.GetClientSettingBool(GlobalSettingsKeys.RadioPanelTaskbarHide))
             Close();
         else
             WindowState = WindowState.Minimized;

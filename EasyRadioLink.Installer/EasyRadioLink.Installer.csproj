@@ -13,7 +13,7 @@
     <PlatformTarget>x64</PlatformTarget>
     <StartupObject>EasyRadioLink.Installer.App</StartupObject>
     <ApplicationManifest>Properties\app.manifest</ApplicationManifest>
-    <ApplicationIcon>generic_installer_by_philosoraptus.ico</ApplicationIcon>
+    <ApplicationIcon>audio-headset.ico</ApplicationIcon>
     <IsPackable>false</IsPackable>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
