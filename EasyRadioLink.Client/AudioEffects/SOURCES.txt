@@ -15,8 +15,9 @@ RADIO_TRANS_END_DOUBLE_BEEP.wav, RADIO_TRANS_END_THREE_TONE_BEEP.wav
 
 FancyRelease.wav, AlmostFancy.wav
     Provided by the EasyRadioLink project owner (shown as "Fancy Release" and "Almost Fancy", selectable as start and
-    as end sounds). Converted to 16-bit PCM, 48000 Hz, mono with 2 ms fades, level unchanged. The originals are kept
-    in tools/sound-sources in the source repository and are not shipped.
+    as end sounds). Converted with tools/convert-sound.py to 16-bit PCM, 48000 Hz, mono with 2 ms fades and matched
+    to the loudness of the other sounds (-24 dBFS RMS). The originals are kept in tools/sound-sources in the source
+    repository and are not shipped.
 
 NATO_TONE.wav
     FM background tone, from DCS-SimpleRadio Standalone.
