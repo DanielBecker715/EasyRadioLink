@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Net;
 using EasyRadioLink.Common.Models;
@@ -104,5 +105,23 @@ public static class VoiceRouting
         }
 
         return recipients;
+    }
+
+    /// <summary>A client sends 25 voice packets per second (40 ms frames); more than this is dropped.</summary>
+    internal const int MaxVoicePacketsPerSecond = 100;
+
+    /// <summary>
+    ///     Per-sender rate limit for voice packets (a sender floods only itself, not every listener). Called from the
+    ///     single UDP receive loop only.
+    /// </summary>
+    public static bool AllowVoicePacket(ClientInfo sender, long nowTicks)
+    {
+        if (nowTicks - sender.VoiceWindowStartTicks >= TimeSpan.TicksPerSecond)
+        {
+            sender.VoiceWindowStartTicks = nowTicks;
+            sender.VoicePacketsInWindow = 0;
+        }
+
+        return ++sender.VoicePacketsInWindow <= MaxVoicePacketsPerSecond;
     }
 }

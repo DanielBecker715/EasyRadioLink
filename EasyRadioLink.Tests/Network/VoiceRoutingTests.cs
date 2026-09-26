@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Net;
 using EasyRadioLink.Common.Models;
@@ -293,5 +294,19 @@ public class VoiceRoutingTests
         Assert.IsFalse(VoiceRouting.IsFromClientAddress(new ClientInfo { ClientGuid = client.ClientGuid },
             new IPEndPoint(IPAddress.Parse("192.168.1.20"), 50123)));
         Assert.IsFalse(VoiceRouting.IsFromClientAddress(null, new IPEndPoint(IPAddress.Loopback, 1)));
+    }
+
+    [TestMethod]
+    public void VoicePacketsAreRateLimitedPerSender()
+    {
+        var sender = new ClientInfo { ClientGuid = "sender" };
+        var start = DateTime.UtcNow.Ticks;
+
+        for (var i = 0; i < VoiceRouting.MaxVoicePacketsPerSecond; i++)
+            Assert.IsTrue(VoiceRouting.AllowVoicePacket(sender, start + i), $"packet {i + 1}");
+
+        Assert.IsFalse(VoiceRouting.AllowVoicePacket(sender, start + 1000), "one packet too many in the same second");
+        Assert.IsTrue(VoiceRouting.AllowVoicePacket(sender, start + TimeSpan.TicksPerSecond), "next second starts fresh");
+        Assert.IsTrue(VoiceRouting.AllowVoicePacket(new ClientInfo { ClientGuid = "other" }, start), "limit is per sender");
     }
 }

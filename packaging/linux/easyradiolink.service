@@ -1,0 +1,61 @@
+# EasyRadioLink voice server as a hardened systemd service.
+#
+#   sudo useradd --system --no-create-home --shell /usr/sbin/nologin easyradiolink
+#   sudo install -D -m 0755 EasyRadioLink.Server.Cli /opt/easyradiolink/EasyRadioLink.Server.Cli
+#   sudo install -m 0644 easyradiolink.service /etc/systemd/system/easyradiolink.service
+#   sudo systemctl daemon-reload && sudo systemctl enable --now easyradiolink
+#
+# Settings, logs, banned.txt, transmission logs and exports live in /var/lib/easyradiolink (server.cfg is
+# created there on the first start). Open TCP and UDP port 5010 in the firewall.
+
+[Unit]
+Description=EasyRadioLink voice server
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=easyradiolink
+Group=easyradiolink
+StateDirectory=easyradiolink
+StateDirectoryMode=0700
+WorkingDirectory=/var/lib/easyradiolink
+ExecStart=/opt/easyradiolink/EasyRadioLink.Server.Cli --cfg=/var/lib/easyradiolink/server.cfg --upnp=false
+Restart=on-failure
+RestartSec=5
+# no diagnostics IPC socket
+Environment=DOTNET_EnableDiagnostics=0
+UMask=0077
+
+# Sandbox: the server only needs the network and its own data folder
+NoNewPrivileges=true
+CapabilityBoundingSet=
+AmbientCapabilities=
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectProc=invisible
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectKernelLogs=true
+ProtectControlGroups=true
+ProtectClock=true
+ProtectHostname=true
+RestrictSUIDSGID=true
+RestrictNamespaces=true
+RestrictRealtime=true
+LockPersonality=true
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX AF_NETLINK
+SystemCallArchitectures=native
+SystemCallFilter=@system-service
+SystemCallErrorNumber=EPERM
+
+# Resource limits (raise them for very large servers)
+TasksMax=256
+MemoryMax=512M
+LimitNOFILE=8192
+# CPUQuota=200%
+
+[Install]
+WantedBy=multi-user.target

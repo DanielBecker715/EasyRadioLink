@@ -17,11 +17,23 @@ public class RadioClientSession : TcpSession
     // A single JSON line is a few KB; anything bigger without a line break is garbage or an attack
     private const int MaxReceiveBufferLength = 512 * 1024;
 
+    // Flood protection. A normal client sends a few lines per second (radio updates at most every 200 ms).
+    private const int MaxLinesPerWindow = 100;
+    private static readonly TimeSpan LineRateWindow = TimeSpan.FromSeconds(5);
+    private const int MaxInvalidLinesBeforeHandshake = 3;
+    private const int MaxInvalidLines = 20;
+
     private static readonly Logger Logger = LogManager.GetCurrentClassLogger();
     private readonly HashSet<IPAddress> _bannedIps;
 
-    // Received data string.
+    // Received data string (UTF-8 decoded with a stateful decoder, so characters split across packets survive).
     private readonly StringBuilder _receiveBuffer = new();
+    private readonly Decoder _utf8Decoder = Encoding.UTF8.GetDecoder();
+    private char[] _charBuffer = new char[4096];
+
+    private int _invalidLines;
+    private int _linesInWindow;
+    private DateTime _lineWindowStartUtc = DateTime.UtcNow;
 
     private string _ip;
     private long _lastFullRadioSent;
@@ -100,6 +112,12 @@ public class RadioClientSession : TcpSession
 
             Disconnect();
         }
+        else if (((ServerSync)Server).ExceedsConnectionLimits(this, out var reason))
+        {
+            Logger.Warn($"Disconnecting {RemoteAddress} - {reason}");
+
+            Disconnect();
+        }
     }
 
     protected override void OnSent(long sent, long pending)
@@ -125,45 +143,87 @@ public class RadioClientSession : TcpSession
         ((ServerSync)Server).HandleDisconnect(this);
     }
 
-    private List<NetworkMessage> GetNetworkMessage()
+    /// <summary>
+    ///     Takes every complete line out of the receive buffer (one pass, no copy of the whole buffer per line) and
+    ///     parses it. Junk is skipped cheaply; too much junk or too many lines close the connection.
+    /// </summary>
+    private List<NetworkMessage> GetNetworkMessages()
     {
         var messages = new List<NetworkMessage>();
-        //search for a \n, extract up to that \n and then remove from buffer
-        var content = _receiveBuffer.ToString();
-        while (content.Length > 2 && content.Contains("\n"))
+        var lineStart = 0;
+
+        for (var i = 0; i < _receiveBuffer.Length; i++)
         {
-            //extract message
-            var message = content.Substring(0, content.IndexOf("\n", StringComparison.Ordinal) + 1);
+            if (_receiveBuffer[i] != '\n') continue;
 
-            //now clear from buffer
-            _receiveBuffer.Remove(0, message.Length);
+            var line = _receiveBuffer.ToString(lineStart, i - lineStart).Trim();
+            lineStart = i + 1;
 
-            try
+            if (!CountLine())
             {
-                var networkMessage = NetworkMessage.Decode(message.Trim());
-                if (networkMessage != null) messages.Add(networkMessage);
-            }
-            catch (Exception ex)
-            {
-                // Can be extremely noisy, use only for debugging!
-                // We conditionally check the trace to avoid building a string with a potentially really long message.
-                if (Logger.IsTraceEnabled)
-                {
-                    Logger.Trace(ex, $"Unable to process JSON: \n {message}");
-                }
+                Logger.Warn($"Disconnecting {RemoteAddress} - too many messages");
+                return null;
             }
 
+            if (line.Length == 0) continue;
 
-            //load in next part
-            content = _receiveBuffer.ToString();
+            var message = TryDecode(line);
+            if (message != null)
+            {
+                messages.Add(message);
+                continue;
+            }
+
+            _invalidLines++;
+            if (_invalidLines > MaxInvalidLines || (ClientGuid == null && _invalidLines > MaxInvalidLinesBeforeHandshake))
+            {
+                Logger.Warn($"Disconnecting {RemoteAddress} - invalid data");
+                return null;
+            }
         }
+
+        if (lineStart > 0) _receiveBuffer.Remove(0, lineStart);
 
         return messages;
     }
 
+    /// <summary>Counts one received line; false if the connection sends more than it ever needs to.</summary>
+    private bool CountLine()
+    {
+        var now = DateTime.UtcNow;
+        if (now - _lineWindowStartUtc >= LineRateWindow)
+        {
+            _lineWindowStartUtc = now;
+            _linesInWindow = 0;
+        }
+
+        return ++_linesInWindow <= MaxLinesPerWindow;
+    }
+
+    private static NetworkMessage TryDecode(string line)
+    {
+        // every message is one JSON object - reject anything else without paying for a parser exception
+        if (line[0] != '{' || line[^1] != '}') return null;
+
+        try
+        {
+            return NetworkMessage.Decode(line);
+        }
+        catch (Exception ex)
+        {
+            // Can be extremely noisy, use only for debugging!
+            if (Logger.IsTraceEnabled) Logger.Trace(ex, $"Unable to process JSON: \n {line}");
+
+            return null;
+        }
+    }
+
     protected override void OnReceived(byte[] buffer, long offset, long size)
     {
-        _receiveBuffer.Append(Encoding.UTF8.GetString(buffer, (int)offset, (int)size));
+        var charCount = _utf8Decoder.GetCharCount(buffer, (int)offset, (int)size);
+        if (_charBuffer.Length < charCount) _charBuffer = new char[Math.Max(charCount, _charBuffer.Length * 2)];
+        var chars = _utf8Decoder.GetChars(buffer, (int)offset, (int)size, _charBuffer, 0);
+        _receiveBuffer.Append(_charBuffer, 0, chars);
 
         if (_receiveBuffer.Length > MaxReceiveBufferLength)
         {
@@ -175,7 +235,19 @@ public class RadioClientSession : TcpSession
 
         LastMessageReceived = DateTime.Now.Ticks;
 
-        foreach (var s in GetNetworkMessage()) ((ServerSync)Server).HandleMessage(this, s);
+        var messages = GetNetworkMessages();
+        if (messages == null)
+        {
+            _receiveBuffer.Clear();
+            Disconnect();
+            return;
+        }
+
+        foreach (var s in messages)
+        {
+            if (!IsConnected) break;
+            ((ServerSync)Server).HandleMessage(this, s);
+        }
     }
 
     protected override void OnTrySendException(Exception ex)

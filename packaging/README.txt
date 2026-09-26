@@ -158,6 +158,11 @@ REQUIREMENTS
   start it once with --password "" (a space, not "="). Stop the server with
   Ctrl+C.
 
+  On a Linux server, run it as a service with the included
+  easyradiolink.service (own user, no privileges, writes only to
+  /var/lib/easyradiolink). The installation commands are at the top of that
+  file.
+
   Server files: server.cfg (all settings) is kept next to the server
   program; Server\ and CommandLine\ each have their own. Presets\*.txt
   (preset channels), server-radios.json (server radio layout), banned.txt

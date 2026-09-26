@@ -97,6 +97,37 @@ public class ServerSync : TcpServer, IHandle<ServerSettingsChangedMessage>
         Logger.Error($"TCP SERVER ERROR: {error} ");
     }
 
+    // Connection limits - generous for players behind one NAT, small enough that one address can't tie up the server.
+    internal const int MaxConnectionsPerAddress = 32;
+    internal const int MaxPendingHandshakesPerAddress = 8;
+    internal const int MaxConnections = 1000;
+
+    /// <summary>
+    ///     True if accepting <paramref name="newSession" /> would exceed the connection limits (per address, pending
+    ///     handshakes per address, total).
+    /// </summary>
+    public bool ExceedsConnectionLimits(RadioClientSession newSession, out string reason)
+    {
+        int total = 0, fromAddress = 0, pendingFromAddress = 0;
+        foreach (var session in Sessions.Values)
+        {
+            if (session is not RadioClientSession other || !other.IsConnected) continue;
+
+            total++;
+            if (other == newSession || !Equals(other.RemoteIp, newSession.RemoteIp)) continue;
+
+            fromAddress++;
+            if (other.ClientGuid == null) pendingFromAddress++;
+        }
+
+        reason = total > MaxConnections ? $"server full ({MaxConnections} connections)"
+            : fromAddress >= MaxConnectionsPerAddress ? $"too many connections from this address ({MaxConnectionsPerAddress})"
+            : pendingFromAddress >= MaxPendingHandshakesPerAddress ? "too many unfinished handshakes from this address"
+            : null;
+
+        return reason != null;
+    }
+
     /// <summary>True while connections from <paramref name="address" /> are refused after too many wrong passwords.</summary>
     public bool IsLockedOut(IPAddress address)
     {

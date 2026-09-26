@@ -52,7 +52,7 @@ public class HttpServer
             _listener.Start();
             Logger.Info($"HTTP Server Started on Port: {_port}");
             // the key is only written to the log file so the admin can find it
-            Logger.Info($"HTTP Server Header {API_HEADER} Required: {_authentication}");
+            Logger.Info($"HTTP admin API requires the header {API_HEADER} - the key is HTTP_SERVER_API_KEY in server.cfg");
             Receive();
         }
         else
@@ -139,7 +139,7 @@ public class HttpServer
         if (!IsAuthorised(context.Request.Headers.Get(API_HEADER)))
         {
             context.Response.StatusCode = 401;
-            context.Response.StatusDescription = $"Unauthorized - Verify you've sent the Header: {API_HEADER} YOUR_API_KEY correctly. The API KEY will be printed in the logs on server startup";
+            context.Response.StatusDescription = $"Unauthorized - Verify you've sent the Header: {API_HEADER} YOUR_API_KEY correctly. The API key is HTTP_SERVER_API_KEY in server.cfg";
             return;
         }
         

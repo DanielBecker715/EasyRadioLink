@@ -278,11 +278,23 @@ internal class UDPVoiceRouter : IHandle<ServerFrequenciesChanged>, IHandle<Serve
                 }
                 else if (rawBytes?.Length > UDPVoicePacket.GuidLength)
                 {
+                    // Cheap checks right here on the receive loop: junk, unknown or spoofed senders, muted clients and
+                    // floods never create any work. The last 22 bytes are the sender's client id.
+                    var guid = Encoding.ASCII.GetString(rawBytes, rawBytes.Length - UDPVoicePacket.GuidLength,
+                        UDPVoicePacket.GuidLength);
+                    if (!_clientsList.TryGetValue(guid, out var sender) ||
+                        !VoiceRouting.IsFromClientAddress(sender, receivedFromEP) ||
+                        sender.Muted ||
+                        !VoiceRouting.AllowVoicePacket(sender, DateTime.UtcNow.Ticks))
+                        continue;
+
+                    sender.VoipPort = receivedFromEP;
+
                     _ = Task.Run(async Task () => await ProcessPendingPacketAsync(listener, new PendingPacket
                     {
                         RawBytes = rawBytes,
                         ReceivedFrom = receivedFromEP
-                    }), token);
+                    }, sender), token);
                 }
             }
             catch (OperationCanceledException)
@@ -308,7 +320,8 @@ internal class UDPVoiceRouter : IHandle<ServerFrequenciesChanged>, IHandle<Serve
         Logger.Info("UDP Voice Router Listener stopped.");
     }
 
-    private async Task ProcessPendingPacketAsync(UdpClient listener, PendingPacket udpPacket)
+    /// <param name="client">The sender - already checked by the receive loop (registered, right address, not muted).</param>
+    private async Task ProcessPendingPacketAsync(UdpClient listener, PendingPacket udpPacket, ClientInfo client)
     {
         if (udpPacket == null)
         {
@@ -317,20 +330,6 @@ internal class UDPVoiceRouter : IHandle<ServerFrequenciesChanged>, IHandle<Serve
 
         try
         {
-            //last 22 bytes are guid!
-            var guid = Encoding.ASCII.GetString(
-                udpPacket.RawBytes, udpPacket.RawBytes.Length - UDPVoicePacket.GuidLength, UDPVoicePacket.GuidLength);
-
-            // the sender must be a registered (authenticated) client, sending from the IP address it authenticated from
-            if (!_clientsList.TryGetValue(guid, out var client) ||
-                !VoiceRouting.IsFromClientAddress(client, udpPacket.ReceivedFrom))
-                return;
-
-            client.VoipPort = udpPacket.ReceivedFrom;
-
-            // muted by the server admin - drop the audio
-            if (client.Muted) return;
-
             var udpVoicePacket = UDPVoicePacket.DecodeVoicePacket(udpPacket.RawBytes);
 
             if (udpVoicePacket == null) return;

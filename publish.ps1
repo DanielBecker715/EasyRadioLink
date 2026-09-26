@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     Builds the EasyRadioLink release downloads.
 
@@ -472,6 +472,10 @@ Add-PackageTexts $serverWindowsDir
 
 Copy-DirectoryContent $cliLinuxBuild $serverLinuxDir
 Add-PackageTexts $serverLinuxDir -UnixLineEndings
+# hardened systemd service (see README "Linux: run as a service")
+$serviceText = [System.IO.File]::ReadAllText((Join-Path $repoRoot "packaging\linux\easyradiolink.service")) -replace "`r`n", "`n"
+[System.IO.File]::WriteAllText((Join-Path $serverLinuxDir "easyradiolink.service"), $serviceText,
+    (New-Object System.Text.UTF8Encoding($false)))
 
 if ($Installer) {
     Write-Step "Assembling the installer package"

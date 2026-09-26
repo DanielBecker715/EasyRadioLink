@@ -49,6 +49,10 @@ public class ClientInfo : PropertyChangedBaseClass
     /// </summary>
     [JsonIgnore] public IPAddress SessionAddress { get; set; }
 
+    // server side: voice packet rate limit (see VoiceRouting.AllowVoicePacket)
+    [JsonIgnore] internal long VoiceWindowStartTicks { get; set; }
+    [JsonIgnore] internal int VoicePacketsInWindow { get; set; }
+
     [JsonIgnore]
     public string TransmittingFrequency
     {

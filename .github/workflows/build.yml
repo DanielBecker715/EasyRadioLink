@@ -2,7 +2,7 @@ name: Build
 
 on:
   push:
-    branches: [ main, master ]
+    branches: [ '**' ]
   pull_request:
   workflow_dispatch:
 
@@ -52,3 +52,66 @@ jobs:
           name: test-results
           path: TestResults
           if-no-files-found: ignore
+
+  linux-server:
+    name: Linux server under systemd (Ubuntu)
+    runs-on: ubuntu-latest
+    env:
+      DOTNET_NOLOGO: true
+      DOTNET_CLI_TELEMETRY_OPTOUT: true
+
+    steps:
+      - name: Check out
+        uses: actions/checkout@v4
+
+      - name: Set up .NET 10
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Publish the command-line server (linux-x64, self-contained)
+        run: >
+          dotnet publish EasyRadioLink.Server.Cli/EasyRadioLink.Server.Cli.csproj
+          --configuration Release --runtime linux-x64 --self-contained
+          -p:PublishSingleFile=true -p:PublishReadyToRun=true -p:DebugType=None
+          --output out
+
+      - name: Install as a hardened systemd service
+        run: |
+          sudo useradd --system --no-create-home --shell /usr/sbin/nologin easyradiolink
+          sudo install -D -m 0755 out/EasyRadioLink.Server.Cli /opt/easyradiolink/EasyRadioLink.Server.Cli
+          sudo install -m 0644 packaging/linux/easyradiolink.service /etc/systemd/system/easyradiolink.service
+          sudo systemctl daemon-reload
+          sudo systemctl start easyradiolink
+          for i in $(seq 1 30); do
+            if ss -ltn | grep -q ':5010 '; then break; fi
+            sleep 1
+          done
+          if ! systemctl is-active --quiet easyradiolink || ! ss -ltn | grep -q ':5010 '; then
+            sudo journalctl -u easyradiolink --no-pager | tail -40 | sed 's/^/::error::/'
+            exit 1
+          fi
+
+      - name: Handshake and UDP ping
+        run: python3 packaging/linux/smoke-test.py 127.0.0.1 5010
+
+      - name: Check the sandbox
+        run: |
+          set -e
+          # runs as the unprivileged service user, not root
+          test "$(ps -o user= -p "$(systemctl show -p MainPID --value easyradiolink)")" = "easyradiolink"
+          # writes only to its state directory
+          sudo test -f /var/lib/easyradiolink/server.cfg
+          sudo test -f /var/lib/easyradiolink/serverlog.txt
+          test "$(sudo stat -c '%U %a' /var/lib/easyradiolink)" = "easyradiolink 700"
+          # the program itself is read-only for the service
+          test "$(stat -c '%U' /opt/easyradiolink/EasyRadioLink.Server.Cli)" = "root"
+          systemd-analyze security easyradiolink --no-pager | tail -1
+
+      - name: Server log
+        if: always()
+        run: |
+          sudo systemctl stop easyradiolink || true
+          sudo journalctl -u easyradiolink --no-pager | tail -30
+          sudo cat /var/lib/easyradiolink/serverlog.txt 2>/dev/null | tail -20 || true
+

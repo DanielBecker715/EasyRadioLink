@@ -140,6 +140,45 @@ starts without options keep the settings. On/off options take a value: `--half-d
 
 `EasyRadioLink.Server.Cli --help` always shows the options of your version.
 
+### Linux: run as a service
+
+The Linux download contains `easyradiolink.service`, a hardened systemd unit: the server runs as its own user without
+a login shell, sees the file system read-only except for its data folder `/var/lib/easyradiolink`, has no privileges
+and limited memory and processes.
+
+```
+sudo useradd --system --no-create-home --shell /usr/sbin/nologin easyradiolink
+sudo install -D -m 0755 EasyRadioLink.Server.Cli /opt/easyradiolink/EasyRadioLink.Server.Cli
+sudo install -m 0644 easyradiolink.service /etc/systemd/system/easyradiolink.service
+sudo systemctl daemon-reload
+sudo systemctl enable --now easyradiolink
+journalctl -u easyradiolink -f
+```
+
+`server.cfg` is created in `/var/lib/easyradiolink` on the first start. To set a password, stop the service, set
+`SERVER_PASSWORD` in the `[Server Settings]` section of that file and start it again (don't put the password on the
+`ExecStart` command line - command lines are visible to other users of the machine).
+
+### Security
+
+The server only relays voice between authenticated clients:
+
+- Clients send JSON over TCP and voice over UDP; nothing a client sends is ever executed, used as a file path or
+  passed to native code (the server does not decode audio).
+- With a password, only clients that passed the login receive or send voice, and only from the IP address they
+  logged in from. Wrong passwords are slowed down and an address is locked out for 5 minutes after 10 failures.
+- Connections that send invalid data, too many messages, or never finish the login are closed; each address can hold
+  a limited number of connections, and voice packets are rate-limited per user.
+- The password and the HTTP API key are never sent to clients or printed in logs.
+
+What you should do as the operator:
+
+- Open only TCP and UDP port 5010 (or your port). Keep the HTTP admin API off or on `localhost` (default) and reach
+  it through an SSH tunnel.
+- The server password is sent unencrypted - don't reuse a valuable password.
+- A volumetric flood (hundreds of megabits of junk) has to be stopped by your firewall or hosting provider, like for
+  any other internet service.
+
 ### Server configuration
 
 By default `server.cfg` is kept next to the server program, whatever the working directory is; each server
