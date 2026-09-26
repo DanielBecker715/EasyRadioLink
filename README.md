@@ -1,42 +1,44 @@
 # EasyRadioLink
 
-EasyRadioLink is a standalone digital radio for Windows. Users connect to an EasyRadioLink server, tune their radios
+EasyRadioLink is a standalone digital radio for Windows. Users connect to an EasyRadioLink server, tune their radio
 to a frequency and talk to everybody on that frequency, with the sound of real radios: band-pass filters, static,
-squelch tails, key clicks, tones, half-duplex behaviour, interference and scrambled encryption.
+squelch tails, key clicks, tones, half-duplex behaviour and interference.
 
 It needs no game or other software: a group of friends, a club, a flight-sim squadron, an airsoft or role-play team
 simply runs a server and connects.
 
 ## Features
 
-**Radios**
-- Up to 10 radios per user, each with its own frequency, modulation (AM, FM or digital), volume, preset channels,
-  guard receiver and, where supported, encryption (keys 1-252).
-- Transmit on the selected radio or on several radios at once; receive on all radios at the same time.
-- Radio Panel window with frequency step buttons and direct entry, channel list, guard toggle, encryption,
-  volume, TX/RX indicators with the transmitter's name and the number of users on the frequency.
-- Default radio set: CB (27 MHz AM), PMR446 (FM), VHF airband, UHF tactical, HF long range and a clean digital radio.
-  Your own layout via `radios-custom.json`; the server can push a common layout.
-- Radios remember their frequencies and settings between sessions.
+**Radio**
+- One radio, 1.000 - 999.999 MHz: as many channels as there are frequencies. The frequency decides the band,
+  the modulation (AM, FM or digital) and the radio sound (see [Band plan](#band-plan)).
+- Radio window with a seven-segment display, a tuning knob (drag, mouse wheel or arrow keys), step keys, STEP
+  (1 kHz - 100 MHz), direct entry (double-click the display), volume knob, TX/RX indicators with the transmitter's
+  name and the number of users on the frequency.
+- The radio remembers its frequency and volume between sessions.
 
 **Radio sound**
-- Per-radio sound models (CB, walkie-talkie, airband, tactical, HF, vintage tube, digital, ...). Receivers hear you
-  through *your* radio model. Add your own models as JSON effect chains ([docs/radio-models.md](docs/radio-models.md)).
-- Frequency-dependent static and HF noise, squelch tail, TX/RX clicks, FM tone, encryption tones and CVSD scramble.
+- Radio sound models per band (CB, walkie-talkie, airband, tactical, HF, vintage tube, digital). Customise them as
+  JSON effect chains ([docs/radio-models.md](docs/radio-models.md)).
+- Frequency-dependent static and HF noise, squelch tail, TX/RX clicks and FM tone.
 - Optional background sound (jet, prop or helicopter) that the other stations hear behind your voice.
 
 **Controls**
-- Push-to-talk and radio selection on keyboard, mouse, joysticks/HOTAS (DirectInput) and gamepads (XInput).
-- Radio Panel toggle hotkey; free choice of microphone and speaker devices, plus an optional "mic output" device that
+- Push-to-talk, frequency steps and volume on keyboard, mouse, joysticks/HOTAS (DirectInput) and gamepads (XInput).
+- Radio window toggle hotkey; free choice of microphone and speaker devices, plus an optional "mic output" device that
   carries your own radio-processed voice (for streaming or recording software).
 - Optional MP3 recording of radio traffic.
+
+**Privacy**
+- Encrypted connection to the server (TLS) with a pinned server identity, like SSH.
+- End-to-end encrypted voice: only the stations tuned to the frequency can hear a transmission - not even the server
+  (see [Security](#security)).
 
 **Server**
 - Server with a window for Windows, plus a command-line server for Windows and Linux (x64).
 - Optional server password, radio check (echo) frequencies, clean frequencies without radio effects,
-  half-duplex radios, interference of simultaneous transmissions, encryption rules.
-- Server preset channels and server radio layout, mute/kick/ban, client list export, transmission log,
-  UPnP port forwarding and an optional HTTP admin API.
+  half-duplex radios and interference of simultaneous transmissions.
+- Mute/kick/ban, client list export, transmission log, UPnP port forwarding and an optional HTTP admin API.
 
 ## Download
 
@@ -71,7 +73,12 @@ Every download also contains `README.txt` (the end-user guide, [packaging/README
 2. **Radio** tab: choose microphone and speakers. **Controls** tab: assign *Push-To-Talk (PTT)*.
 3. **Radio** tab: enter your name, the server address (`host:5010`) and the password if the server has one,
    then **Connect**.
-4. The Radio Panel opens. Tune to the same frequency and modulation as the others, hold PTT and talk.
+4. The radio opens. Tune to the same frequency as the others (the frequency also sets the modulation), hold PTT
+   and talk.
+
+On the first connection to a server EasyRadioLink remembers the server's identity (its fingerprint is shown under
+**Server Info**). If that identity ever changes, EasyRadioLink warns you before it sends anything; see
+[Security](#security).
 
 To update, extract the new version and use it instead of the old folder; the settings live in
 `%AppData%\EasyRadioLink` and are kept.
@@ -88,8 +95,12 @@ Radio check: with default server settings, transmissions on **27.405 MHz** (CB c
 4. Optionally set a **server password**. Leave it empty for an open server.
 5. Users connect to `<your public IP>:5010`.
 
-The password is compared on the server and a wrong password is rejected, but it is sent **unencrypted** over TCP.
-It keeps strangers out; do not reuse a valuable password.
+The password travels over the encrypted connection and is compared on the server; a wrong password is rejected. It
+keeps strangers out - anybody who can connect can tune to any frequency and listen.
+
+On the first start the server creates its identity `server-identity.pfx` and shows its **fingerprint** in the
+*Server identity* box (the command-line servers print it and write it to `serverlog.txt`). Share the fingerprint with
+your users, keep `server-identity.pfx` private and copy it along with `server.cfg` when you update or move the server.
 
 ### Command-line server (Windows and Linux)
 
@@ -123,12 +134,8 @@ starts without options keep the settings. On/off options take a value: `--half-d
 | `--clean-frequencies` | `CLEAN_FREQUENCIES` | empty | Frequencies in MHz that are played without radio effects. |
 | `--half-duplex` | `IRL_RADIO_TX` | `false` | Half-duplex radios: a radio cannot receive while it transmits. |
 | `--radio-interference` | `IRL_RADIO_RX_INTERFERENCE` | `false` | Simultaneous transmissions on one frequency interfere. |
-| `--allow-encryption` | `ALLOW_RADIO_ENCRYPTION` | `true` | Radios that support it may encrypt (scramble). |
-| `--strict-encryption` | `STRICT_RADIO_ENCRYPTION` | `false` | Encrypted radios only understand transmissions with the same key; clear transmissions are scrambled too. |
-| `--show-tuned-count` | `SHOW_TUNED_COUNT` | `true` | Users see how many people are tuned to each frequency. |
+| `--show-tuned-count` | `SHOW_TUNED_COUNT` | `true` | Users see how many people are tuned to their frequency. |
 | `--show-transmitter-name` | `SHOW_TRANSMITTER_NAME` | `false` | Users see who is transmitting. |
-| `--server-presets` | `SERVER_PRESETS_ENABLED` | `false` | Offer the preset channels from `Presets/*.txt` to the clients. |
-| `--server-radio-layout` | `SERVER_RADIO_PRESET_ENABLED` | `false` | Offer the radio layout from `server-radios.json` to the clients. |
 | `--client-export` | `CLIENT_EXPORT_ENABLED` | `false` | Write the connected clients to a JSON file every 5 seconds. |
 | `--client-export-path` | `CLIENT_EXPORT_FILE_PATH` | `clients-list.json` | Full path of that file (default: next to `server.cfg`). |
 | `--transmission-log` | `TRANSMISSION_LOG_ENABLED` | `false` | Log every transmission to a daily CSV file. |
@@ -155,27 +162,96 @@ sudo systemctl enable --now easyradiolink
 journalctl -u easyradiolink -f
 ```
 
-`server.cfg` is created in `/var/lib/easyradiolink` on the first start. To set a password, stop the service, set
+`server.cfg` and the server identity `server-identity.pfx` (readable by the service user only) are created in
+`/var/lib/easyradiolink` on the first start; `journalctl -u easyradiolink` shows the identity's fingerprint. To set a
+password, stop the service, set
 `SERVER_PASSWORD` in the `[Server Settings]` section of that file and start it again (don't put the password on the
 `ExecStart` command line - command lines are visible to other users of the machine).
 
 ### Security
 
+EasyRadioLink 1.1 encrypts the connection to the server and the voice between the stations:
+
+- **Encrypted connection.** Everything a client and the server say to each other travels over TLS 1.2/1.3: the
+  password, names, frequencies and the user list can't be read or changed on the way (Wi-Fi, internet provider).
+  Voice packets (UDP) are encrypted and authenticated per user with AES-256-GCM, with a new key for every connection;
+  replayed, altered or forged packets are dropped. Forged packets can't mute anybody: packets from the address and port
+  a user's authenticated packets come from are always checked, and the server's limit on packets that fail the check
+  applies per sender address and port (plus a total limit), never per user.
+- **End-to-end encrypted voice.** Every transmission (each press of PTT, on one frequency) gets its own random key.
+  That key is sent only to the stations whose radio can hear the frequency, encrypted separately for each of them (every
+  client creates an ECDH P-256 key pair when it starts; the private key never leaves the PC and is never stored). The
+  server forwards the voice but can't decrypt it, and it can't move it to another frequency without breaking it.
+  Stations that tune in during a transmission get the key too and hear the rest of it - also when they come back
+  (reconnected, or tuned away and back) while it lasts. If the key of a transmission doesn't reach a station in time,
+  it hears the scrambled sound of an encrypted radio instead. Recordings (made from your own audio) and the radio check
+  echo keep working: on a radio check frequency your client keeps the key of its own transmission to play the echo; on
+  every other frequency it doesn't keep it.
+- **Server identity, trust on first use.** Each server creates its identity (`server-identity.pfx`, a self-signed
+  certificate) on its first start and shows its fingerprint (SHA-256 of the public key, `AB:CD:...`) in the server
+  window, on the console and in `serverlog.txt`. On the first connection the client remembers it (`known-servers.json`
+  in the settings folder, like SSH does) and shows it under **Server Info**. If the server later presents another
+  identity, the client stops before sending anything - not even the password - and shows both fingerprints:
+  *Connect anyway and trust the new identity* or *Cancel*. Only continue if the server admin confirms the new
+  fingerprint. The check fails closed: if the saved identity of a server is unreadable (the file was edited), the
+  client shows the server's fingerprint and asks the same way instead of trusting it silently; if `known-servers.json`
+  can't be read at all (damaged, or locked by another program), it connects to no server and says so. A damaged file is
+  never overwritten - repair it, or rename or delete it (then every server counts as new again).
+
+What the server can and can't see:
+
+| The server sees | The server can't see |
+|---|---|
+| Who is connected (name, IP address) and which frequency each radio is tuned to | What anybody says - the voice is end-to-end encrypted |
+| Who transmits when, on which frequency and for how long | The transmission keys: it only forwards copies that are encrypted for each listener |
+| The server password (it checks it) | The users' private keys |
+
+Threat model:
+
+- Protected against: anybody on the network path (they see only encrypted traffic); a curious server operator (logs,
+  network captures and the server process itself never hold a voice key); voice packets injected or replayed on the
+  network (every packet is authenticated, with a replay window per connection and direction); a server replaying a
+  recorded transmission to you - frames you already played are never played again while the app runs (the last 256
+  transmissions per sender are remembered), and the key of a transmission without activity for 5 minutes is refused;
+  users on other frequencies.
+- Not protected against: a server that is deliberately modified to fake listeners - clients trust the server's user
+  list, and there is no manual key comparison between users (such a server could also hand you parts of a recent
+  transmission that you did not receive, a little late); anybody who can connect and tunes to your frequency - that is
+  how radio works, so set a password to keep strangers out; traffic analysis (who talks when, on which frequency).
+- Anybody who can connect can also take over a connected user's client id (the ids are part of the user list): the
+  server closes that user's old connection - they see it drop - and from then on voice keys for that id go to the new
+  connection. On an open server that is anybody on the internet: set a password so only people you trust can
+  connect.
+- The server identity is trusted on first use: an impostor on the very first connection can't be told apart. If in
+  doubt, compare the fingerprint under **Server Info** with the one your server admin shares.
+- EasyRadioLink 1.1 and 1.0 can't connect to each other: a 1.0 client gets "incompatible server", a 1.1 client
+  connecting to a 1.0 server reports that servers older than 1.1 can't be used.
+
 The server only relays voice between authenticated clients:
 
-- Clients send JSON over TCP and voice over UDP; nothing a client sends is ever executed, used as a file path or
-  passed to native code (the server does not decode audio).
+- Clients send JSON over the encrypted connection and voice over UDP; nothing a client sends is ever executed, used as a
+  file path or passed to native code (the server neither decrypts nor decodes audio).
 - With a password, only clients that passed the login receive or send voice, and only from the IP address they
   logged in from. Wrong passwords are slowed down and an address is locked out for 5 minutes after 10 failures.
-- Connections that send invalid data, too many messages, or never finish the login are closed; each address can hold
-  a limited number of connections, and voice packets are rate-limited per user.
-- The password and the HTTP API key are never sent to clients or printed in logs.
+- Connections that send invalid data, too many messages, or don't finish the TLS handshake and login within 15
+  seconds are closed; each address may open a limited number of connections (32 at once, 8 unfinished handshakes,
+  about one new connection per second after a burst), voice packets are rate-limited per user and voice keys to a
+  burst of 20, then 10 per second per user. Refused and unfinished connections are logged at debug level each and
+  summarised in `serverlog.txt` once a minute, so a flood doesn't flood the log. The client closes the connection if
+  the server sends a message longer than 512 KB.
+- The password, the HTTP API key, UDP keys and voice keys are never printed in logs; the password and the HTTP API key
+  are never sent to clients.
 
 What you should do as the operator:
 
 - Open only TCP and UDP port 5010 (or your port). Keep the HTTP admin API off or on `localhost` (default) and reach
   it through an SSH tunnel.
-- The server password is sent unencrypted - don't reuse a valuable password.
+- Keep `server-identity.pfx` private and in your backups, and copy it with `server.cfg` when you update or move the
+  server. It is created readable only by the server's account (on Linux mode 0600; on Windows with an ACL of its own:
+  the server's account, SYSTEM and Administrators, nothing inherited from the folder). On every start the server warns
+  (log, console, server window) if other Windows accounts can read it - for example a copy that picked up the folder's
+  permissions. A lost or replaced identity makes every client warn about a changed identity once. Share the
+  fingerprint with your users so they can compare it.
 - A volumetric flood (hundreds of megabits of junk) has to be stopped by your firewall or hosting provider, like for
   any other internet service.
 
@@ -190,14 +266,16 @@ its settings cannot be saved.
 | File | Location | Purpose |
 |---|---|---|
 | `server.cfg` | next to the server program, or the `--cfg` / `-cfg` path | All settings. `[General Settings]` are sent to every client; `[Server Settings]` (port, bind address, UPnP, HTTP API, password) never leave the server. |
-| `Presets/<radio>.txt` | next to `server.cfg` | Server preset channels (same format as the client preset files, see below). |
-| `server-radios.json` | next to `server.cfg` | Server radio layout (same format as `radios.json`), used when `SERVER_RADIO_PRESET_ENABLED` is on and the user allows server layouts. |
+| `server-identity.pfx` | next to `server.cfg` | The server identity (TLS certificate with its private key), created on the first start. Clients pin its fingerprint - keep it private, back it up and keep it when updating. |
 | `banned.txt` | next to `server.cfg` | Banned IP addresses, one per line. |
 | `serverlog.txt`, `*-transmissionlog.csv` | next to `server.cfg` | Server log and transmission logs. |
 | `clients-list.json` | next to `server.cfg` | Client export (when enabled and no other path is set). |
 
-To update a server, extract the new version and copy `server.cfg` (plus `Presets/`, `server-radios.json` and
-`banned.txt` if used) from the old folder, or keep these files in a separate folder and start the server with `--cfg`.
+To update a server, extract the new version and copy `server.cfg` and `server-identity.pfx` (plus `banned.txt` if
+used) from the old folder, or keep these files in a separate folder and start the server with `--cfg`. Without the old
+`server-identity.pfx` the server creates a new identity and every user is warned about a changed identity once.
+Settings in `server.cfg` that the running version does not know (for example those of features removed in 1.1) are
+ignored and may be deleted.
 
 Other `server.cfg` keys: `HTTP_SERVER_API_KEY` (generated on first start). Frequency lists always use a dot as
 decimal separator, independent of the Windows language.
@@ -211,83 +289,81 @@ header):
 | `POST /client/kick/guid/<guid>` / `POST /client/kick/name/<name>` | Kick a client. |
 | `POST /client/ban/guid/<guid>` / `POST /client/ban/name/<name>` | Ban a client's IP address (`banned.txt`) and disconnect it. |
 
-## Radios, models and presets
+## Radio, band plan and models
 
-### Radio layout: `radios.json` and `radios-custom.json`
+### The radio
 
-The radios are defined by `radios.json` next to `EasyRadioLink.exe`. To change them, copy it to the settings folder
-as `radios-custom.json` (`%AppData%\EasyRadioLink\radios-custom.json` by default) and edit the copy. Load order:
-server radio layout (if the server provides one and the user allows it) → `radios-custom.json` → `radios.json`.
+After connecting, the radio window opens (*Open the radio when connected* on the **Settings** tab); **Show Radio** on
+the **Radio** tab and the *Show / hide the radio* hotkey open it at any time. It stays on top of other windows.
 
-The file is a JSON array with either 11 entries (entry 0 is reserved and always disabled, entries 1-10 are the user
-radios) or just the user radios (up to 10, the first one enabled). Frequencies are in **Hz**. Comments and trailing
-commas are allowed, names are case-insensitive.
+- **Tune**: drag the big knob round with the mouse (30 notches per turn, one notch = one step), or turn the mouse
+  wheel over the knob or the display. The ▲ / ▼ keys and the arrow keys Up / Down tune one step as well.
+- **STEP** cycles the step: 1 kHz, 10 kHz, 100 kHz, 1 MHz, 10 MHz, 100 MHz (and back to 1 kHz). The arrow keys
+  Left / Right choose a larger / smaller step. The digit that the step changes is underlined on the display.
+- **Direct entry**: double-click the display (or press Enter) and type the frequency in MHz, e.g. `446.19375`
+  (`446,19375` works too). Enter applies it, Esc cancels. The frequency is rounded to 10 Hz (what the display shows);
+  a frequency outside 1.000 - 999.999 MHz is set to the nearest end of the range; text that is not a frequency makes
+  the frame flash and the entry stays open.
+- **VOL**: the small knob sets the volume (drag or mouse wheel).
+- **Display**: the frequency in seven-segment digits (digits below 1 kHz appear small, e.g. the `75` of
+  446.19375), the band, the modulation (AM / FM / DIG), `TX` while you transmit, `RX` while you receive, the
+  transmitter's name and the number of users on the frequency (when the server allows them) and the step. Without a
+  connection it shows `NO LINK` and the controls are disabled.
+- Drag the radio by its case; the grip at the bottom right scales it. Position and size are remembered.
 
-```json
-[
-  { "name": "Reserved", "modulation": 3 },
-  { "name": "CB", "model": "cb", "modulation": 0, "freq": 27185000, "freqMin": 26965000, "freqMax": 27405000 },
-  { "name": "PMR446", "model": "walkie", "modulation": 1, "freq": 446006250, "freqMin": 446006250,
-    "freqMax": 446193750 },
-  { "name": "UHF Tactical", "model": "tactical", "modulation": 0, "freq": 251000000, "freqMin": 225000000,
-    "freqMax": 400000000, "guardFreq": 243000000, "encCapable": true, "encKey": 12 }
-]
-```
+The **Controls** tab assigns keys or buttons to push-to-talk, frequency up / down (one binding per step, 100 MHz to
+1 kHz), volume up / down and *Show / hide the radio*.
 
-| Field | Default | Meaning |
-|---|---|---|
-| `name` | `Radio <n>` | Radio name, also used to find its preset channel file. |
-| `model` | empty (= `standard`) | Radio model key, see below. |
-| `modulation` | `3` | `0` = AM, `1` = FM, `3` = disabled, `5` = digital (clean, no static). |
-| `freq` | – | Start frequency in Hz. |
-| `freqMin`, `freqMax` | = `freq` | Allowed range in Hz. Without a range the radio is fixed to `freq`. |
-| `guardFreq` | `0` | Guard receiver frequency in Hz (`0` = no guard receiver). |
-| `encCapable` | `false` | The radio can encrypt. |
-| `enc`, `encKey` | `false`, `1` | Encryption on at start, and the key (1-252). |
-| `channel` | `-1` | Preset channel selected at start (1-based, `-1` = none). |
-| `rxOnly` | `false` | Receive-only radio. |
-| `simul` | `false` | Transmit together with the selected radio. |
+### Band plan
 
-Invalid values are corrected when the file is loaded (frequency clamped into the range, unknown modulation =
-disabled, missing entries = disabled).
+There is one radio. Its frequency (1.000 - 999.999 MHz, 1 kHz steps; a typed frequency may be finer, e.g.
+446.19375) alone decides the modulation, the radio model (sound) and the band shown on the display. Everybody applies
+the same plan, so everybody on a frequency uses the same modulation and hears the same radio sound.
+
+| Frequency (MHz) | Band | Modulation | Radio model |
+|---|---|---|---|
+| 1.000 - 2.999 | MW | AM | `vintage` |
+| 3.000 - 26.964 | HF | AM | `hf` |
+| 26.965 - 27.405 | CB | AM | `cb` |
+| 27.406 - 29.999 | HF | AM | `hf` |
+| 30.000 - 87.999 | VHF | FM | `tactical` |
+| 88.000 - 107.999 | FM | FM | `walkie` |
+| 108.000 - 136.999 | AIR | AM | `airband` |
+| 137.000 - 224.999 | VHF | FM | `walkie` |
+| 225.000 - 399.999 | UHF | AM | `tactical` |
+| 400.000 - 445.999 | UHF | FM | `walkie` |
+| 446.000 - 446.199 | PMR | FM | `walkie` |
+| 446.200 - 899.999 | UHF | FM | `walkie` |
+| 900.000 - 999.999 | DIG | Digital (clean, no static) | `digital` |
+
+Both ends of every range are included; a frequency between two kHz steps belongs to the band of the nearer step
+(27.4054 MHz is CB, 446.19375 MHz is PMR). Where the modulation changes (30, 108, 137, 225, 400 and 900 MHz) a
+frequency closer than 1 kHz to the band edge is rounded to the whole kHz (29.9996 MHz becomes 30.000 MHz, 29.9994 MHz
+becomes 29.999 MHz), so two radios close enough to hear each other always use the same modulation. The radio starts on
+27.185 MHz (CB channel 19) and remembers its last frequency and volume in `radio-state.json`.
 
 ### Radio models
 
 Radio models are JSON effect chains that define how a radio sounds. Built-in models live in `RadioModels\*.json`
 next to `EasyRadioLink.exe`; your own models go to `%AppData%\EasyRadioLink\RadioModels\*.json` (the file name is
-the model key; a file with a built-in name replaces that model). Select a model per radio in the Radio Panel or with the
-`model` field. The format (`chain`, `filters`, `gain`, `saturation`, `compressor`, `sidechainCompressor`, `cvsd`;
-`lowpass`, `highpass`, `peak` filters) is documented in [docs/radio-models.md](docs/radio-models.md).
-
-### Preset channels
-
-Preset channel files are plain text files named after the radio (`CB.txt`, `PMR446.txt`, ...; letters and digits of
-the radio name, case-insensitive) in `%AppData%\EasyRadioLink\Presets` or the presets folder chosen on the Radio tab.
-One channel per line, `Name|Frequency in MHz` or just the frequency:
-
-```
-Channel 9|27.065
-Channel 19|27.185
-446.00625
-```
-
-A server can provide the same files for everybody in its `Presets` folder (`SERVER_PRESETS_ENABLED`).
+the model key; a file with a built-in name replaces that model and so changes the sound of its band). The format
+(`chain`, `filters`, `gain`, `saturation`, `compressor`, `sidechainCompressor`, `cvsd`; `lowpass`, `highpass`,
+`peak` filters) is documented in [docs/radio-models.md](docs/radio-models.md).
 
 ## Files and folders
 
 | Location | Contents |
 |---|---|
-| `%AppData%\EasyRadioLink` | Settings folder: client settings (`global.cfg`, profile `*.cfg`), `FavouriteServers.csv`, `radios-custom.json`, `radio-state.json` |
-| `%AppData%\EasyRadioLink\Presets` | Preset channel files |
+| `%AppData%\EasyRadioLink` | Settings folder: client settings (`global.cfg`, profile `*.cfg`), `FavouriteServers.csv`, `radio-state.json`, `known-servers.json` (the pinned server identities) |
 | `%AppData%\EasyRadioLink\RadioModels` | Custom radio models |
 | `%AppData%\EasyRadioLink\Logs` | Client log (`clientlog.txt`, previous run in `clientlog.old.txt`); linked on the About tab |
 | `Documents\EasyRadioLink\Recordings` | Recordings |
-| Client folder (where `EasyRadioLink.exe` is) | Client program, `radios.json`, built-in radio models and sounds |
-| Server folder (where `server.cfg` is) | `server.cfg`, `Presets`, `server-radios.json`, `banned.txt`, server logs |
+| Client folder (where `EasyRadioLink.exe` is) | Client program, built-in radio models and sounds |
+| Server folder (where `server.cfg` is) | `server.cfg`, `server-identity.pfx`, `banned.txt`, server logs, transmission logs, client export |
 
 The client accepts `-cfg=<folder>` to use another settings folder: everything in the first row (`global.cfg`,
-profiles, favourites, `radios-custom.json`, `radio-state.json`) then lives there, while logs, presets, custom radio
-models and recordings stay in their default places. `-host=<address:port>`, `-name=<name>` and
+profiles, favourites, `radio-state.json`, `known-servers.json`) then lives there, while logs, custom radio models and
+recordings stay in their default places. `-host=<address:port>`, `-name=<name>` and
 `-password=<password>` pre-fill the connection.
 
 ## Building from source

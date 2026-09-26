@@ -35,10 +35,6 @@
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
 
             <TextBlock Grid.Row="0"
@@ -59,76 +55,61 @@
 
             <TextBlock Grid.Row="2"
                        Style="{StaticResource SettingText}"
-                       Text="{x:Static p:Resources.SrvAllowRadioEncryption}" />
-            <TextBlock x:Name="AllowRadioEncryption"
+                       Text="{x:Static p:Resources.SrvTunedClientCount}" />
+            <TextBlock x:Name="TunedClientCount"
                        Grid.Row="2"
                        Grid.Column="1"
                        Style="{StaticResource InfoValue}" />
 
             <TextBlock Grid.Row="3"
                        Style="{StaticResource SettingText}"
-                       Text="{x:Static p:Resources.SrvStrictRadioEncryption}" />
-            <TextBlock x:Name="StrictRadioEncryption"
+                       Text="{x:Static p:Resources.SrvShowTransmitterName}" />
+            <TextBlock x:Name="ShowTransmitterName"
                        Grid.Row="3"
                        Grid.Column="1"
                        Style="{StaticResource InfoValue}" />
 
             <TextBlock Grid.Row="4"
                        Style="{StaticResource SettingText}"
-                       Text="{x:Static p:Resources.SrvTunedClientCount}" />
-            <TextBlock x:Name="TunedClientCount"
+                       Text="{x:Static p:Resources.SrvTestFrequencies}" />
+            <TextBlock x:Name="TestFrequencies"
                        Grid.Row="4"
                        Grid.Column="1"
                        Style="{StaticResource InfoValue}" />
 
             <TextBlock Grid.Row="5"
                        Style="{StaticResource SettingText}"
-                       Text="{x:Static p:Resources.SrvShowTransmitterName}" />
-            <TextBlock x:Name="ShowTransmitterName"
+                       Text="{x:Static p:Resources.SrvCleanFrequencies}" />
+            <TextBlock x:Name="CleanFrequencies"
                        Grid.Row="5"
                        Grid.Column="1"
                        Style="{StaticResource InfoValue}" />
 
             <TextBlock Grid.Row="6"
                        Style="{StaticResource SettingText}"
-                       Text="{x:Static p:Resources.SrvPresetsEnabled}" />
-            <TextBlock x:Name="ServerPresetsEnabled"
+                       Text="{x:Static p:Resources.SrvServerVersion}" />
+            <TextBlock x:Name="ServerVersion"
                        Grid.Row="6"
                        Grid.Column="1"
                        Style="{StaticResource InfoValue}" />
-
-            <TextBlock Grid.Row="7"
-                       Style="{StaticResource SettingText}"
-                       Text="{x:Static p:Resources.SrvRadioPresetEnabled}" />
-            <TextBlock x:Name="ServerRadioPresetEnabled"
-                       Grid.Row="7"
-                       Grid.Column="1"
-                       Style="{StaticResource InfoValue}" />
-
-            <TextBlock Grid.Row="8"
-                       Style="{StaticResource SettingText}"
-                       Text="{x:Static p:Resources.SrvTestFrequencies}" />
-            <TextBlock x:Name="TestFrequencies"
-                       Grid.Row="8"
-                       Grid.Column="1"
-                       Style="{StaticResource InfoValue}" />
-
-            <TextBlock Grid.Row="9"
-                       Style="{StaticResource SettingText}"
-                       Text="{x:Static p:Resources.SrvCleanFrequencies}" />
-            <TextBlock x:Name="CleanFrequencies"
-                       Grid.Row="9"
-                       Grid.Column="1"
-                       Style="{StaticResource InfoValue}" />
-
-            <TextBlock Grid.Row="10"
-                       Style="{StaticResource SettingText}"
-                       Text="{x:Static p:Resources.SrvServerVersion}" />
-            <TextBlock x:Name="ServerVersion"
-                       Grid.Row="10"
-                       Grid.Column="1"
-                       Style="{StaticResource InfoValue}" />
         </Grid>
+
+        <!-- the pinned (and verified) server identity - selectable so users can copy and compare it -->
+        <TextBlock Margin="4,10,12,2"
+                   Style="{StaticResource SettingText}"
+                   Text="{x:Static p:Resources.SrvServerIdentity}" />
+        <TextBox x:Name="ServerIdentityFingerprint"
+                 Margin="4,0,4,2"
+                 Padding="0"
+                 Background="Transparent"
+                 BorderThickness="0"
+                 FontFamily="Consolas"
+                 FontWeight="SemiBold"
+                 IsReadOnly="True"
+                 IsTabStop="False"
+                 TextWrapping="Wrap"
+                 Text="{x:Static p:Resources.ValueUnknown}" />
+        <TextBlock Style="{StaticResource HintText}" Text="{x:Static p:Resources.SrvServerIdentityHint}" />
 
         <Button Width="100"
                 Margin="0,12,0,0"

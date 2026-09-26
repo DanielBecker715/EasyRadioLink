@@ -20,6 +20,24 @@ public struct ShortGuid
     /// </summary>
     public static readonly ShortGuid Empty = new(Guid.Empty);
 
+    /// <summary>Length of a ShortGuid string - the client id on the wire.</summary>
+    public const int Length = 22;
+
+    /// <summary>
+    ///     True for a client id as it may appear on the wire: exactly <see cref="Length" /> characters of the ShortGuid
+    ///     alphabet (URL-safe base64: A-Z a-z 0-9 - _).
+    /// </summary>
+    public static bool IsWellFormed(string value)
+    {
+        if (value == null || value.Length != Length) return false;
+
+        foreach (var c in value)
+            if (!char.IsAsciiLetterOrDigit(c) && c != '-' && c != '_')
+                return false;
+
+        return true;
+    }
+
     #endregion
 
     #region Fields

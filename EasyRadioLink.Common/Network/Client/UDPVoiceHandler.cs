@@ -1,17 +1,24 @@
-﻿using System;
+using System;
 using System.Collections.Concurrent;
 using System.Net;
 using System.Net.Sockets;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using EasyRadioLink.Common.Models;
 using EasyRadioLink.Common.Models.EventMessages;
+using EasyRadioLink.Common.Network.Crypto;
 using EasyRadioLink.Common.Network.Singletons;
 using NLog;
 
 namespace EasyRadioLink.Common.Network.Client;
 
+/// <summary>
+///     UDP voice connection of the client. Every datagram is encrypted with this connection's key from the SYNC reply
+///     (<see cref="UdpTransportSession" />, <see cref="UdpDatagram" /> layout): voice packets and the ping every 15 s
+///     are sealed right before they are sent; received datagrams are only used if they authenticate and pass the replay
+///     window - anything else is dropped (and does not count as a sign of life). <see cref="Ready" /> becomes true with
+///     the first authenticated pong.
+/// </summary>
 public class UDPVoiceHandler
 {
     private static readonly TimeSpan UDP_VOIP_TIMEOUT = TimeSpan.FromSeconds(42); // seconds for timeout before redoing VoIP
@@ -24,21 +31,29 @@ public class UDPVoiceHandler
 
     private static readonly Logger Logger = LogManager.GetCurrentClassLogger();
 
-    // FIFO so voice packets leave in the order they were recorded
+    // FIFO so voice packets leave in the order they were recorded (plain bodies - sealed when they are sent)
     private readonly ConcurrentQueue<byte[]> _outgoing = new ConcurrentQueue<byte[]>();
     private readonly byte[] _guidAsciiBytes;
     private CancellationTokenSource _stopRequest;
     private readonly IPEndPoint _serverEndpoint;
+    private readonly UdpTransportSession _transport;
     private bool _started;
     private SemaphoreSlim _outgoingSemaphore = new SemaphoreSlim(0);
 
-    public UDPVoiceHandler(string guid, IPEndPoint endPoint)
+    /// <param name="guid">The client's 22 character id (owner of the key).</param>
+    /// <param name="endPoint">The server's voice endpoint (same as TCP).</param>
+    /// <param name="udpKey">This connection's UDP key from the SYNC reply (copied - the caller may clear it).</param>
+    public UDPVoiceHandler(string guid, IPEndPoint endPoint, UdpTransportKey udpKey)
     {
-        _guidAsciiBytes = Encoding.ASCII.GetBytes(guid);
+        ArgumentNullException.ThrowIfNull(udpKey);
+
+        _guidAsciiBytes = System.Text.Encoding.ASCII.GetBytes(guid);
+        _transport = new UdpTransportSession(guid, udpKey.Key, udpKey.KeyId, false);
 
         _serverEndpoint = endPoint;
     }
 
+    /// <summary>Decrypted voice packets (encoded <see cref="UDPVoicePacket" />s) received from the server.</summary>
     public BlockingCollection<byte[]> EncodedAudio { get; } = new();
 
 
@@ -107,6 +122,20 @@ public class UDPVoiceHandler
         }
     }
 
+    /// <summary>Seals and sends one body; false if nothing may be sent any more (counter used up).</summary>
+    private async Task<bool> SendSealedAsync(UdpClient listener, byte[] body, CancellationToken token)
+    {
+        var datagram = _transport.Seal(body);
+        if (datagram == null)
+        {
+            Logger.Error("UDP counter used up or voice connection closed - not sending");
+            return false;
+        }
+
+        await listener.SendAsync(datagram, token);
+        return true;
+    }
+
     private async void StartUDP()
     {
         using (_stopRequest = new CancellationTokenSource())
@@ -115,8 +144,9 @@ public class UDPVoiceHandler
             var listener = SetupListener();
 
             // Send a first ping to check connectivity.
-            Logger.Info($"Pinging Server - Starting");
+            Logger.Info($"Pinging Server - Starting (UDP key #{_transport.KeyId:x8})");
             var pingInterval = TimeSpan.FromSeconds(15);
+            var pingBody = UdpDatagram.PingBody.ToArray();
 
             // Initial states to avoid null checks and also avoid throwing before we enter the loop.
             var receiveTask = Task.FromException<UdpReceiveResult>(new Exception());
@@ -131,32 +161,15 @@ public class UDPVoiceHandler
                     if (pingTask.IsCompletedSuccessfully)
                     {
                         // Send ping every 15s.
-                        await listener.SendAsync(_guidAsciiBytes, token);
+                        await SendSealedAsync(listener, pingBody, token);
                         pingTask = Task.Delay(pingInterval, token);
                     }
 
                     if (receiveTask.IsCompleted)
                     {
-                        if (receiveTask.IsCompletedSuccessfully)
-                        {
-                            var bytes = receiveTask.Result.Buffer;
-                            if (bytes?.Length == 22)
-                            {
-                                if (!Ready)
-                                {
-                                    Logger.Info($"Received initial Ping Back from Server");
-                                }
-                                Ready = true;
-                                
-                            }
-                            else if (Ready && bytes?.Length > 22)
-                            {
-                                EncodedAudio.Add(bytes);
-                            }
-
-                            // Consider this a valid heartbeat. Reset the clock!
+                        // Only an authenticated datagram is a valid heartbeat. Reset the clock!
+                        if (receiveTask.IsCompletedSuccessfully && HandleDatagram(receiveTask.Result.Buffer))
                             timeoutTask = Task.Delay(UDP_VOIP_TIMEOUT, token);
-                        }
 
                         receiveTask = listener.ReceiveAsync(token).AsTask();
                     }
@@ -171,7 +184,7 @@ public class UDPVoiceHandler
 
                         if (_outgoing.TryDequeue(out var outgoing) && Ready)
                         {
-                            await listener.SendAsync(outgoing, token);
+                            await SendSealedAsync(listener, outgoing, token);
                         }
                     }
 
@@ -226,10 +239,35 @@ public class UDPVoiceHandler
             CloseListener(listener);
             _outgoing.Clear();
 
+            if (_transport.AuthenticationFailures > 0 || _transport.ReplaysRejected > 0)
+                Logger.Info($"UDP: dropped {_transport.AuthenticationFailures} datagrams that failed " +
+                            $"authentication and {_transport.ReplaysRejected} replayed/old ones");
+
+            _transport.Dispose();
+
             Interlocked.Exchange(ref _started, false);
 
             Logger.Info("UDP Voice Handler Thread Stop");
         }
+    }
+
+    /// <summary>Authenticates a received datagram; false (dropped) unless it is authentic and new.</summary>
+    private bool HandleDatagram(byte[] datagram)
+    {
+        if (_transport.Open(datagram, out var body) != UdpOpenResult.Ok) return false;
+
+        if (UdpDatagram.IsPing(body))
+        {
+            if (!Ready) Logger.Info("Received initial Ping Back from Server");
+
+            Ready = true;
+        }
+        else if (Ready)
+        {
+            EncodedAudio.Add(body);
+        }
+
+        return true;
     }
 
     public void RequestStop()
@@ -250,8 +288,11 @@ public class UDPVoiceHandler
             {
                 udpVoicePacket.GuidBytes ??= _guidAsciiBytes;
                 udpVoicePacket.OriginalClientGuidBytes ??= _guidAsciiBytes;
-                
-                _outgoing.Enqueue(udpVoicePacket.EncodePacket());
+
+                var body = udpVoicePacket.EncodePacket();
+                if (body.Length > UdpDatagram.MaxBodyLength) return false;
+
+                _outgoing.Enqueue(body);
                 _outgoingSemaphore.Release(1);
 
                 return true;

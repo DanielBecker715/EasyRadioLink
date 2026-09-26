@@ -231,40 +231,22 @@ public class AudioRecordingManager
             _clientFullQueues.Add(new AudioRecordingStreamHydrated(MaxSamples, $"{i}.c"));
             _playerFullQueues.Add(new AudioRecordingStreamHydrated(MaxSamples, $"{i}.p"));
 
-            // only user radios (1..10) get a recording stream / file - slot 0 is reserved
-            if (i < Constants.FIRST_RADIO_INDEX) continue;
+            // only the radio (slot 1) gets a recording stream / file - the other slots never carry audio
+            if (i != Constants.FIRST_RADIO_INDEX) continue;
 
             var streams = new List<AudioRecordingStream>
             {
                 _clientFullQueues[i],
                 _playerFullQueues[i]
             };
-            _radioFullQueues.Add(new AudioRecordingStreamMixer(streams, $"-Radio-{i}"));
+            _radioFullQueues.Add(new AudioRecordingStreamMixer(streams, "-Radio"));
         }
 
-        // setup the recording writer to emit a single file that contains a mix of all radios
-        // or multiple files that contains per radio traffic. stop any existing writer first.
+        // one file with everything received and transmitted on the radio. stop any existing writer first.
 
         _audioRecordingWriter?.Stop();
 
-        if (GlobalSettingsStore.Instance.GetClientSettingBool(GlobalSettingsKeys.SingleFileMixdown))
-        {
-            // write single mixed file. create a writer with a single stream source: a mixer
-            // that combines all per-radio streams.
-
-            var streams = new List<AudioRecordingStream>
-            {
-                new AudioRecordingStreamMixer(_radioFullQueues, "-All")
-            };
-            _audioRecordingWriter = CreateWriter(streams, SampleRate, MaxSamples);
-        }
-        else
-        {
-            // write per-radio audio files. create a write with N streams, one for each of the
-            // radios.
-
-            _audioRecordingWriter = CreateWriter(_radioFullQueues, SampleRate, MaxSamples);
-        }
+        _audioRecordingWriter = CreateWriter(_radioFullQueues, SampleRate, MaxSamples);
 
         _stop = false;
         _processThreadDone = false;

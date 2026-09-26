@@ -8,15 +8,14 @@ namespace EasyRadioLink.Common.Helpers;
 ///     Well-known file locations of the client.
 ///     <para>
 ///         User data lives in <see cref="UserDataDirectory" /> (<c>%AppData%\EasyRadioLink</c>). The settings
-///         (global.cfg, profiles), favourites, radios-custom.json, the radio state and the client logs are in the
-///         settings folder <c>GlobalSettingsStore.Path</c>, which the <c>-cfg=&lt;directory&gt;</c> argument moves;
-///         presets, custom radio models and recordings always use the locations below. Built-in data (radio models,
-///         audio effects, radios.json) is resolved relative to <see cref="ProgramDirectory" />, never the working
-///         directory.
+///         (global.cfg, profiles), favourites, the radio state and the client logs are in the settings folder
+///         <c>GlobalSettingsStore.Path</c>, which the <c>-cfg=&lt;directory&gt;</c> argument moves; custom radio models
+///         and recordings always use the locations below. Built-in data (radio models, audio effects) is resolved
+///         relative to <see cref="ProgramDirectory" />, never the working directory.
 ///     </para>
 ///     <para>
-///         The server does NOT use these locations: server.cfg defaults to the server's program folder, and Presets,
-///         server-radios.json, banned.txt, logs, the transmission log and the client export live next to server.cfg
+///         The server does NOT use these locations: server.cfg defaults to the server's program folder, and banned.txt,
+///         logs, the transmission log and the client export live next to server.cfg
 ///         (see <c>ServerSettingsStore.ConfigDirectory</c>).
 ///     </para>
 ///     All directory properties create the directory on first access (errors are logged, not thrown).
@@ -44,9 +43,6 @@ public static class AppPaths
         }
     }
 
-    /// <summary><c>%AppData%\EasyRadioLink\Presets</c> - preset channel files (default of the LastPresetsFolder setting).</summary>
-    public static string PresetsDirectory => EnsureDirectory(Path.Combine(UserDataDirectory, "Presets"));
-
     /// <summary><c>%AppData%\EasyRadioLink\RadioModels</c> - user overrides of the built-in radio models.</summary>
     public static string CustomRadioModelsDirectory => EnsureDirectory(Path.Combine(UserDataDirectory, "RadioModels"));
 
@@ -63,7 +59,7 @@ public static class AppPaths
         }
     }
 
-    /// <summary>Full path of a built-in file shipped next to the executable, e.g. <c>GetProgramFile("radios.json")</c>.</summary>
+    /// <summary>Full path of a built-in file shipped next to the executable, e.g. <c>GetProgramFile("whitelist.txt")</c>.</summary>
     public static string GetProgramFile(params string[] relativePathParts)
     {
         if (relativePathParts == null || relativePathParts.Length == 0) return ProgramDirectory;

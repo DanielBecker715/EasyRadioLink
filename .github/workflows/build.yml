@@ -92,8 +92,12 @@ jobs:
             exit 1
           fi
 
-      - name: Handshake and UDP ping
-        run: python3 packaging/linux/smoke-test.py 127.0.0.1 5010
+      - name: TLS and SYNC handshake
+        run: |
+          # the server must present exactly the identity whose fingerprint it printed on start
+          FP=$(sudo journalctl -u easyradiolink --no-pager | grep -oE 'fingerprint \(SHA-256\): [0-9A-F:]+' | tail -1 | sed 's/.*: //')
+          test -n "$FP"
+          python3 packaging/linux/smoke-test.py 127.0.0.1 5010 "$FP"
 
       - name: Check the sandbox
         run: |
@@ -103,6 +107,8 @@ jobs:
           # writes only to its state directory
           sudo test -f /var/lib/easyradiolink/server.cfg
           sudo test -f /var/lib/easyradiolink/serverlog.txt
+          # the TLS identity (private key) is readable by the service user only
+          test "$(sudo stat -c '%U %a' /var/lib/easyradiolink/server-identity.pfx)" = "easyradiolink 600"
           test "$(sudo stat -c '%U %a' /var/lib/easyradiolink)" = "easyradiolink 700"
           # the program itself is read-only for the service
           test "$(stat -c '%U' /opt/easyradiolink/EasyRadioLink.Server.Cli)" = "root"

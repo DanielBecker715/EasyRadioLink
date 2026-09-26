@@ -26,7 +26,8 @@ public class NetworkMessageTests
             { "SERVER_SETTINGS", 4 },
             { "CLIENT_DISCONNECT", 5 },
             { "VERSION_MISMATCH", 6 },
-            { "AUTH_FAILED", 7 }
+            { "AUTH_FAILED", 7 },
+            { "VOICE_KEY", 8 }
         };
 
         var actual = new Dictionary<string, int>();
@@ -162,6 +163,99 @@ public class NetworkMessageTests
     }
 
     [TestMethod]
+    public void SyncReplyCarriesTheUdpKeyOnlyWhenSet()
+    {
+        var key = Convert.ToBase64String(new byte[32]);
+        var reply = new NetworkMessage
+        {
+            MsgType = NetworkMessage.MessageType.SYNC,
+            Clients = new List<ClientInfo>(),
+            UdpKey = key,
+            UdpKeyId = 0xCAFE0001
+        };
+
+        var decoded = NetworkMessage.Decode(reply.Encode());
+        Assert.AreEqual(key, decoded.UdpKey);
+        Assert.AreEqual(0xCAFE0001u, decoded.UdpKeyId);
+
+        // every other message leaves the fields out entirely
+        using var document = JsonDocument.Parse(new NetworkMessage
+            { MsgType = NetworkMessage.MessageType.RADIO_UPDATE }.Encode());
+        Assert.IsFalse(document.RootElement.TryGetProperty("UdpKey", out _));
+        Assert.IsFalse(document.RootElement.TryGetProperty("UdpKeyId", out _));
+    }
+
+    [TestMethod]
+    public void ServerSideUdpKeyOfAClientIsNeverSerialised()
+    {
+        using var transport = new Common.Network.Crypto.UdpTransportSession(Guid,
+            Common.Network.Crypto.UdpTransportSession.GenerateKey(), 1, true);
+        var client = new ClientInfo { ClientGuid = Guid, Name = "A", UdpTransport = transport };
+
+        // the client list of every SYNC reply / RADIO_UPDATE and the client export serialise ClientInfo
+        var json = new NetworkMessage { MsgType = NetworkMessage.MessageType.SYNC, Clients = [client] }.Encode();
+
+        StringAssert.DoesNotMatch(json, new System.Text.RegularExpressions.Regex("Udp|Transport|Key",
+            System.Text.RegularExpressions.RegexOptions.IgnoreCase));
+    }
+
+    [TestMethod]
+    public void ClientInfoCarriesTheEndToEndPublicKey()
+    {
+        using var keys = Common.Network.Crypto.E2EKeyPair.Create();
+        var client = new ClientInfo { ClientGuid = Guid, Name = "A", E2EPublicKey = keys.PublicKey };
+
+        var json = new NetworkMessage { MsgType = NetworkMessage.MessageType.RADIO_UPDATE, Client = client }.Encode();
+
+        using var document = JsonDocument.Parse(json);
+        Assert.AreEqual(keys.PublicKey, document.RootElement.GetProperty("Client").GetProperty("E2EPublicKey").GetString());
+        Assert.AreEqual(keys.PublicKey, NetworkMessage.Decode(json).Client.E2EPublicKey);
+        Assert.AreEqual(keys.PublicKey, client.DeepClone().E2EPublicKey);
+    }
+
+    [TestMethod]
+    public void VoiceKeyMessageWireFormat()
+    {
+        var wrapped = Convert.ToBase64String(new byte[48]);
+        var message = new NetworkMessage
+        {
+            MsgType = NetworkMessage.MessageType.VOICE_KEY,
+            VoiceKey = new VoiceKeyMessage
+            {
+                SenderGuid = Guid,
+                TxId = Convert.ToBase64String(new byte[] { 1, 2, 3, 4, 5, 6, 7, 8 }),
+                Frequency = 27185000,
+                Modulation = Modulation.AM,
+                Keys = new Dictionary<string, string> { ["abcdefghijklmnopqrstuv"] = wrapped }
+            }
+        };
+
+        var json = message.Encode();
+
+        using var document = JsonDocument.Parse(json);
+        var root = document.RootElement;
+        Assert.AreEqual(8, root.GetProperty("MsgType").GetInt32());
+        var voiceKey = root.GetProperty("VoiceKey");
+        var names = new List<string>();
+        foreach (var property in voiceKey.EnumerateObject()) names.Add(property.Name);
+        CollectionAssert.AreEquivalent(new[] { "SenderGuid", "TxId", "Frequency", "Modulation", "Keys" }, names);
+        Assert.AreEqual(0, voiceKey.GetProperty("Modulation").GetInt32());
+        Assert.AreEqual("AQIDBAUGBwg=", voiceKey.GetProperty("TxId").GetString());
+        Assert.AreEqual(wrapped, voiceKey.GetProperty("Keys").GetProperty("abcdefghijklmnopqrstuv").GetString());
+        Assert.IsFalse(root.TryGetProperty("Client", out _));
+
+        var decoded = NetworkMessage.Decode(json);
+        Assert.AreEqual(NetworkMessage.MessageType.VOICE_KEY, decoded.MsgType);
+        Assert.IsTrue(decoded.VoiceKey.IsValid(out var txId, out _));
+        Assert.AreEqual(0x0102030405060708UL, txId);
+        Assert.AreEqual(wrapped, decoded.VoiceKey.Keys["abcdefghijklmnopqrstuv"]);
+
+        // other messages have no VoiceKey member
+        using var other = JsonDocument.Parse(new NetworkMessage { MsgType = NetworkMessage.MessageType.PING }.Encode());
+        Assert.IsFalse(other.RootElement.TryGetProperty("VoiceKey", out _));
+    }
+
+    [TestMethod]
     public void UnknownJsonMembersAreIgnored()
     {
         // e.g. a hello from the upstream application this product was forked from: unknown members, no Product
@@ -183,8 +277,11 @@ public class NetworkMessageTests
         Assert.IsFalse(AppVersion.IsSupportedProduct(null));
 
         Assert.IsTrue(AppVersion.IsSupportedProtocolVersion(AppVersion.ProtocolVersion));
-        Assert.IsTrue(AppVersion.IsSupportedProtocolVersion("1.0.0.0"));
+        Assert.IsTrue(AppVersion.IsSupportedProtocolVersion("1.1.0.0"));
         Assert.IsTrue(AppVersion.IsSupportedProtocolVersion("2.0"));
+        // 1.0 peers speak plain TCP/UDP - they can't talk to 1.1 (TLS + encrypted UDP)
+        Assert.IsFalse(AppVersion.IsSupportedProtocolVersion("1.0.0"));
+        Assert.IsFalse(AppVersion.IsSupportedProtocolVersion("1.0.9"));
         Assert.IsFalse(AppVersion.IsSupportedProtocolVersion("0.9.9"));
         Assert.IsFalse(AppVersion.IsSupportedProtocolVersion(null));
         Assert.IsFalse(AppVersion.IsSupportedProtocolVersion("not a version"));

@@ -2,17 +2,15 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Globalization;
-using System.Text.Json;
 using EasyRadioLink.Common.Helpers;
 using EasyRadioLink.Common.Models.EventMessages;
 using EasyRadioLink.Common.Models.Player;
 using EasyRadioLink.Common.Settings.Setting;
-using NLog;
 
 namespace EasyRadioLink.Common.Network.Singletons;
 
 /// <summary>
-///     Client-side mirror of the server's broadcast settings ("[General Settings]" + synthetic values).
+///     Client-side mirror of the server's broadcast settings ("[General Settings]").
 ///     Missing keys fall back to <see cref="DefaultServerSettings.Defaults" />.
 /// </summary>
 public class SyncedServerSettings
@@ -25,7 +23,6 @@ public class SyncedServerSettings
 
     //cache of processed settings as bools to make lookup slightly quicker
     private readonly ConcurrentDictionary<string, bool> _settingsBool;
-    private readonly Logger Logger = LogManager.GetCurrentClassLogger();
 
     public SyncedServerSettings()
     {
@@ -33,17 +30,6 @@ public class SyncedServerSettings
         _settingsBool = new ConcurrentDictionary<string, bool>();
         UpdateFrequencyLists();
     }
-
-    private Dictionary<string, List<ServerPresetChannel>> ServerPresetChannels { get; set; } = new();
-
-    /// <summary>
-    ///     The server's radio layout (SERVER_RADIO_PRESET): exactly <see cref="Constants.MAX_RADIOS" /> validated entries,
-    ///     or empty if the server does not provide one.
-    /// </summary>
-    public List<RadioDefinition> ServerRadioPreset { get; private set; } = new();
-
-    /// <summary>Raw SERVER_RADIO_PRESET value as received ("" if none) - handy to detect layout changes.</summary>
-    public string ServerRadioPresetJson { get; private set; } = "";
 
     /// <summary>Radio check (echo) frequencies in Hz (TEST_FREQUENCIES).</summary>
     public IReadOnlyList<double> TestFrequencies { get; private set; } = Array.Empty<double>();
@@ -53,6 +39,9 @@ public class SyncedServerSettings
 
     /// <summary>Protocol version reported by the server in its SYNC reply.</summary>
     public string ServerVersion { get; set; }
+
+    /// <summary>Fingerprint of the connected server's identity ("AB:CD:..."), verified against the pin.</summary>
+    public string ServerIdentityFingerprint { get; set; }
 
     public static SyncedServerSettings Instance
     {
@@ -119,26 +108,13 @@ public class SyncedServerSettings
         return false;
     }
 
-    public List<ServerPresetChannel> GetPresetChannels(string radio)
-    {
-        var presets = ServerPresetChannels;
-        if (radio != null)
-            foreach (var radioPreset in presets.Keys)
-                if (radio.StartsWith(radioPreset))
-                    return presets[radioPreset];
-
-        return new List<ServerPresetChannel>();
-    }
-
     /// <summary>Forgets everything received from a server (call on connect/disconnect).</summary>
     public void Reset()
     {
         _settings.Clear();
         _settingsBool.Clear();
-        ServerPresetChannels = new Dictionary<string, List<ServerPresetChannel>>();
-        ServerRadioPreset = new List<RadioDefinition>();
-        ServerRadioPresetJson = "";
         ServerVersion = null;
+        ServerIdentityFingerprint = null;
         UpdateFrequencyLists();
     }
 
@@ -156,31 +132,6 @@ public class SyncedServerSettings
 
             var value = kvp.Value ?? "";
             _settings.AddOrUpdate(kvp.Key, value, (key, oldVal) => value);
-
-            if (kvp.Key.Equals(ServerSettingsKeys.SERVER_PRESETS.ToString()))
-            {
-                try
-                {
-                    ServerPresetChannels =
-                        JsonSerializer.Deserialize<Dictionary<string, List<ServerPresetChannel>>>(value,
-                            new JsonSerializerOptions
-                            {
-                                AllowTrailingCommas = true,
-                                PropertyNameCaseInsensitive = true,
-                                ReadCommentHandling = JsonCommentHandling.Skip,
-                                IncludeFields = true
-                            }) ?? new Dictionary<string, List<ServerPresetChannel>>();
-                }
-                catch (Exception ex)
-                {
-                    Logger.Warn(ex, "Unable to read the server preset channels");
-                    ServerPresetChannels = new Dictionary<string, List<ServerPresetChannel>>();
-                }
-            }
-            else if (kvp.Key.Equals(ServerSettingsKeys.SERVER_RADIO_PRESET.ToString()))
-            {
-                DecodeServerRadioPreset(value);
-            }
         }
 
         UpdateFrequencyLists();
@@ -195,25 +146,6 @@ public class SyncedServerSettings
     public void PublishSettingsUpdated()
     {
         EventBus.Instance.PublishOnBackgroundThreadAsync(new ServerSettingsUpdatedMessage(_settings));
-    }
-
-    private void DecodeServerRadioPreset(string json)
-    {
-        try
-        {
-            var radios = RadioDefinition.ParseList(json);
-
-            ServerRadioPreset = radios.Count == 0
-                ? new List<RadioDefinition>()
-                : RadioDefinition.Normalise(radios);
-            ServerRadioPresetJson = radios.Count == 0 ? "" : json;
-        }
-        catch (Exception ex)
-        {
-            Logger.Warn(ex, "Unable to read the server radio layout");
-            ServerRadioPreset = new List<RadioDefinition>();
-            ServerRadioPresetJson = "";
-        }
     }
 
     private void UpdateFrequencyLists()

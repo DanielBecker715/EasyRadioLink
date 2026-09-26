@@ -47,67 +47,13 @@
         <ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Visible">
             <StackPanel Orientation="Vertical">
 
-                <!-- Push to talk and radio selection -->
+                <!-- Push to talk -->
                 <TextBlock Style="{StaticResource SectionText}" Text="{x:Static p:Resources.ControlsTalkHeader}" />
                 <inputSettingsControl:InputBindingControl x:Name="PTT"
                                                           ControlInputBinding="Ptt"
                                                           InputName="{x:Static p:Resources.InputPTT}" />
-                <inputSettingsControl:InputBindingControl x:Name="NextRadio"
-                                                          ControlInputBinding="NextRadio"
-                                                          InputName="{x:Static p:Resources.InputNextRadio}" />
-                <inputSettingsControl:InputBindingControl x:Name="PreviousRadio"
-                                                          ControlInputBinding="PreviousRadio"
-                                                          InputName="{x:Static p:Resources.InputPreviousRadio}" />
-                <inputSettingsControl:InputBindingControl x:Name="Radio1"
-                                                          ControlInputBinding="Switch1"
-                                                          InputName="{x:Static p:Resources.InputRadio1}" />
-                <inputSettingsControl:InputBindingControl x:Name="Radio2"
-                                                          ControlInputBinding="Switch2"
-                                                          InputName="{x:Static p:Resources.InputRadio2}" />
-                <inputSettingsControl:InputBindingControl x:Name="Radio3"
-                                                          ControlInputBinding="Switch3"
-                                                          InputName="{x:Static p:Resources.InputRadio3}" />
-                <inputSettingsControl:InputBindingControl x:Name="Radio4"
-                                                          ControlInputBinding="Switch4"
-                                                          InputName="{x:Static p:Resources.InputRadio4}" />
-                <inputSettingsControl:InputBindingControl x:Name="Radio5"
-                                                          ControlInputBinding="Switch5"
-                                                          InputName="{x:Static p:Resources.InputRadio5}" />
-                <inputSettingsControl:InputBindingControl x:Name="Radio6"
-                                                          ControlInputBinding="Switch6"
-                                                          InputName="{x:Static p:Resources.InputRadio6}" />
-                <inputSettingsControl:InputBindingControl x:Name="Radio7"
-                                                          ControlInputBinding="Switch7"
-                                                          InputName="{x:Static p:Resources.InputRadio7}" />
-                <inputSettingsControl:InputBindingControl x:Name="Radio8"
-                                                          ControlInputBinding="Switch8"
-                                                          InputName="{x:Static p:Resources.InputRadio8}" />
-                <inputSettingsControl:InputBindingControl x:Name="Radio9"
-                                                          ControlInputBinding="Switch9"
-                                                          InputName="{x:Static p:Resources.InputRadio9}" />
-                <inputSettingsControl:InputBindingControl x:Name="Radio10"
-                                                          ControlInputBinding="Switch10"
-                                                          InputName="{x:Static p:Resources.InputRadio10}" />
 
-                <!-- Selected radio -->
-                <TextBlock Style="{StaticResource SectionText}" Text="{x:Static p:Resources.ControlsRadioHeader}" />
-                <inputSettingsControl:InputBindingControl x:Name="ToggleGuard"
-                                                          ControlInputBinding="ToggleGuard"
-                                                          InputName="{x:Static p:Resources.InputToggleGuard}" />
-                <inputSettingsControl:InputBindingControl x:Name="RadioChannelUp"
-                                                          ControlInputBinding="RadioChannelUp"
-                                                          InputName="{x:Static p:Resources.InputRadioChannelUp}" />
-                <inputSettingsControl:InputBindingControl x:Name="RadioChannelDown"
-                                                          ControlInputBinding="RadioChannelDown"
-                                                          InputName="{x:Static p:Resources.InputRadioChannelDown}" />
-                <inputSettingsControl:InputBindingControl x:Name="RadioVolumeUp"
-                                                          ControlInputBinding="RadioVolumeUp"
-                                                          InputName="{x:Static p:Resources.InputRadioVolumeUp}" />
-                <inputSettingsControl:InputBindingControl x:Name="RadioVolumeDown"
-                                                          ControlInputBinding="RadioVolumeDown"
-                                                          InputName="{x:Static p:Resources.InputRadioVolumeDown}" />
-
-                <!-- Frequency of the selected radio -->
+                <!-- Frequency -->
                 <TextBlock Style="{StaticResource SectionText}" Text="{x:Static p:Resources.ControlsFrequencyHeader}" />
                 <inputSettingsControl:InputBindingControl x:Name="Up100"
                                                           ControlInputBinding="Up100"
@@ -146,17 +92,14 @@
                                                           ControlInputBinding="Down0001"
                                                           InputName="{x:Static p:Resources.InputDown0001}" />
 
-                <!-- Encryption of the selected radio -->
-                <TextBlock Style="{StaticResource SectionText}" Text="{x:Static p:Resources.ControlsEncryptionHeader}" />
-                <inputSettingsControl:InputBindingControl x:Name="ToggleEncryption"
-                                                          ControlInputBinding="ToggleEncryption"
-                                                          InputName="{x:Static p:Resources.InputToggleEncryption}" />
-                <inputSettingsControl:InputBindingControl x:Name="EncryptionKeyIncrease"
-                                                          ControlInputBinding="EncryptionKeyIncrease"
-                                                          InputName="{x:Static p:Resources.InputEncryptionIncrease}" />
-                <inputSettingsControl:InputBindingControl x:Name="EncryptionKeyDecrease"
-                                                          ControlInputBinding="EncryptionKeyDecrease"
-                                                          InputName="{x:Static p:Resources.InputEncryptionDecrease}" />
+                <!-- Volume -->
+                <TextBlock Style="{StaticResource SectionText}" Text="{x:Static p:Resources.ControlsVolumeHeader}" />
+                <inputSettingsControl:InputBindingControl x:Name="RadioVolumeUp"
+                                                          ControlInputBinding="RadioVolumeUp"
+                                                          InputName="{x:Static p:Resources.InputRadioVolumeUp}" />
+                <inputSettingsControl:InputBindingControl x:Name="RadioVolumeDown"
+                                                          ControlInputBinding="RadioVolumeDown"
+                                                          InputName="{x:Static p:Resources.InputRadioVolumeDown}" />
 
                 <!-- Windows -->
                 <TextBlock Style="{StaticResource SectionText}" Text="{x:Static p:Resources.ControlsWindowsHeader}" />

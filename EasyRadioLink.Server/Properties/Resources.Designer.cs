@@ -10,7 +10,6 @@
 namespace EasyRadioLink.Server.Properties {
     using System;
 
-
     /// <summary>
     ///   A strongly-typed resource class, for looking up localized strings, etc.
     /// </summary>
@@ -141,6 +140,15 @@ namespace EasyRadioLink.Server.Properties {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to Server identity.
+        /// </summary>
+        public static string GroupIdentity {
+            get {
+                return ResourceManager.GetString("GroupIdentity", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Logging and export.
         /// </summary>
         public static string GroupLogging {
@@ -204,20 +212,20 @@ namespace EasyRadioLink.Server.Properties {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to Clients remember this fingerprint on their first connection and warn their users if it ever changes. Share it with your users so they can compare it in Server Info. Keep server-identity.pfx (next to the settings file) private and include it in backups - a new identity makes every client show a warning..
+        /// </summary>
+        public static string LabelIdentityHint {
+            get {
+                return ResourceManager.GetString("LabelIdentityHint", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Port:.
         /// </summary>
         public static string LabelPort {
             get {
                 return ResourceManager.GetString("LabelPort", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to Allow radio encryption.
-        /// </summary>
-        public static string LabelRadioEncryption {
-            get {
-                return ResourceManager.GetString("LabelRadioEncryption", resourceCulture);
             }
         }
 
@@ -249,38 +257,11 @@ namespace EasyRadioLink.Server.Properties {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to Server channel presets (Presets folder).
-        /// </summary>
-        public static string LabelServerPresets {
-            get {
-                return ResourceManager.GetString("LabelServerPresets", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to Server radio layout.
-        /// </summary>
-        public static string LabelServerRadioPreset {
-            get {
-                return ResourceManager.GetString("LabelServerRadioPreset", resourceCulture);
-            }
-        }
-
-        /// <summary>
         ///   Looks up a localized string similar to Show transmitter name.
         /// </summary>
         public static string LabelShowTransmitterName {
             get {
                 return ResourceManager.GetString("LabelShowTransmitterName", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to Strict radio encryption.
-        /// </summary>
-        public static string LabelStrictEncryption {
-            get {
-                return ResourceManager.GetString("LabelStrictEncryption", resourceCulture);
             }
         }
 
@@ -420,14 +401,14 @@ namespace EasyRadioLink.Server.Properties {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to Radios that support encryption may scramble their transmissions with a key (1-252)..
+        ///   Looks up a localized string similar to SHA-256 fingerprint of the server's public key (server-identity.pfx).
         /// </summary>
-        public static string TooltipRadioEncryption {
+        public static string TooltipIdentity {
             get {
-                return ResourceManager.GetString("TooltipRadioEncryption", resourceCulture);
+                return ResourceManager.GetString("TooltipIdentity", resourceCulture);
             }
         }
-
+        
         /// <summary>
         ///   Looks up a localized string similar to Two stations transmitting at the same time on one frequency interfere with each other..
         /// </summary>
@@ -447,47 +428,20 @@ namespace EasyRadioLink.Server.Properties {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to Clients must enter this password to connect. Leave empty for an open server. The password is sent unencrypted..
+        ///   Looks up a localized string similar to Clients must enter this password to connect. Leave empty for an open server. The password travels over the encrypted connection..
         /// </summary>
         public static string TooltipServerPassword {
             get {
                 return ResourceManager.GetString("TooltipServerPassword", resourceCulture);
             }
         }
-
-        /// <summary>
-        ///   Looks up a localized string similar to Offer the channel lists from the Presets folder next to server.cfg (one *.txt file per radio name, lines "Name|MHz")..
-        /// </summary>
-        public static string TooltipServerPresets {
-            get {
-                return ResourceManager.GetString("TooltipServerPresets", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to Clients use the radios defined in server-radios.json next to server.cfg (same format as the client's radios.json)..
-        /// </summary>
-        public static string TooltipServerRadioPreset {
-            get {
-                return ResourceManager.GetString("TooltipServerRadioPreset", resourceCulture);
-            }
-        }
-
+        
         /// <summary>
         ///   Looks up a localized string similar to Clients see the name of the user who is transmitting..
         /// </summary>
         public static string TooltipShowTransmitterName {
             get {
                 return ResourceManager.GetString("TooltipShowTransmitterName", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to Encrypted radios only understand transmissions with the same key; unencrypted transmissions are scrambled for them too..
-        /// </summary>
-        public static string TooltipStrictEncryption {
-            get {
-                return ResourceManager.GetString("TooltipStrictEncryption", resourceCulture);
             }
         }
 
@@ -510,7 +464,16 @@ namespace EasyRadioLink.Server.Properties {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to Clients see how many other users are tuned to each radio's frequency..
+        ///   Looks up a localized string similar to Not loaded - the server is not running.
+        /// </summary>
+        public static string ValueIdentityNotLoaded {
+            get {
+                return ResourceManager.GetString("ValueIdentityNotLoaded", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Clients see how many other users are tuned to their frequency..
         /// </summary>
         public static string TooltipTunedCount {
             get {

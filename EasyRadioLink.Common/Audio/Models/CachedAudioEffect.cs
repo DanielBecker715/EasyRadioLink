@@ -23,8 +23,7 @@ public class CachedAudioEffect
     {
         RADIO_TRANS_START = 0, // prefix: RADIO_TRANS_START*.wav (user selectable)
         RADIO_TRANS_END = 1, // prefix: RADIO_TRANS_END*.wav (user selectable)
-        ENCRYPTION_TX = 2, // ENCRYPTION_TX.wav - played on TX start of an encrypted radio
-        ENCRYPTION_RX = 3, // ENCRYPTION_RX.wav - played on RX start of a decryptable encrypted transmission
+        // 2 and 3 were the encryption tones (removed)
         NATO_TONE = 4, // NATO_TONE.wav - looping FM tone (user-visible label "FM tone")
         SQUELCH_TAIL_AM = 5, // SQUELCH_TAIL_AM.wav - noise source for the AM squelch tail
         SQUELCH_TAIL_FM = 6, // SQUELCH_TAIL_FM.wav - noise source for the FM squelch tail

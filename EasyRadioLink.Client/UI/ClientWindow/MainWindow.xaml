@@ -181,20 +181,15 @@
                             </Grid>
                         </GroupBox>
 
-                        <!-- Radios -->
+                        <!-- Radio -->
                         <GroupBox Margin="0,0,0,8" Header="{x:Static p:Resources.RadiosHeader}">
                             <Grid Margin="4">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="110" />
                                     <ColumnDefinition Width="*" />
                                 </Grid.ColumnDefinitions>
-                                <Grid.RowDefinitions>
-                                    <RowDefinition Height="Auto" />
-                                    <RowDefinition Height="Auto" />
-                                </Grid.RowDefinitions>
 
-                                <StackPanel Grid.Row="0"
-                                            Grid.Column="1"
+                                <StackPanel Grid.Column="1"
                                             Margin="0,2,0,2"
                                             Orientation="Horizontal">
                                     <Button x:Name="ShowRadioPanel"
@@ -210,38 +205,6 @@
                                             IsEnabled="{Binding IsConnected}"
                                             ToolTip="{x:Static p:Resources.ToolTipClientList}" />
                                 </StackPanel>
-
-                                <TextBlock Grid.Row="1"
-                                           Grid.Column="0"
-                                           Margin="2,8,10,0"
-                                           Style="{StaticResource FormLabel}"
-                                           Text="{x:Static p:Resources.PresetsFolderLabel}" />
-                                <Grid Grid.Row="1"
-                                      Grid.Column="1"
-                                      Margin="0,8,0,0">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*" />
-                                        <ColumnDefinition Width="Auto" />
-                                        <ColumnDefinition Width="Auto" />
-                                    </Grid.ColumnDefinitions>
-                                    <Label x:Name="PresetsFolderLabel"
-                                           Grid.Column="0"
-                                           Padding="0"
-                                           VerticalContentAlignment="Center" />
-                                    <Button x:Name="PresetsFolderBrowseButton"
-                                            Grid.Column="1"
-                                            Margin="6,0,0,0"
-                                            Click="PresetsFolderBrowseButton_Click"
-                                            Content="{x:Static p:Resources.PresetsFolderBrowseButton}"
-                                            IsEnabled="{Binding IsNotConnected, Mode=OneWay}"
-                                            ToolTip="{x:Static p:Resources.ToolTipPresetsFolder}" />
-                                    <Button x:Name="PresetsFolderResetButton"
-                                            Grid.Column="2"
-                                            Margin="6,0,0,0"
-                                            Click="PresetsFolderResetButton_Click"
-                                            Content="{x:Static p:Resources.PresetsFolderResetButton}"
-                                            IsEnabled="{Binding IsNotConnected, Mode=OneWay}" />
-                                </Grid>
                             </Grid>
                         </GroupBox>
 
@@ -477,12 +440,7 @@
                             </ListItem>
                             <ListItem>
                                 <Paragraph>
-                                    <Run Text="{x:Static p:Resources.AboutTipPresets}" />
-                                </Paragraph>
-                            </ListItem>
-                            <ListItem>
-                                <Paragraph>
-                                    <Run Text="{x:Static p:Resources.AboutTipRadios}" />
+                                    <Run Text="{x:Static p:Resources.AboutTipBands}" />
                                 </Paragraph>
                             </ListItem>
                             <ListItem>

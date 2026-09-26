@@ -26,6 +26,7 @@ using EasyRadioLink.Common.Helpers;
 using EasyRadioLink.Common.Models.EventMessages;
 using EasyRadioLink.Common.Models.Player;
 using EasyRadioLink.Common.Network.Client;
+using EasyRadioLink.Common.Network.Crypto;
 using EasyRadioLink.Common.Network.Singletons;
 using EasyRadioLink.Common.Settings;
 using EasyRadioLink.Common.Settings.Setting;
@@ -40,9 +41,11 @@ namespace EasyRadioLink.Client.UI.ClientWindow;
 ///     <para>
 ///         Connect flow: <see cref="ConnectAsync" /> creates the <see cref="TCPClientHandler" /> (with the server
 ///         password) and shows "Connecting..."; <c>TCPClientStatusMessage(true)</c> arrives after the server accepted
-///         the handshake - then audio and the <see cref="RadioStateSyncService" /> are started (radios become usable)
-///         and the radio panel is opened if <c>AutoOpenRadioPanel</c> is set. Any disconnect stops both again; a
-///         wrong password, an incompatible server or an unreachable server is reported with a dialog.
+///         the handshake - then audio and the <see cref="RadioStateSyncService" /> are started (the radio becomes usable)
+///         and the radio window is opened if <c>AutoOpenRadioPanel</c> is set. Any disconnect stops both again; a
+///         wrong password, an incompatible server or an unreachable server is reported with a dialog. A server whose
+///         identity differs from the pinned one (known-servers.json) is not connected to: the user sees both
+///         fingerprints and may trust the new identity and connect again.
 ///     </para>
 /// </summary>
 public class MainWindowViewModel : PropertyChangedBaseClass, IHandle<TCPClientStatusMessage>,
@@ -108,7 +111,7 @@ public class MainWindowViewModel : PropertyChangedBaseClass, IHandle<TCPClientSt
 
     public ICommand ServerSettingsCommand { get; set; }
 
-    /// <summary>Shows / hides the radio panel (button "Radio Panel", hotkey InputBinding.RadioPanelToggle).</summary>
+    /// <summary>Shows / hides the radio window (button "Show Radio", hotkey InputBinding.RadioPanelToggle).</summary>
     public DelegateCommand RadioPanelCommand { get; set; }
 
     public ClientStateSingleton ClientState { get; } = ClientStateSingleton.Instance;
@@ -116,7 +119,7 @@ public class MainWindowViewModel : PropertyChangedBaseClass, IHandle<TCPClientSt
     public AudioInputSingleton AudioInput { get; } = AudioInputSingleton.Instance;
     public AudioOutputSingleton AudioOutput { get; } = AudioOutputSingleton.Instance;
 
-    /// <summary>Connected: the server accepted the handshake (radios and audio are running).</summary>
+    /// <summary>Connected: the server accepted the handshake (radio and audio are running).</summary>
     public bool IsConnected { get; set; }
 
     /// <summary>A connection attempt is running (between Connect and the server's answer).</summary>
@@ -338,9 +341,9 @@ public class MainWindowViewModel : PropertyChangedBaseClass, IHandle<TCPClientSt
         await Task.Run(() =>
         {
             if (obj.Connected)
-                OnConnected(obj.Address);
+                OnConnected(obj.Address, obj.UdpKey, obj.VoiceSession);
             else
-                OnDisconnected(obj.Error);
+                OnDisconnected(obj.Error, obj.IdentityMismatch, obj.ErrorDetail);
         }, cancellationToken);
     }
 
@@ -363,7 +366,7 @@ public class MainWindowViewModel : PropertyChangedBaseClass, IHandle<TCPClientSt
         return Task.CompletedTask;
     }
 
-    private void OnConnected(IPEndPoint address)
+    private void OnConnected(IPEndPoint address, UdpTransportKey udpKey, E2EVoiceSession voiceSession)
     {
         if (_client == null || !IsConnecting)
         {
@@ -389,9 +392,9 @@ public class MainWindowViewModel : PropertyChangedBaseClass, IHandle<TCPClientSt
                 Logger.Warn(ex, "Failed to play connect sound");
             }
 
-        if (address == null)
+        if (address == null || udpKey == null || voiceSession == null)
         {
-            Logger.Error("TCPClientStatusMessage - Connect sent without address - disconnecting");
+            Logger.Error("TCPClientStatusMessage - Connect sent without address, UDP key or voice encryption - disconnecting");
             Stop();
             return;
         }
@@ -403,17 +406,17 @@ public class MainWindowViewModel : PropertyChangedBaseClass, IHandle<TCPClientSt
         {
             if (!ReferenceEquals(client, _client) || !IsConnected)
             {
-                Logger.Info("Disconnected while the connection was set up - not starting audio and radios");
+                Logger.Info("Disconnected while the connection was set up - not starting audio and the radio");
                 return;
             }
 
-            if (!StartAudio(address))
+            if (!StartAudio(address, udpKey, voiceSession))
             {
                 Stop();
                 return;
             }
 
-            // loads the radios once the server settings are known and keeps the server up to date
+            // switches the radio on (remembered frequency) and keeps the server up to date
             _radioSync?.Stop();
             _radioSync = new RadioStateSyncService();
             _radioSync.Start();
@@ -430,7 +433,8 @@ public class MainWindowViewModel : PropertyChangedBaseClass, IHandle<TCPClientSt
             });
     }
 
-    private void OnDisconnected(TCPClientStatusMessage.ErrorCode error)
+    private void OnDisconnected(TCPClientStatusMessage.ErrorCode error, ServerIdentityMismatch identityMismatch,
+        string errorDetail)
     {
         if (_awaitingDisconnect)
         {
@@ -457,6 +461,15 @@ public class MainWindowViewModel : PropertyChangedBaseClass, IHandle<TCPClientSt
                     string.Format(Resources.MsgBoxServerMismatchText, address,
                         string.IsNullOrWhiteSpace(serverVersion) ? Resources.ValueUnknown : serverVersion,
                         AppVersion.ProtocolVersion, AppVersion.MinimumProtocolVersion));
+                break;
+            case TCPClientStatusMessage.ErrorCode.SERVER_IDENTITY_CHANGED when identityMismatch != null:
+                ShowServerIdentityChanged(identityMismatch, address);
+                break;
+            case TCPClientStatusMessage.ErrorCode.SERVER_IDENTITY_UNKNOWN when identityMismatch != null:
+                ShowServerIdentityUnknown(identityMismatch, address);
+                break;
+            case TCPClientStatusMessage.ErrorCode.IDENTITY_CHECK_FAILED:
+                ShowIdentityCheckFailed(address, errorDetail);
                 break;
             case TCPClientStatusMessage.ErrorCode.INVALID_SERVER:
                 ShowConnectionError(Resources.MsgBoxConnectFailed, Resources.MsgBoxInvalidServerHeading,
@@ -493,6 +506,92 @@ public class MainWindowViewModel : PropertyChangedBaseClass, IHandle<TCPClientSt
                 Logger.Error(ex, "Unable to show the connection error dialog");
             }
         });
+    }
+
+    /// <summary>
+    ///     The server presented another identity than the pinned one. Shows both fingerprints; only if the user chooses
+    ///     "Connect anyway and trust the new identity" the new fingerprint is pinned and the connection is tried again.
+    ///     Cancel (the default) keeps the old pin.
+    /// </summary>
+    private void ShowServerIdentityChanged(ServerIdentityMismatch mismatch, string address)
+    {
+        ShowTrustIdentityDialog(mismatch, Resources.MsgBoxIdentityChanged, Resources.MsgBoxIdentityChangedHeading,
+            string.Format(Resources.MsgBoxIdentityChangedText, address, mismatch.PinnedFingerprint,
+                mismatch.PresentedFingerprint), Resources.BtnTrustNewIdentity);
+    }
+
+    /// <summary>
+    ///     The saved identity of the server (its entry in known-servers.json) is unreadable, so the server could not be
+    ///     checked. Shows the presented fingerprint; only if the user chooses to trust it, it is pinned (replacing the
+    ///     unreadable entry) and the connection is tried again.
+    /// </summary>
+    private void ShowServerIdentityUnknown(ServerIdentityMismatch mismatch, string address)
+    {
+        ShowTrustIdentityDialog(mismatch, Resources.MsgBoxIdentityUnknown, Resources.MsgBoxIdentityUnknownHeading,
+            string.Format(Resources.MsgBoxIdentityUnknownText, address, mismatch.PresentedFingerprint),
+            Resources.BtnTrustIdentity);
+    }
+
+    /// <summary>Asks whether to trust <see cref="ServerIdentityMismatch.PresentedFingerprint" />; Cancel is the default.</summary>
+    private void ShowTrustIdentityDialog(ServerIdentityMismatch mismatch, string caption, string heading, string text,
+        string trustLabel)
+    {
+        Application.Current?.Dispatcher.InvokeAsync(async () =>
+        {
+            try
+            {
+                var trustButton = new TaskDialogButton(trustLabel);
+                var cancelButton = TaskDialogButton.Cancel;
+
+                var result = await TaskDialog.ShowDialogAsync(new TaskDialogPage
+                {
+                    Caption = caption,
+                    Heading = heading,
+                    Text = text,
+                    Icon = TaskDialogIcon.ShieldWarningYellowBar,
+                    Buttons = [trustButton, cancelButton],
+                    DefaultButton = cancelButton
+                });
+
+                if (result != trustButton)
+                {
+                    Logger.Info($"Did not trust the identity {mismatch.PresentedFingerprint} of {mismatch.ServerKey} - not connecting");
+                    return;
+                }
+
+                try
+                {
+                    KnownServersStore.Default.Trust(mismatch.ServerKey, mismatch.PresentedFingerprint);
+                }
+                catch (Exception ex) when (ex is System.IO.IOException or UnauthorizedAccessException)
+                {
+                    // e.g. known-servers.json became unreadable - it is never overwritten then
+                    Logger.Error(ex, $"Unable to save the identity of {mismatch.ServerKey}");
+                    ShowIdentityCheckFailed(_connectAddress, ex.Message);
+                    return;
+                }
+
+                Logger.Warn($"The user trusted the identity of {mismatch.ServerKey}: " +
+                            $"{mismatch.PresentedFingerprint} (was {mismatch.PinnedFingerprint ?? "unreadable"})");
+
+                if (!IsConnected && !IsConnecting && !_awaitingDisconnect) await ConnectAsync();
+            }
+            catch (Exception ex)
+            {
+                Logger.Error(ex, "Unable to show the server identity dialog");
+            }
+        });
+    }
+
+    /// <summary>
+    ///     The identity of the server could not be checked (known-servers.json can't be read or is damaged): the
+    ///     connection was refused and nothing is offered - the file has to be repaired first.
+    /// </summary>
+    private void ShowIdentityCheckFailed(string address, string detail)
+    {
+        ShowConnectionError(Resources.MsgBoxIdentityCheckFailed, Resources.MsgBoxIdentityCheckFailedHeading,
+            string.Format(Resources.MsgBoxIdentityCheckFailedText, address,
+                string.IsNullOrWhiteSpace(detail) ? Resources.ValueUnknown : detail));
     }
 
     private void UpdatePlayerCountAndVUMeters(object sender, EventArgs e)
@@ -543,6 +642,7 @@ public class MainWindowViewModel : PropertyChangedBaseClass, IHandle<TCPClientSt
             {
                 IsConnecting = true;
 
+                // the server's identity is pinned under the name the user typed (known-servers.json)
                 _client = new TCPClientHandler(ClientState.ShortGUID,
                     new ClientInfo
                     {
@@ -552,7 +652,9 @@ public class MainWindowViewModel : PropertyChangedBaseClass, IHandle<TCPClientSt
                         Name = ClientState.EffectiveName,
                         RadioInfo = ClientState.PlayerRadioInfo.ConvertToRadioBase()
                     },
-                    string.IsNullOrEmpty(ServerPassword) ? null : ServerPassword);
+                    ClientState.E2EKeys,
+                    string.IsNullOrEmpty(ServerPassword) ? null : ServerPassword,
+                    host);
 
                 Logger.Info($"Connecting to {_connectAddress} ({ip}:{port})");
                 _client.TryConnect(new IPEndPoint(ip, port));
@@ -586,7 +688,7 @@ public class MainWindowViewModel : PropertyChangedBaseClass, IHandle<TCPClientSt
         });
     }
 
-    /// <summary>Stops audio, radios and the connection.</summary>
+    /// <summary>Stops audio, the radio and the connection.</summary>
     /// <param name="userInitiated">true: the user disconnected (the connection is closed without an error)</param>
     private void Stop(bool userInitiated = true)
     {
@@ -614,7 +716,7 @@ public class MainWindowViewModel : PropertyChangedBaseClass, IHandle<TCPClientSt
 
         try
         {
-            // saves the radio tuning and marks the radios unavailable
+            // remembers the radio tuning and marks the radio unavailable
             _radioSync?.Stop();
         }
         catch (Exception ex)
@@ -735,7 +837,7 @@ public class MainWindowViewModel : PropertyChangedBaseClass, IHandle<TCPClientSt
     }
 
     /// <returns>false if audio could not be started (a dialog was shown)</returns>
-    private bool StartAudio(IPEndPoint endPoint)
+    private bool StartAudio(IPEndPoint endPoint, UdpTransportKey udpKey, E2EVoiceSession voiceSession)
     {
         var started = false;
 
@@ -744,7 +846,7 @@ public class MainWindowViewModel : PropertyChangedBaseClass, IHandle<TCPClientSt
         {
             try
             {
-                started = _audioManager.StartEncoding(ClientState.ShortGUID, endPoint);
+                started = _audioManager.StartEncoding(ClientState.ShortGUID, endPoint, udpKey, voiceSession);
             }
             catch (Exception ex)
             {

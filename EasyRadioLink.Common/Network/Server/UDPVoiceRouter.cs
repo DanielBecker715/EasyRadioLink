@@ -3,6 +3,7 @@ using EasyRadioLink.Common.Helpers;
 using EasyRadioLink.Common.Models;
 using EasyRadioLink.Common.Models.EventMessages;
 using EasyRadioLink.Common.Models.Player;
+using EasyRadioLink.Common.Network.Crypto;
 using EasyRadioLink.Common.Network.Server.TransmissionLogging;
 using EasyRadioLink.Common.Settings;
 using EasyRadioLink.Common.Settings.Setting;
@@ -20,8 +21,20 @@ using LogManager = NLog.LogManager;
 
 namespace EasyRadioLink.Common.Network.Server;
 
-internal class UDPVoiceRouter : IHandle<ServerFrequenciesChanged>, IHandle<ServerSettingsChangedMessage>
+/// <summary>
+///     UDP side of the server. Every datagram is encrypted with the key of the client it belongs to
+///     (<see cref="UdpDatagram" />). Per datagram, cheapest check first: length, known client id, source address
+///     (the IP of the client's TCP connection), failed-authentication budget of the source endpoint (not for the
+///     client's last authenticated endpoint, <see cref="UdpAuthFailureBudget" />), then decryption + replay window
+///     (<see cref="UdpTransportSession.Open" />), then the per-sender rate limit. A ping is answered with an encrypted
+///     pong; a voice packet must name its authenticated sender, is routed by frequency/modulation as before and
+///     encrypted again for every recipient with the recipient's key and the server's counter.
+/// </summary>
+internal class UDPVoiceRouter : IHandle<ServerFrequenciesChanged>
 {
+    // datagrams that failed authentication are counted and summarised in the log at most this often
+    private static readonly TimeSpan DropLogInterval = TimeSpan.FromMinutes(1);
+
     // WSAIoctl SIO_UDP_CONNRESET: stop Windows from failing the next receive with WSAECONNRESET (10054) after an
     // ICMP "port unreachable" for a packet sent to a client that has gone away
     private const int SIO_UDP_CONNRESET = unchecked((int)0x9800000C);
@@ -38,10 +51,13 @@ internal class UDPVoiceRouter : IHandle<ServerFrequenciesChanged>, IHandle<Serve
     private readonly ServerSettingsStore _serverSettings = ServerSettingsStore.Instance;
     private volatile List<double> _testFrequencies = new();
 
-    // read for every voice packet - cached instead of taking the settings lock each time
-    private volatile bool _strictEncryption;
-
     private TransmissionLoggingQueue _transmissionLoggingQueue;
+
+    // receive loop only
+    private readonly UdpAuthFailureBudget _authFailureBudget = new();
+    private long _authenticationFailures;
+    private long _budgetDrops;
+    private DateTime _lastDropLogUtc = DateTime.UtcNow;
 
     public UDPVoiceRouter(ConcurrentDictionary<string, ClientInfo> clientsList, IEventAggregator eventAggregator)
     {
@@ -51,7 +67,6 @@ internal class UDPVoiceRouter : IHandle<ServerFrequenciesChanged>, IHandle<Serve
 
         var freqString = _serverSettings.GetGeneralSetting(ServerSettingsKeys.TEST_FREQUENCIES).StringValue;
         UpdateTestFrequencies(freqString);
-        UpdateStrictEncryption();
     }
 
     public Task HandleAsync(ServerFrequenciesChanged message, CancellationToken cancellationToken)
@@ -60,17 +75,6 @@ internal class UDPVoiceRouter : IHandle<ServerFrequenciesChanged>, IHandle<Serve
             UpdateTestFrequencies(message.TestFrequencies);
 
         return Task.CompletedTask;
-    }
-
-    public Task HandleAsync(ServerSettingsChangedMessage message, CancellationToken cancellationToken)
-    {
-        UpdateStrictEncryption();
-        return Task.CompletedTask;
-    }
-
-    private void UpdateStrictEncryption()
-    {
-        _strictEncryption = _serverSettings.GetGeneralSetting(ServerSettingsKeys.STRICT_RADIO_ENCRYPTION).BoolValue;
     }
 
     private void UpdateTestFrequencies(string freqString)
@@ -221,28 +225,6 @@ internal class UDPVoiceRouter : IHandle<ServerFrequenciesChanged>, IHandle<Serve
         _transmissionLoggingQueue?.Stop();
     }
 
-    private async Task DispatchOutgoingPacketsAsync(UdpClient listener, OutgoingUDPPackets outgoingUdpPacket)
-    {
-        var recipients = new List<Task>(outgoingUdpPacket.OutgoingEndPoints.Count);
-        foreach (var outgoingEndPoint in outgoingUdpPacket.OutgoingEndPoints)
-        {
-            try
-            {
-                recipients.Add(listener.SendAsync(outgoingUdpPacket.ReceivedPacket, outgoingEndPoint, _stopCancellationToken.Token).AsTask());
-            }
-            catch (OperationCanceledException)
-            {
-                // Expected termination.
-            }
-            catch (Exception)
-            {
-                // Deliberately ignored, can be spammy.
-            }
-        }
-
-        await Task.WhenAll(recipients);
-    }
-
     private async Task ProcessIncomingPacketsAsync(UdpClient listener, CancellationToken token)
     {
         while (!token.IsCancellationRequested)
@@ -250,52 +232,7 @@ internal class UDPVoiceRouter : IHandle<ServerFrequenciesChanged>, IHandle<Serve
             try
             {
                 var inbound = await listener.ReceiveAsync(token);
-                var rawBytes = inbound.Buffer;
-                var receivedFromEP = inbound.RemoteEndPoint;
-                if (rawBytes?.Length == UDPVoicePacket.GuidLength)
-                {
-                    try
-                    {
-                        //22 bytes are guid!
-                        var guid = Encoding.ASCII.GetString(rawBytes, 0, UDPVoicePacket.GuidLength);
-
-                        // Only clients that completed the TCP handshake (and the password check) get a pong, and only
-                        // from the IP address they authenticated from - unknown peers never become "ready" and can't
-                        // receive voice.
-                        if (_clientsList.TryGetValue(guid, out var client) &&
-                            VoiceRouting.IsFromClientAddress(client, receivedFromEP))
-                        {
-                            client.VoipPort = receivedFromEP;
-
-                            //send back ping UDP, don't care much about the result.
-                            _ = Task.Run(async Task () => await listener.SendAsync(rawBytes, rawBytes.Length, receivedFromEP), token);
-                        }
-                    }
-                    catch (Exception e)
-                    {
-                        Logger.Error(e, "Bad send?");
-                    }
-                }
-                else if (rawBytes?.Length > UDPVoicePacket.GuidLength)
-                {
-                    // Cheap checks right here on the receive loop: junk, unknown or spoofed senders, muted clients and
-                    // floods never create any work. The last 22 bytes are the sender's client id.
-                    var guid = Encoding.ASCII.GetString(rawBytes, rawBytes.Length - UDPVoicePacket.GuidLength,
-                        UDPVoicePacket.GuidLength);
-                    if (!_clientsList.TryGetValue(guid, out var sender) ||
-                        !VoiceRouting.IsFromClientAddress(sender, receivedFromEP) ||
-                        sender.Muted ||
-                        !VoiceRouting.AllowVoicePacket(sender, DateTime.UtcNow.Ticks))
-                        continue;
-
-                    sender.VoipPort = receivedFromEP;
-
-                    _ = Task.Run(async Task () => await ProcessPendingPacketAsync(listener, new PendingPacket
-                    {
-                        RawBytes = rawBytes,
-                        ReceivedFrom = receivedFromEP
-                    }, sender), token);
-                }
+                HandleDatagram(listener, inbound.Buffer, inbound.RemoteEndPoint, token);
             }
             catch (OperationCanceledException)
             {
@@ -320,25 +257,118 @@ internal class UDPVoiceRouter : IHandle<ServerFrequenciesChanged>, IHandle<Serve
         Logger.Info("UDP Voice Router Listener stopped.");
     }
 
-    /// <param name="client">The sender - already checked by the receive loop (registered, right address, not muted).</param>
-    private async Task ProcessPendingPacketAsync(UdpClient listener, PendingPacket udpPacket, ClientInfo client)
+    /// <summary>
+    ///     Runs on the receive loop: junk, unknown clients, spoofed senders, forged, replayed and flooding datagrams are
+    ///     dropped here without creating any other work (and without logging each of them).
+    /// </summary>
+    private void HandleDatagram(UdpClient listener, byte[] datagram, IPEndPoint receivedFrom, CancellationToken token)
     {
-        if (udpPacket == null)
+        if (datagram == null || !UdpDatagram.HasValidLength(datagram.Length)) return;
+
+        // unknown client id: dropped before any crypto
+        var guid = UdpDatagram.ReadClientGuid(datagram);
+        if (!_clientsList.TryGetValue(guid, out var sender)) return;
+
+        var transport = sender.UdpTransport;
+        if (transport == null || !VoiceRouting.IsFromClientAddress(sender, receivedFrom)) return;
+
+        var nowTicks = DateTime.UtcNow.Ticks;
+
+        // The client's last authenticated endpoint is always heard. Every other endpoint (a first datagram, a NAT
+        // rebinding - or forged datagrams in the client's name, e.g. from another host behind the same NAT) has a
+        // budget of failed authentications of its own, so a forger can use up only its own budget, never the client's.
+        var fromAuthenticatedEndpoint = VoiceRouting.IsFromAuthenticatedEndpoint(sender, receivedFrom);
+        if (!fromAuthenticatedEndpoint && !_authFailureBudget.AllowAttempt(receivedFrom, nowTicks))
         {
+            _budgetDrops++;
+            LogDroppedDatagrams();
             return;
         }
 
+        var result = transport.Open(datagram, out var body);
+        if (result != UdpOpenResult.Ok)
+        {
+            if (result == UdpOpenResult.AuthenticationFailed)
+            {
+                if (!fromAuthenticatedEndpoint) _authFailureBudget.RecordFailure(receivedFrom, nowTicks);
+                _authenticationFailures++;
+                LogDroppedDatagrams();
+            }
+
+            return;
+        }
+
+        // voice and pings count against the sender's rate limit (a flood costs the flooder, not every listener)
+        if (!VoiceRouting.AllowVoicePacket(sender, nowTicks)) return;
+
+        // only an authenticated datagram may move the client's voice endpoint (e.g. after a NAT rebinding)
+        sender.VoipPort = receivedFrom;
+
+        if (UdpDatagram.IsPing(body))
+        {
+            var pong = transport.Seal(UdpDatagram.PingBody);
+            if (pong != null) _ = SendDatagramAsync(listener, pong, receivedFrom);
+
+            return;
+        }
+
+        if (sender.Muted) return;
+
+        _ = Task.Run(async Task () => await ProcessVoicePacketAsync(listener, body, sender), token);
+    }
+
+    private void LogDroppedDatagrams()
+    {
+        var now = DateTime.UtcNow;
+        if (now - _lastDropLogUtc < DropLogInterval) return;
+
+        Logger.Warn($"Dropped {_authenticationFailures} UDP datagrams that failed authentication (wrong key, " +
+                    $"tampered or forged) and {_budgetDrops} more without decrypting them (too many failures from " +
+                    $"their source) since {_lastDropLogUtc:u}");
+        _authenticationFailures = 0;
+        _budgetDrops = 0;
+        _lastDropLogUtc = now;
+    }
+
+    private async Task SendDatagramAsync(UdpClient listener, byte[] datagram, IPEndPoint endPoint)
+    {
         try
         {
-            var udpVoicePacket = UDPVoicePacket.DecodeVoicePacket(udpPacket.RawBytes);
+            await listener.SendAsync(datagram, endPoint, _stopCancellationToken.Token);
+        }
+        catch (Exception)
+        {
+            // Deliberately ignored (stopping, client gone) - can be spammy.
+        }
+    }
 
-            if (udpVoicePacket == null) return;
+    /// <param name="body">The decrypted body: an encoded <see cref="UDPVoicePacket" />.</param>
+    /// <param name="sender">The authenticated sender (registered, right address, not muted).</param>
+    private async Task ProcessVoicePacketAsync(UdpClient listener, byte[] body, ClientInfo sender)
+    {
+        try
+        {
+            if (!UDPVoicePacket.TryDecode(body, false, out var udpVoicePacket)) return;
 
-            var outgoingVoice = GenerateOutgoingPacket(udpVoicePacket, udpPacket, client);
+            // nobody speaks with another user's id: the packet must name the sender whose key authenticated it
+            if (udpVoicePacket.Guid != sender.ClientGuid || udpVoicePacket.OriginalClientGuid != sender.ClientGuid)
+                return;
 
-            if (outgoingVoice == null) return;
+            var recipients =
+                VoiceRouting.SelectRecipientClients(_clientsList.Values, sender, udpVoicePacket, _testFrequencies);
+            if (recipients.Count == 0) return;
 
-            await DispatchOutgoingPacketsAsync(listener, outgoingVoice);
+            var sends = new List<Task>(recipients.Count);
+            foreach (var recipient in recipients)
+            {
+                var endPoint = recipient.VoipPort;
+                var datagram = recipient.UdpTransport?.Seal(body);
+                if (endPoint == null || datagram == null) continue;
+
+                sends.Add(SendDatagramAsync(listener, datagram, endPoint));
+            }
+
+            await Task.WhenAll(sends);
 
             //mark as transmitting for the UI
             var mainFrequency = udpVoicePacket.Frequencies.FirstOrDefault();
@@ -346,10 +376,10 @@ internal class UDPVoiceRouter : IHandle<ServerFrequenciesChanged>, IHandle<Serve
             if (mainFrequency > 0 && udpVoicePacket.Modulations.Length > 0)
             {
                 var mainModulation = (Modulation)udpVoicePacket.Modulations[0];
-                client.TransmittingFrequency = $"{RadioCalculator.FormatMHz(mainFrequency)} {mainModulation}";
-                client.LastTransmissionReceived = DateTime.Now;
+                sender.TransmittingFrequency = $"{RadioCalculator.FormatMHz(mainFrequency)} {mainModulation}";
+                sender.LastTransmissionReceived = DateTime.Now;
 
-                _transmissionLoggingQueue?.LogTransmission(client);
+                _transmissionLoggingQueue?.LogTransmission(sender);
             }
         }
         catch (OperationCanceledException)
@@ -360,21 +390,5 @@ internal class UDPVoiceRouter : IHandle<ServerFrequenciesChanged>, IHandle<Serve
         {
             //Hide for now, slows down too much....
         }
-    }
-
-    private OutgoingUDPPackets GenerateOutgoingPacket(UDPVoicePacket udpVoice, PendingPacket pendingPacket,
-        ClientInfo sender)
-    {
-        var outgoingList = VoiceRouting.SelectRecipients(_clientsList.Values, sender, udpVoice, _strictEncryption,
-            _testFrequencies);
-
-        if (outgoingList.Count > 0)
-            return new OutgoingUDPPackets
-            {
-                OutgoingEndPoints = outgoingList,
-                ReceivedPacket = pendingPacket.RawBytes
-            };
-
-        return null;
     }
 }

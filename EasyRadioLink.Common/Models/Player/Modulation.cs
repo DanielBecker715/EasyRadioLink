@@ -1,10 +1,9 @@
 namespace EasyRadioLink.Common.Models.Player;
 
 /// <summary>
-///     Radio modulation. The numeric values are part of the wire contract (UDP voice packet byte, TCP JSON integer,
-///     radios.json / server-radios.json / preset files) and must never change.
-///     Values 2, 4, 6 and 7 are retired and must never be reused; anything outside the defined set is treated as
-///     <see cref="DISABLED" /> when radios are loaded.
+///     Radio modulation. The numeric values are part of the wire contract (UDP voice packet byte, TCP JSON integer)
+///     and must never change. The client's radio takes its modulation from the <see cref="BandPlan" />.
+///     Values 2, 4, 6 and 7 are retired and must never be reused.
 /// </summary>
 public enum Modulation
 {

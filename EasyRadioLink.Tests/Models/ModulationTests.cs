@@ -9,7 +9,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace EasyRadioLink.Common.Tests.Models;
 
-/// <summary>Modulation values are on the wire (UDP byte, TCP JSON int, radio files) and must never change.</summary>
+/// <summary>Modulation values are on the wire (UDP byte, TCP JSON int) and must never change.</summary>
 [TestClass]
 public class ModulationTests
 {
@@ -35,16 +35,6 @@ public class ModulationTests
 
         foreach (var retired in new[] { 2, 4, 6, 7 })
             Assert.IsFalse(Enum.IsDefined(typeof(Modulation), retired), $"{retired} is retired and must not be reused");
-    }
-
-    [TestMethod]
-    public void RadioLayoutsSupportExactlyTheDefinedModulations()
-    {
-        foreach (var modulation in Enum.GetValues<Modulation>())
-            Assert.IsTrue(RadioDefinition.IsSupportedModulation(modulation), modulation.ToString());
-
-        foreach (var retired in new[] { 2, 4, 6, 7, 8, 255 })
-            Assert.IsFalse(RadioDefinition.IsSupportedModulation((Modulation)retired), retired.ToString());
     }
 
     [TestMethod]

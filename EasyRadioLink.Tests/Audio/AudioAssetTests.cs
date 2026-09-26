@@ -3,13 +3,12 @@ using System.IO;
 using System.Linq;
 using EasyRadioLink.Common.Audio.Models;
 using EasyRadioLink.Common.Audio.Providers;
-using EasyRadioLink.Common.Models.Player;
 using EasyRadioLink.Common.Settings;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace EasyRadioLink.Common.Tests.Audio;
 
-/// <summary>The shipped sound effects, radio layout and the audio settings keys.</summary>
+/// <summary>The shipped sound effects and the audio settings keys.</summary>
 [TestClass]
 public class AudioAssetTests
 {
@@ -62,6 +61,7 @@ public class AudioAssetTests
             Assert.IsFalse(name.StartsWith("HAVEQUICK", StringComparison.OrdinalIgnoreCase), name);
             Assert.IsFalse(name.StartsWith("KY_58", StringComparison.OrdinalIgnoreCase), name);
             Assert.IsFalse(name.Contains("Apache", StringComparison.OrdinalIgnoreCase), name);
+            Assert.IsFalse(name.StartsWith("ENCRYPTION", StringComparison.OrdinalIgnoreCase), name);
         }
 
         Assert.IsFalse(Directory.Exists(Path.Combine(RepositoryFiles.AudioEffectsFolder, "Ambient")));
@@ -122,57 +122,10 @@ public class AudioAssetTests
     }
 
     [TestMethod]
-    public void ShippedRadioLayoutMatchesTheDesign()
+    public void TheClientShipsNoRadioLayout()
     {
-        var radios = RadioDefinition.ParseList(File.ReadAllText(RepositoryFiles.RadiosJson));
-        Assert.HasCount(Constants.MAX_RADIOS, radios, "radios.json lists all 11 slots");
-
-        var normalised = RadioDefinition.Normalise(radios);
-
-        // slot, name, model, modulation, freq, min, max, guard, encCapable
-        var expected = new (string name, string model, Modulation modulation, double freq, double min, double max,
-            double guard, bool encCapable)[]
-            {
-                ("Reserved", "", Modulation.DISABLED, 0, 0, 0, 0, false),
-                ("CB", "cb", Modulation.AM, 27185000, 26965000, 27405000, 0, false),
-                ("PMR446", "walkie", Modulation.FM, 446006250, 446006250, 446193750, 0, false),
-                ("VHF Airband", "airband", Modulation.AM, 124800000, 118000000, 137000000, 121500000, false),
-                ("UHF Tactical", "tactical", Modulation.AM, 251000000, 225000000, 400000000, 243000000, true),
-                ("HF Long Range", "hf", Modulation.AM, 7100000, 3000000, 30000000, 0, false),
-                ("Digital", "digital", Modulation.DIGITAL, 100000000, 100000000, 199999000, 0, true)
-            };
-
-        for (var slot = 0; slot < expected.Length; slot++)
-        {
-            var radio = radios[slot];
-            var e = expected[slot];
-            Assert.AreEqual(e.name, radio.name, $"slot {slot}");
-            Assert.AreEqual(e.modulation, radio.modulation, $"slot {slot}");
-            if (slot == 0) continue;
-
-            Assert.AreEqual(e.model, radio.model, $"slot {slot}");
-            Assert.AreEqual(e.freq, radio.freq, $"slot {slot}");
-            Assert.AreEqual(e.min, radio.freqMin, $"slot {slot}");
-            Assert.AreEqual(e.max, radio.freqMax, $"slot {slot}");
-            Assert.AreEqual(e.guard, radio.guardFreq, $"slot {slot}");
-            Assert.AreEqual(e.encCapable, radio.encCapable, $"slot {slot}");
-            Assert.IsFalse(radio.enc, $"slot {slot}");
-
-            // the file is already valid - validation must not change it
-            Assert.AreEqual(radio.freq, normalised[slot].freq, $"slot {slot}");
-            Assert.AreEqual(radio.modulation, normalised[slot].modulation, $"slot {slot}");
-        }
-
-        for (var slot = expected.Length; slot < Constants.MAX_RADIOS; slot++)
-        {
-            Assert.AreEqual(Modulation.DISABLED, radios[slot].modulation, $"slot {slot}");
-            Assert.AreEqual($"Radio {slot}", radios[slot].name);
-        }
-
-        // every radio model used by the layout is shipped
-        var models = RadioModelFactory.FromFolders(RepositoryFiles.RadioModelsFolder);
-        foreach (var radio in radios.Where(radio => radio.model.Length > 0))
-            Assert.IsNotNull(models.GetModelInfo(radio.model), radio.model);
+        // the band plan defines the single radio - there is no radio layout file any more
+        Assert.IsFalse(File.Exists(Path.Combine(RepositoryFiles.ClientFolder, "radios.json")));
     }
 
     [TestMethod]
@@ -183,7 +136,11 @@ public class AudioAssetTests
                      "IntercomChannel", "MIDSRadioEffect", "HAVEQUICKTone", "HQToneVolume",
                      "IntercomTransmissionStartSelection", "IntercomTransmissionEndSelection", "AMCollisionVolume",
                      "AmbientCockpitNoiseEffect", "AmbientCockpitNoiseEffectVolume", "AmbientCockpitIntercomNoiseEffect",
-                     "AllowServerEAMRadioPreset"
+                     "AllowServerEAMRadioPreset",
+                     // single radio (1.1): no encryption, presets, radio switches, server layout, radios 2-10
+                     "RadioEncryptionEffects", "AutoSelectPresetChannel", "RadioSwitchIsPTT",
+                     "RadioSwitchIsPTTOnlyWhenValid", "ServerPresetSelection", "AllowServerRadioPreset",
+                     "Radio2Channel", "Radio10Channel"
                  })
             Assert.IsFalse(Enum.IsDefined(typeof(ProfileSettingsKeys), removed), removed);
 

@@ -13,11 +13,17 @@ public static class AppVersion
     /// <summary>Product name. Also sent as <c>NetworkMessage.Product</c> so foreign servers/clients are rejected.</summary>
     public const string Product = "EasyRadioLink";
 
-    /// <summary>Wire protocol version sent in every <c>NetworkMessage.Version</c>.</summary>
-    public const string ProtocolVersion = "1.0.0";
+    /// <summary>
+    ///     Wire protocol version sent in every <c>NetworkMessage.Version</c>. 1.1.0: TLS for TCP (pinned server
+    ///     identity), AES-256-GCM for every UDP datagram with a per-client key from the SYNC reply.
+    /// </summary>
+    public const string ProtocolVersion = "1.1.0";
 
-    /// <summary>Oldest peer protocol version that is still accepted. Must be &lt;= <see cref="ProtocolVersion" />.</summary>
-    public const string MinimumProtocolVersion = "1.0.0";
+    /// <summary>
+    ///     Oldest peer protocol version that is still accepted. Must be &lt;= <see cref="ProtocolVersion" />. 1.0 peers
+    ///     can't talk to 1.1 peers at all (no TLS/UDP encryption).
+    /// </summary>
+    public const string MinimumProtocolVersion = "1.1.0";
 
     /// <summary>Product version, e.g. "1.0.0" (from the assembly informational version).</summary>
     public static string Version { get; } = ReadProductVersion();

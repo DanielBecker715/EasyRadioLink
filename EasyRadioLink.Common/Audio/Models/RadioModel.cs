@@ -246,16 +246,16 @@ namespace EasyRadioLink.Common.Audio.Models
 
         public float NoiseGain { get; init; }
 
-        public TxRadioModel(Models.Dto.RadioModel dtoPreset)
+        public TxRadioModel(Models.Dto.RadioModel dtoModel)
         {
-            TxEffectProvider = dtoPreset.TxEffect.ToSampleProvider(TxSource);
+            TxEffectProvider = dtoModel.TxEffect.ToSampleProvider(TxSource);
 
-            if (dtoPreset.EncryptionEffect != null)
+            if (dtoModel.EncryptionEffect != null)
             {
-                EncryptionProvider = dtoPreset.EncryptionEffect.ToSampleProvider(TxEffectProvider);
+                EncryptionProvider = dtoModel.EncryptionEffect.ToSampleProvider(TxEffectProvider);
             }
 
-            NoiseGain = dtoPreset.NoiseGain;
+            NoiseGain = dtoModel.NoiseGain;
         }
     }
 
@@ -265,9 +265,9 @@ namespace EasyRadioLink.Common.Audio.Models
 
         public ISampleProvider RxEffectProvider { get; init; }
 
-        public RxRadioModel(Models.Dto.RadioModel dtoPreset)
+        public RxRadioModel(Models.Dto.RadioModel dtoModel)
         {
-            RxEffectProvider = dtoPreset.RxEffect.ToSampleProvider(RxSource);
+            RxEffectProvider = dtoModel.RxEffect.ToSampleProvider(RxSource);
         }
     }
 

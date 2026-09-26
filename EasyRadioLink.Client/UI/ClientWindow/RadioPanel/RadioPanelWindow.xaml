@@ -2,175 +2,562 @@
     x:Class="EasyRadioLink.Client.UI.ClientWindow.RadioPanel.RadioPanelWindow"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:controls="clr-namespace:EasyRadioLink.Client.UI.Controls"
     xmlns:p="clr-namespace:EasyRadioLink.Client.Properties"
-    xmlns:radioPanel="clr-namespace:EasyRadioLink.Client.UI.ClientWindow.RadioPanel"
     x:Name="RadioPanelWin"
     Title="{x:Static p:Resources.RadioPanelTitle}"
-    Width="620"
-    Height="170"
+    Width="500"
+    Height="238"
     AllowsTransparency="True"
-    Background="#444"
-    Opacity="1.0"
-    ResizeMode="CanResizeWithGrip"
+    Background="Transparent"
+    ResizeMode="NoResize"
+    ShowActivated="True"
     Style="{x:Null}"
     Topmost="True"
+    UseLayoutRounding="False"
     WindowStyle="None">
 
-    <!-- the content has a fixed natural size; the window scales it uniformly when resized -->
+    <Window.Resources>
+        <!-- LCD palette (amber backlight) -->
+        <Color x:Key="LcdLitColor">#FFFFB23E</Color>
+        <Color x:Key="LcdGlowColor">#FFFF9A1F</Color>
+        <SolidColorBrush x:Key="LcdLitBrush" Color="{StaticResource LcdLitColor}" />
+        <SolidColorBrush x:Key="LcdGhostBrush" Color="#14FFB23E" />
+        <SolidColorBrush x:Key="LcdDimBrush" Color="#B0D08A2C" />
+        <SolidColorBrush x:Key="LcdTxBrush" Color="#FFFF5A45" />
+        <SolidColorBrush x:Key="LcdRxBrush" Color="#FF72FF86" />
+        <SolidColorBrush x:Key="PanelLabelBrush" Color="#FF858C96" />
+
+        <FontFamily x:Key="LcdFont">Bahnschrift SemiBold, Segoe UI Semibold, Segoe UI</FontFamily>
+
+        <!-- small indicator text on the LCD (band, mode, TX/RX, name, step) -->
+        <Style x:Key="LcdText" TargetType="{x:Type TextBlock}">
+            <Setter Property="FontFamily" Value="{StaticResource LcdFont}" />
+            <Setter Property="FontSize" Value="10.5" />
+            <Setter Property="Foreground" Value="{StaticResource LcdLitBrush}" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="SnapsToDevicePixels" Value="False" />
+        </Style>
+
+        <!-- TX / RX: faint while off, lit and glowing while on -->
+        <Style x:Key="LcdIndicator"
+               BasedOn="{StaticResource LcdText}"
+               TargetType="{x:Type TextBlock}">
+            <Setter Property="FontSize" Value="10" />
+            <Setter Property="Margin" Value="7,0,0,0" />
+            <Setter Property="Foreground" Value="{StaticResource LcdGhostBrush}" />
+        </Style>
+
+        <!-- keys below the display: dark, softly domed, pressed = sunk in -->
+        <Style x:Key="RadioKey" TargetType="{x:Type Button}">
+            <Setter Property="Focusable" Value="False" />
+            <Setter Property="Width" Value="46" />
+            <Setter Property="Height" Value="28" />
+            <Setter Property="Margin" Value="0,0,8,0" />
+            <Setter Property="Foreground" Value="#FFD9DDE3" />
+            <Setter Property="FontFamily" Value="{StaticResource LcdFont}" />
+            <Setter Property="FontSize" Value="10.5" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="ToolTipService.InitialShowDelay" Value="600" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type Button}">
+                        <Grid x:Name="Root">
+                            <!-- drop shadow -->
+                            <Border Margin="0,1.5,0,-1.5"
+                                    Background="#70000000"
+                                    CornerRadius="6" />
+                            <Border x:Name="Face"
+                                    BorderBrush="#FF121417"
+                                    BorderThickness="1"
+                                    CornerRadius="6">
+                                <Border.Background>
+                                    <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                                        <GradientStop Offset="0" Color="#FF50555D" />
+                                        <GradientStop Offset="1" Color="#FF2A2D32" />
+                                    </LinearGradientBrush>
+                                </Border.Background>
+                            </Border>
+                            <!-- highlight on the upper edge -->
+                            <Border x:Name="Highlight"
+                                    Margin="1"
+                                    BorderThickness="0,1,0,0"
+                                    CornerRadius="5">
+                                <Border.BorderBrush>
+                                    <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                                        <GradientStop Offset="0" Color="#10FFFFFF" />
+                                        <GradientStop Offset="0.5" Color="#40FFFFFF" />
+                                        <GradientStop Offset="1" Color="#10FFFFFF" />
+                                    </LinearGradientBrush>
+                                </Border.BorderBrush>
+                            </Border>
+                            <ContentPresenter HorizontalAlignment="Center"
+                                              VerticalAlignment="Center"
+                                              RecognizesAccessKey="False" />
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Face" Property="Background">
+                                    <Setter.Value>
+                                        <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                                            <GradientStop Offset="0" Color="#FF5B6069" />
+                                            <GradientStop Offset="1" Color="#FF30343A" />
+                                        </LinearGradientBrush>
+                                    </Setter.Value>
+                                </Setter>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="Root" Property="RenderTransform">
+                                    <Setter.Value>
+                                        <TranslateTransform Y="1" />
+                                    </Setter.Value>
+                                </Setter>
+                                <Setter TargetName="Highlight" Property="Visibility" Value="Hidden" />
+                                <Setter TargetName="Face" Property="Background">
+                                    <Setter.Value>
+                                        <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                                            <GradientStop Offset="0" Color="#FF25282C" />
+                                            <GradientStop Offset="1" Color="#FF3A3E45" />
+                                        </LinearGradientBrush>
+                                    </Setter.Value>
+                                </Setter>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="Root" Property="Opacity" Value="0.45" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- minimise / close in the corner: nearly invisible until hovered -->
+        <Style x:Key="CornerButton" TargetType="{x:Type Button}">
+            <Setter Property="Focusable" Value="False" />
+            <Setter Property="Width" Value="20" />
+            <Setter Property="Height" Value="20" />
+            <Setter Property="Margin" Value="4,0,0,0" />
+            <Setter Property="Foreground" Value="#FF7A818B" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type Button}">
+                        <Border x:Name="Face"
+                                Background="#00FFFFFF"
+                                CornerRadius="10">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Face" Property="Background" Value="#26FFFFFF" />
+                                <Setter Property="Foreground" Value="#FFE4E7EB" />
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="Face" Property="Background" Value="#40FFFFFF" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Resources>
+
+    <!-- the housing has a fixed natural size (500 x 238 incl. the shadow margin) and is scaled with the window -->
     <Viewbox x:Name="PanelViewbox"
              Stretch="Uniform"
              StretchDirection="Both">
-        <Grid x:Name="ContainerPanel" Background="#444">
-            <Grid.RowDefinitions>
-                <RowDefinition Height="22" />
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="30" />
-            </Grid.RowDefinitions>
+        <Grid x:Name="Housing"
+              Width="500"
+              Height="238">
 
-            <!-- header: drag anywhere, minimise, close -->
-            <DockPanel Grid.Row="0" LastChildFill="True">
-                <Button Height="15"
-                        Margin="2,0,5,0"
-                        VerticalAlignment="Center"
-                        Click="Button_Close"
-                        DockPanel.Dock="Right"
-                        Focusable="False"
-                        Style="{StaticResource DarkStyle-Button}"
-                        ToolTip="{x:Static p:Resources.ToolTipClose}">
-                    <Grid Width="10" Height="10">
-                        <TextBlock HorizontalAlignment="Center"
+            <!-- ============================== housing ============================== -->
+            <!-- the shadow is cast by a separate shape, so the content is not rendered through an effect -->
+            <Border Margin="11"
+                    Background="#FF000000"
+                    CornerRadius="18">
+                <Border.Effect>
+                    <DropShadowEffect BlurRadius="14"
+                                      Opacity="0.6"
+                                      ShadowDepth="3"
+                                      Color="Black" />
+                </Border.Effect>
+            </Border>
+            <Border Margin="10"
+                    BorderThickness="1"
+                    CornerRadius="18">
+                <Border.BorderBrush>
+                    <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                        <GradientStop Offset="0" Color="#FF5E636B" />
+                        <GradientStop Offset="0.25" Color="#FF2E3136" />
+                        <GradientStop Offset="1" Color="#FF0B0C0E" />
+                    </LinearGradientBrush>
+                </Border.BorderBrush>
+                <Border.Background>
+                    <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                        <GradientStop Offset="0" Color="#FF3A3E44" />
+                        <GradientStop Offset="0.45" Color="#FF26292D" />
+                        <GradientStop Offset="1" Color="#FF1B1D20" />
+                    </LinearGradientBrush>
+                </Border.Background>
+
+                <Grid x:Name="ContainerPanel" Background="Transparent">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="30" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+
+                    <!-- ============================== header ============================== -->
+                    <DockPanel Grid.Row="0"
+                               Margin="18,4,10,0"
+                               LastChildFill="True">
+                        <Button x:Name="CloseButton"
+                                Click="Button_Close"
+                                DockPanel.Dock="Right"
+                                Style="{StaticResource CornerButton}"
+                                ToolTip="{x:Static p:Resources.ToolTipClose}">
+                            <Path Data="M0,0 L7,7 M7,0 L0,7"
+                                  Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}"
+                                  StrokeEndLineCap="Round"
+                                  StrokeStartLineCap="Round"
+                                  StrokeThickness="1.4" />
+                        </Button>
+                        <Button x:Name="MinimiseButton"
+                                Click="Button_Minimise"
+                                DockPanel.Dock="Right"
+                                Style="{StaticResource CornerButton}"
+                                ToolTip="{x:Static p:Resources.ToolTipMinimise}">
+                            <Path Data="M0,0 L8,0"
+                                  Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}"
+                                  StrokeEndLineCap="Round"
+                                  StrokeStartLineCap="Round"
+                                  StrokeThickness="1.4" />
+                        </Button>
+
+                        <!-- link LED: green = connected -->
+                        <Ellipse x:Name="LinkLed"
+                                 Width="7"
+                                 Height="7"
+                                 Margin="0,0,8,0"
+                                 VerticalAlignment="Center"
+                                 DockPanel.Dock="Left"
+                                 Fill="#FF5A2320"
+                                 Stroke="#80000000"
+                                 StrokeThickness="0.8">
+                            <Ellipse.Effect>
+                                <DropShadowEffect x:Name="LinkLedGlow"
+                                                  BlurRadius="6"
+                                                  Opacity="0"
+                                                  ShadowDepth="0"
+                                                  Color="#FF4DFF6A" />
+                            </Ellipse.Effect>
+                        </Ellipse>
+                        <TextBlock x:Name="BrandText"
                                    VerticalAlignment="Center"
-                                   FontFamily="Marlett"
-                                   FontSize="14"
-                                   Padding="0,0,0,1"
-                                   Text="r" />
-                    </Grid>
-                </Button>
-                <Button Height="15"
-                        Margin="0"
-                        VerticalAlignment="Center"
-                        Click="Button_Minimise"
-                        DockPanel.Dock="Right"
-                        Focusable="False"
-                        Style="{StaticResource DarkStyle-Button}"
-                        ToolTip="{x:Static p:Resources.ToolTipMinimise}">
-                    <Grid Width="10" Height="10">
-                        <TextBlock HorizontalAlignment="Center"
+                                   FontFamily="{StaticResource LcdFont}"
+                                   FontSize="10"
+                                   Foreground="{StaticResource PanelLabelBrush}"
+                                   Text="EASYRADIOLINK" />
+                    </DockPanel>
+
+                    <!-- ============================== front panel ============================== -->
+                    <Grid Grid.Row="1" Margin="16,2,16,14">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="316" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="118" />
+                            <RowDefinition Height="*" />
+                        </Grid.RowDefinitions>
+
+                        <!-- ============================== display ============================== -->
+                        <Border x:Name="DisplayBezel"
+                                Grid.Row="0"
+                                Grid.Column="0"
+                                Padding="4"
+                                Background="#FF090A0B"
+                                BorderThickness="1"
+                                CornerRadius="9"
+                                MouseLeftButtonDown="Display_MouseLeftButtonDown"
+                                MouseWheel="Display_MouseWheel"
+                                ToolTip="{x:Static p:Resources.ToolTipRadioDisplay}"
+                                ToolTipService.InitialShowDelay="1200">
+                            <Border.BorderBrush>
+                                <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                                    <GradientStop Offset="0" Color="#FF050506" />
+                                    <GradientStop Offset="1" Color="#FF4A4F57" />
+                                </LinearGradientBrush>
+                            </Border.BorderBrush>
+
+                            <Grid>
+                                <!-- backlight -->
+                                <Border CornerRadius="5">
+                                    <Border.Background>
+                                        <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                                            <GradientStop Offset="0" Color="#FF2C1D08" />
+                                            <GradientStop Offset="1" Color="#FF1A1104" />
+                                        </LinearGradientBrush>
+                                    </Border.Background>
+                                </Border>
+                                <!-- soft inner glow of the backlight -->
+                                <Border x:Name="Backlight" CornerRadius="5">
+                                    <Border.Background>
+                                        <RadialGradientBrush Center="0.5,0.55" GradientOrigin="0.5,0.55" RadiusX="0.62" RadiusY="0.75">
+                                            <GradientStop Offset="0" Color="#2EFFA629" />
+                                            <GradientStop Offset="1" Color="#00FFA629" />
+                                        </RadialGradientBrush>
+                                    </Border.Background>
+                                </Border>
+                                <!-- inner shadow along the top edge of the glass -->
+                                <Border CornerRadius="5">
+                                    <Border.Background>
+                                        <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                                            <GradientStop Offset="0" Color="#70000000" />
+                                            <GradientStop Offset="0.12" Color="#00000000" />
+                                            <GradientStop Offset="0.88" Color="#00000000" />
+                                            <GradientStop Offset="1" Color="#40000000" />
+                                        </LinearGradientBrush>
+                                    </Border.Background>
+                                </Border>
+
+                                <Grid Margin="12,7,12,6">
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="16" />
+                                        <RowDefinition Height="*" />
+                                        <RowDefinition Height="16" />
+                                    </Grid.RowDefinitions>
+
+                                    <!-- band, mode | users on the frequency, TX, RX -->
+                                    <DockPanel Grid.Row="0" LastChildFill="False">
+                                        <Border x:Name="BandChip"
+                                                Padding="4,0,4,0"
+                                                VerticalAlignment="Center"
+                                                BorderBrush="{StaticResource LcdLitBrush}"
+                                                BorderThickness="1"
+                                                CornerRadius="2"
+                                                DockPanel.Dock="Left">
+                                            <TextBlock x:Name="BandText"
+                                                       FontSize="10"
+                                                       Style="{StaticResource LcdText}"
+                                                       Text="CB" />
+                                        </Border>
+                                        <TextBlock x:Name="ModulationText"
+                                                   Margin="7,0,0,0"
+                                                   DockPanel.Dock="Left"
+                                                   Style="{StaticResource LcdText}"
+                                                   Text="AM" />
+
+                                        <TextBlock x:Name="RxText"
+                                                   DockPanel.Dock="Right"
+                                                   Style="{StaticResource LcdIndicator}"
+                                                   Text="RX" />
+                                        <TextBlock x:Name="TxText"
+                                                   DockPanel.Dock="Right"
+                                                   Style="{StaticResource LcdIndicator}"
+                                                   Text="TX" />
+                                        <StackPanel x:Name="UsersPanel"
+                                                    Margin="0,0,4,0"
+                                                    VerticalAlignment="Center"
+                                                    DockPanel.Dock="Right"
+                                                    Orientation="Horizontal"
+                                                    ToolTip="{x:Static p:Resources.ToolTipUsersOnFrequency}">
+                                            <!-- person glyph -->
+                                            <Path Width="8"
+                                                  Height="9"
+                                                  Margin="0,0,3,0"
+                                                  VerticalAlignment="Center"
+                                                  Data="M4,0 A2.2,2.2 0 1 1 3.99,0 Z M0,9 C0,5.6 1.8,4.8 4,4.8 C6.2,4.8 8,5.6 8,9 Z"
+                                                  Fill="{StaticResource LcdLitBrush}"
+                                                  Stretch="Uniform" />
+                                            <TextBlock x:Name="UsersText"
+                                                       Style="{StaticResource LcdText}"
+                                                       Text="0" />
+                                        </StackPanel>
+                                    </DockPanel>
+
+                                    <!-- frequency: 000.000 + the digits below 1 kHz + MHz -->
+                                    <StackPanel x:Name="FrequencyPanel"
+                                                Grid.Row="1"
+                                                HorizontalAlignment="Center"
+                                                VerticalAlignment="Center"
+                                                Orientation="Horizontal">
+                                        <controls:SevenSegmentDisplay x:Name="FrequencyDisplay"
+                                                                      DigitCount="6"
+                                                                      DigitHeight="44"
+                                                                      DigitSpacing="10"
+                                                                      DigitWidth="25"
+                                                                      GlowColor="{StaticResource LcdGlowColor}"
+                                                                      GlowRadius="12"
+                                                                      LitBrush="{StaticResource LcdLitBrush}"
+                                                                      SegmentThickness="5.5"
+                                                                      SkewAngle="6"
+                                                                      Text="027.185"
+                                                                      UnlitBrush="{StaticResource LcdGhostBrush}" />
+                                        <StackPanel Margin="2,0,0,0"
+                                                    VerticalAlignment="Bottom"
+                                                    Orientation="Vertical">
+                                            <TextBlock x:Name="UnitText"
+                                                       Margin="0,0,0,3"
+                                                       FontSize="10"
+                                                       Style="{StaticResource LcdText}"
+                                                       Text="MHz" />
+                                            <controls:SevenSegmentDisplay x:Name="SubKiloHertzDisplay"
+                                                                          Margin="0,0,0,1"
+                                                                          DigitCount="2"
+                                                                          DigitHeight="17"
+                                                                          DigitSpacing="4"
+                                                                          DigitWidth="10"
+                                                                          GlowColor="{StaticResource LcdGlowColor}"
+                                                                          GlowRadius="6"
+                                                                          LitBrush="{StaticResource LcdLitBrush}"
+                                                                          SegmentThickness="2.3"
+                                                                          SkewAngle="6"
+                                                                          Text=""
+                                                                          UnlitBrush="{StaticResource LcdGhostBrush}" />
+                                        </StackPanel>
+                                    </StackPanel>
+
+                                    <!-- direct entry (double-click on the display) -->
+                                    <Border x:Name="EntryPanel"
+                                            Grid.Row="1"
+                                            Margin="18,5,18,5"
+                                            Background="#FF1E1406"
+                                            BorderBrush="{StaticResource LcdLitBrush}"
+                                            BorderThickness="1"
+                                            CornerRadius="3"
+                                            Visibility="Collapsed">
+                                        <Grid>
+                                            <TextBox x:Name="EntryBox"
+                                                     Padding="44,0,44,0"
+                                                     VerticalContentAlignment="Center"
+                                                     Background="Transparent"
+                                                     BorderThickness="0"
+                                                     CaretBrush="{StaticResource LcdLitBrush}"
+                                                     FontFamily="{StaticResource LcdFont}"
+                                                     FontSize="26"
+                                                     Foreground="{StaticResource LcdLitBrush}"
+                                                     LostKeyboardFocus="EntryBox_LostKeyboardFocus"
+                                                     MaxLength="12"
+                                                     MaxLines="1"
+                                                     PreviewKeyDown="EntryBox_PreviewKeyDown"
+                                                     SelectionBrush="#FFB06A10"
+                                                     Style="{x:Null}"
+                                                     TextAlignment="Center" />
+                                            <TextBlock Margin="0,0,10,0"
+                                                       HorizontalAlignment="Right"
+                                                       FontSize="10"
+                                                       Foreground="{StaticResource LcdDimBrush}"
+                                                       IsHitTestVisible="False"
+                                                       Style="{StaticResource LcdText}"
+                                                       Text="MHz" />
+                                        </Grid>
+                                    </Border>
+
+                                    <!-- who is talking / status | tuning step -->
+                                    <DockPanel Grid.Row="2" LastChildFill="True">
+                                        <TextBlock x:Name="StepText"
+                                                   Margin="8,0,0,0"
+                                                   DockPanel.Dock="Right"
+                                                   Foreground="{StaticResource LcdDimBrush}"
+                                                   Style="{StaticResource LcdText}"
+                                                   Text="STEP 1 kHz" />
+                                        <TextBlock x:Name="StatusText"
+                                                   Style="{StaticResource LcdText}"
+                                                   Text=""
+                                                   TextTrimming="CharacterEllipsis" />
+                                    </DockPanel>
+                                </Grid>
+                            </Grid>
+                        </Border>
+
+                        <!-- ============================== keys + volume ============================== -->
+                        <DockPanel Grid.Row="1"
+                                   Grid.Column="0"
+                                   Margin="0,10,0,0"
                                    VerticalAlignment="Center"
-                                   FontFamily="Marlett"
-                                   FontSize="14"
-                                   Padding="3.5,0,0,3"
-                                   Text="0" />
+                                   LastChildFill="False">
+                            <Button x:Name="StepUpButton"
+                                    Click="StepUpButton_Click"
+                                    DockPanel.Dock="Left"
+                                    Style="{StaticResource RadioKey}"
+                                    ToolTip="{x:Static p:Resources.ToolTipStepUp}">
+                                <Path Data="M0,6 L5,0 L10,6 Z" Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}" />
+                            </Button>
+                            <Button x:Name="StepDownButton"
+                                    Click="StepDownButton_Click"
+                                    DockPanel.Dock="Left"
+                                    Style="{StaticResource RadioKey}"
+                                    ToolTip="{x:Static p:Resources.ToolTipStepDown}">
+                                <Path Data="M0,0 L10,0 L5,6 Z" Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}" />
+                            </Button>
+                            <Button x:Name="StepButton"
+                                    Width="58"
+                                    Click="StepButton_Click"
+                                    Content="STEP"
+                                    DockPanel.Dock="Left"
+                                    Style="{StaticResource RadioKey}"
+                                    ToolTip="{x:Static p:Resources.ToolTipStep}" />
+
+                            <controls:VolumeKnob x:Name="VolumeKnob"
+                                                 Width="38"
+                                                 Height="38"
+                                                 Margin="0,-6,0,-6"
+                                                 DockPanel.Dock="Right"
+                                                 ValueChangedByUser="VolumeKnob_ValueChangedByUser" />
+                            <TextBlock Margin="0,0,6,0"
+                                       VerticalAlignment="Center"
+                                       DockPanel.Dock="Right"
+                                       FontFamily="{StaticResource LcdFont}"
+                                       FontSize="10"
+                                       Foreground="{StaticResource PanelLabelBrush}"
+                                       Text="VOL" />
+                        </DockPanel>
+
+                        <!-- ============================== tuning knob ============================== -->
+                        <controls:TuningKnob x:Name="TuningKnob"
+                                             Grid.Row="0"
+                                             Grid.RowSpan="2"
+                                             Grid.Column="1"
+                                             Width="124"
+                                             Height="124"
+                                             Margin="10,0,0,0"
+                                             HorizontalAlignment="Center"
+                                             VerticalAlignment="Center"
+                                             NotchCount="30"
+                                             ToolTip="{x:Static p:Resources.ToolTipTuningKnob}"
+                                             ToolTipService.InitialShowDelay="1200"
+                                             Tuned="TuningKnob_Tuned" />
                     </Grid>
-                </Button>
-                <Ellipse x:Name="ConnectionIndicator"
-                         Width="8"
-                         Height="8"
-                         Margin="7,0,6,0"
-                         VerticalAlignment="Center"
-                         DockPanel.Dock="Left"
-                         Fill="Red" />
-                <TextBlock x:Name="HeaderText"
-                           VerticalAlignment="Center"
-                           FontSize="12"
-                           Foreground="#E7E7E7"
-                           Text="{x:Static p:Resources.RadioPanelHeader}"
-                           TextTrimming="CharacterEllipsis" />
-            </DockPanel>
 
-            <!-- radios 1..10 - disabled radios are collapsed, the grid is sized by RadioPanelWindow.UpdateRadioLayout -->
-            <Grid Grid.Row="1" Margin="4,0,4,0">
-                <UniformGrid x:Name="RadioGrid"
-                             Columns="5"
-                             Rows="2">
-                    <radioPanel:RadioChannelControl x:Name="radio1"
-                                                    Margin="2"
-                                                    RadioId="1" />
-                    <radioPanel:RadioChannelControl x:Name="radio2"
-                                                    Margin="2"
-                                                    RadioId="2" />
-                    <radioPanel:RadioChannelControl x:Name="radio3"
-                                                    Margin="2"
-                                                    RadioId="3" />
-                    <radioPanel:RadioChannelControl x:Name="radio4"
-                                                    Margin="2"
-                                                    RadioId="4" />
-                    <radioPanel:RadioChannelControl x:Name="radio5"
-                                                    Margin="2"
-                                                    RadioId="5" />
-                    <radioPanel:RadioChannelControl x:Name="radio6"
-                                                    Margin="2"
-                                                    RadioId="6" />
-                    <radioPanel:RadioChannelControl x:Name="radio7"
-                                                    Margin="2"
-                                                    RadioId="7" />
-                    <radioPanel:RadioChannelControl x:Name="radio8"
-                                                    Margin="2"
-                                                    RadioId="8" />
-                    <radioPanel:RadioChannelControl x:Name="radio9"
-                                                    Margin="2"
-                                                    RadioId="9" />
-                    <radioPanel:RadioChannelControl x:Name="radio10"
-                                                    Margin="2"
-                                                    RadioId="10" />
-                </UniformGrid>
-
-                <!-- shown instead of the radios while they are not available -->
-                <Border x:Name="NoRadiosPanel"
-                        Width="612"
-                        Height="120"
-                        Margin="0,0,0,0"
-                        BorderBrush="#666"
-                        BorderThickness="1"
-                        CornerRadius="3"
-                        Visibility="Collapsed">
-                    <TextBlock x:Name="NoRadiosText"
-                               Margin="12"
-                               HorizontalAlignment="Center"
-                               VerticalAlignment="Center"
-                               FontSize="13"
-                               Foreground="#E7E7E7"
-                               Text="{x:Static p:Resources.RadioPanelNotConnected}"
-                               TextAlignment="Center"
-                               TextWrapping="Wrap" />
-                </Border>
-            </Grid>
-
-            <!-- footer: opacity, global simultaneous transmission -->
-            <DockPanel Grid.Row="2"
-                       Margin="8,0,8,0"
-                       LastChildFill="False">
-                <TextBlock Margin="0,0,6,0"
-                           VerticalAlignment="Center"
-                           DockPanel.Dock="Left"
-                           FontSize="10"
-                           Foreground="#E7E7E7"
-                           Text="{x:Static p:Resources.RadioPanelOpacity}" />
-                <Slider x:Name="WindowOpacitySlider"
-                        Width="160"
-                        VerticalAlignment="Center"
-                        DockPanel.Dock="Left"
-                        Focusable="False"
-                        IsMoveToPointEnabled="True"
-                        Maximum="1.0"
-                        Minimum="0.05"
-                        Style="{x:Null}"
-                        ToolTip="{x:Static p:Resources.ToolTipOpacity}"
-                        ValueChanged="WindowOpacitySlider_ValueChanged"
-                        Value="1.0" />
-                <Button x:Name="ToggleGlobalSimultaneousTransmissionButton"
-                        Height="20"
-                        Margin="0,0,14,0"
-                        Padding="8,1,8,1"
-                        VerticalAlignment="Center"
-                        Click="ToggleGlobalSimultaneousTransmissionButton_Click"
-                        Content="{x:Static p:Resources.OverlaySimulTransOFF}"
-                        DockPanel.Dock="Right"
-                        FontSize="11"
-                        Focusable="False"
-                        Style="{StaticResource DarkStyle-Button}"
-                        ToolTip="{x:Static p:Resources.ToolTipGlobalSimulTrans}" />
-            </DockPanel>
+                    <!-- resize grip: drag to scale the radio (the aspect ratio is kept) -->
+                    <Border x:Name="ResizeGrip"
+                            Grid.Row="1"
+                            Width="18"
+                            Height="18"
+                            Margin="0,0,3,3"
+                            HorizontalAlignment="Right"
+                            VerticalAlignment="Bottom"
+                            Background="Transparent"
+                            Cursor="SizeNWSE"
+                            LostMouseCapture="ResizeGrip_LostMouseCapture"
+                            MouseLeftButtonDown="ResizeGrip_MouseLeftButtonDown"
+                            MouseLeftButtonUp="ResizeGrip_MouseLeftButtonUp"
+                            MouseMove="ResizeGrip_MouseMove"
+                            ToolTip="{x:Static p:Resources.ToolTipResizeRadio}"
+                            ToolTipService.InitialShowDelay="1200">
+                        <Path Width="9"
+                              Height="9"
+                              Margin="0,0,4,4"
+                              HorizontalAlignment="Right"
+                              VerticalAlignment="Bottom"
+                              Data="M9,0 L0,9 M9,4 L4,9 M9,8 L8,9"
+                              Stroke="#FF50565E"
+                              StrokeEndLineCap="Round"
+                              StrokeStartLineCap="Round"
+                              StrokeThickness="1" />
+                    </Border>
+                </Grid>
+            </Border>
         </Grid>
     </Viewbox>
 </Window>

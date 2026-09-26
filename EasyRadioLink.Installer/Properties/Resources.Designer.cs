@@ -326,7 +326,7 @@ namespace EasyRadioLink.Installer.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to The install folder contains files that were not installed by the setup, for example server settings (server.cfg), presets or log files: [rest of string was truncated]&quot;;.
+        ///   Looks up a localized string similar to The install folder contains files that were not installed by the setup, for example server settings (server.cfg), the ban list (banned.txt) or log files: [rest of string was truncated]&quot;;.
         /// </summary>
         internal static string MsgBoxUninstallDataText {
             get {

@@ -11,7 +11,7 @@ namespace EasyRadioLink.Common.Audio.Providers;
 
 /// <summary>
 ///     Loads and caches the sound effects shipped in <c>&lt;ProgramDirectory&gt;\AudioEffects</c>:
-///     start/end clicks (user selectable by file-name prefix), encryption tones, the FM tone, the squelch tail noise
+///     start/end clicks (user selectable by file-name prefix), the FM tone, the squelch tail noise
 ///     sources and the background sounds in <c>AudioEffects\Background</c>.
 /// </summary>
 public class CachedAudioEffectProvider
@@ -51,12 +51,6 @@ public class CachedAudioEffectProvider
     public CachedAudioEffect SelectedRadioTransmissionEndEffect =>
         FindSelectedEffect(RadioTransmissionEnd, ProfileSettingsKeys.RadioTransmissionEndSelection);
 
-    /// <summary>ENCRYPTION_TX.wav - played on TX start of an encrypted radio.</summary>
-    public CachedAudioEffect EncryptionTransmitTone { get; private set; }
-
-    /// <summary>ENCRYPTION_RX.wav - played on RX start of a decryptable encrypted transmission.</summary>
-    public CachedAudioEffect EncryptionReceiveTone { get; private set; }
-
     /// <summary>NATO_TONE.wav - looping FM tone.</summary>
     public CachedAudioEffect NATOTone { get; private set; }
 
@@ -75,9 +69,6 @@ public class CachedAudioEffectProvider
     private void LoadEffects()
     {
         LoadRadioStartAndEndEffects();
-
-        EncryptionTransmitTone = new CachedAudioEffect(CachedAudioEffect.AudioEffectTypes.ENCRYPTION_TX);
-        EncryptionReceiveTone = new CachedAudioEffect(CachedAudioEffect.AudioEffectTypes.ENCRYPTION_RX);
 
         NATOTone = new CachedAudioEffect(CachedAudioEffect.AudioEffectTypes.NATO_TONE);
 

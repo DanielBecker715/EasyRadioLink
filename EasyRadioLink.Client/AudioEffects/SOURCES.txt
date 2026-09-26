@@ -4,10 +4,6 @@ Sound effect sources
 All effects used by the radio pipeline are 16-bit PCM, 48000 Hz, mono WAV files (anything else is ignored).
 Most of them come from DCS-SimpleRadio Standalone (GPL-3.0), the project EasyRadioLink is based on.
 
-ENCRYPTION_TX.wav, ENCRYPTION_RX.wav
-    KY-58 TX/RX preamble tones from the SimPhonics tones collection
-    (http://www.simphonics.com/library/WaveFiles/SimPhonics%20Tones%20Collection/Generic%20Tones/KY58/).
-
 RADIO_TRANS_START*.wav, RADIO_TRANS_END*.wav
     PTT tones and effects by "Bimbac".
 

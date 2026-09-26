@@ -133,15 +133,15 @@ public class PlayerRadioInfoBase
     ///     A radio matches when it is enabled and either its main frequency or its guard/secondary frequency
     ///     (<see cref="RadioBase.secFreq" />) is within <see cref="RadioBase.FreqCloseEnough" /> of
     ///     <paramref name="frequency" /> with the same modulation.
-    ///     A matching radio that cannot decrypt the transmission is still returned (with
-    ///     <paramref name="decryptable" /> = false) so the receiver can play scrambled audio; a decryptable match on a
-    ///     radio that is not blocked always wins.
+    ///     A transmission is <paramref name="decryptable" /> when it is unencrypted (key 0 - every transmission since
+    ///     1.1) or when its key matches the radio's key (only older clients encrypt). A matching radio that cannot decrypt
+    ///     the transmission is still returned (with <paramref name="decryptable" /> = false) so the receiver can play
+    ///     scrambled audio; a decryptable match on a radio that is not blocked always wins.
     /// </summary>
     /// <returns>The receiving radio or null if no radio is tuned to the transmission.</returns>
     public RadioBase CanHearTransmission(double frequency,
         Modulation modulation,
         byte encryptionKey,
-        bool strictEncryption,
         List<int> blockedRadios,
         out RadioReceivingState receivingState,
         out bool decryptable)
@@ -166,8 +166,7 @@ public class PlayerRadioInfoBase
                 || receivingRadio.modulation != modulation)
                 continue;
 
-            var isDecryptable = (receivingRadio.enc ? receivingRadio.encKey : 0) == encryptionKey ||
-                                (!strictEncryption && encryptionKey == 0);
+            var isDecryptable = encryptionKey == 0 || (receivingRadio.enc && receivingRadio.encKey == encryptionKey);
 
             var isBlocked = blockedRadios != null && blockedRadios.Contains(i);
 

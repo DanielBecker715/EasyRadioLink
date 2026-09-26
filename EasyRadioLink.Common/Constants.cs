@@ -10,15 +10,13 @@ public class Constants
     public static readonly int OUTPUT_SEGMENT_FRAMES = OUTPUT_SAMPLE_RATE / 1000 * OUTPUT_AUDIO_LENGTH_MS;
     public static readonly int JITTER_BUFFER = 50; //in milliseconds
 
-    // Length of every radio array (network + client state). Slot 0 is reserved: it is always
-    // Modulation.DISABLED, never shown and never transmits. User radios are 1..10.
+    // Length of every radio array (network + client state) - part of the wire format. Slot 0 is reserved: it is
+    // always Modulation.DISABLED, never shown and never transmits. Since 1.1 the client only uses slot 1
+    // (FIRST_RADIO_INDEX, the one radio); slots 2..10 stay disabled.
     public static readonly int MAX_RADIOS = 11;
 
-    // Index of the first user radio (slot 0 is reserved).
+    // Index of the first user radio (slot 0 is reserved) - the slot of the client's one radio.
     public const int FIRST_RADIO_INDEX = 1;
-
-    // Number of user radios (slots 1..10).
-    public const int RADIO_COUNT = 10;
 
     //no updates will be sent if there are no changes for this number of seconds
     public static readonly int CLIENT_UPDATE_INTERVAL_LIMIT = 180;

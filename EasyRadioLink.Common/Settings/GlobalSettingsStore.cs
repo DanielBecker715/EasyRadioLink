@@ -29,12 +29,11 @@ public enum GlobalSettingsKeys
     LastServer,
     SpeakerBoost,
 
-    // Radio panel window geometry
+    // Radio window geometry: position and scale (1 = natural size). The 1.0 keys RadioWidth / RadioHeight held the size
+    // of the six-radio panel and are no longer read.
     RadioX,
     RadioY,
-    RadioOpacity,
-    RadioWidth,
-    RadioHeight,
+    RadioScale,
 
     ClientX,
     ClientY,
@@ -65,7 +64,6 @@ public enum GlobalSettingsKeys
 
     AllowRecording,
     RecordAudio,
-    SingleFileMixdown,
     RecordingQuality,
     RecordingFormat,
     DisallowedAudioTone,
@@ -76,48 +74,17 @@ public enum GlobalSettingsKeys
 
     AllowXInputController,
 
-    LastPresetsFolder,
-
-    AutoOpenRadioPanel // open the radio panel automatically after connecting
+    AutoOpenRadioPanel // open the radio window automatically after connecting
 }
 
 /// <summary>
 ///     Hotkey bindings, persisted per profile by NAME.
-///     Invariants used by the input code: modifier binding = main binding + 100, and
-///     <c>SwitchN = 100 + radio index</c> (radios 1..10). Never change the numeric values.
+///     Invariant used by the input code: modifier binding = main binding + 100. Never change the numeric values and
+///     never reuse a removed one (101-110 radio select, 125/126 next/previous radio, 127 guard, 128-130 encryption,
+///     131/132 preset channels).
 /// </summary>
 public enum InputBinding
 {
-    Switch1 = 101,
-    ModifierSwitch1 = 201,
-
-    Switch2 = 102,
-    ModifierSwitch2 = 202,
-
-    Switch3 = 103,
-    ModifierSwitch3 = 203,
-
-    Switch4 = 104,
-    ModifierSwitch4 = 204,
-
-    Switch5 = 105,
-    ModifierSwitch5 = 205,
-
-    Switch6 = 106,
-    ModifierSwitch6 = 206,
-
-    Switch7 = 107,
-    ModifierSwitch7 = 207,
-
-    Switch8 = 108,
-    ModifierSwitch8 = 208,
-
-    Switch9 = 109,
-    ModifierSwitch9 = 209,
-
-    Switch10 = 110,
-    ModifierSwitch10 = 210,
-
     Ptt = 111,
     ModifierPtt = 211,
 
@@ -156,30 +123,6 @@ public enum InputBinding
 
     Down0001 = 124,
     ModifierDown0001 = 224,
-
-    NextRadio = 125,
-    ModifierNextRadio = 225,
-
-    PreviousRadio = 126,
-    ModifierPreviousRadio = 226,
-
-    ToggleGuard = 127,
-    ModifierToggleGuard = 227,
-
-    ToggleEncryption = 128,
-    ModifierToggleEncryption = 228,
-
-    EncryptionKeyIncrease = 129,
-    ModifierEncryptionKeyIncrease = 229,
-
-    EncryptionKeyDecrease = 130,
-    ModifierEncryptionKeyDecrease = 230,
-
-    RadioChannelUp = 131,
-    ModifierRadioChannelUp = 231,
-
-    RadioChannelDown = 132,
-    ModifierRadioChannelDown = 232,
 
     RadioVolumeUp = 134,
     ModifierRadioVolumeUp = 234,
@@ -233,10 +176,7 @@ public class GlobalSettingsStore
 
         { GlobalSettingsKeys.RadioX.ToString(), "300" },
         { GlobalSettingsKeys.RadioY.ToString(), "300" },
-        { GlobalSettingsKeys.RadioOpacity.ToString(), "1.0" },
-
-        { GlobalSettingsKeys.RadioWidth.ToString(), "122" },
-        { GlobalSettingsKeys.RadioHeight.ToString(), "270" },
+        { GlobalSettingsKeys.RadioScale.ToString(), "1" },
 
         { GlobalSettingsKeys.ClientX.ToString(), "200" },
         { GlobalSettingsKeys.ClientY.ToString(), "200" },
@@ -265,7 +205,6 @@ public class GlobalSettingsStore
 
         { GlobalSettingsKeys.AllowRecording.ToString(), "false" },
         { GlobalSettingsKeys.RecordAudio.ToString(), "false" },
-        { GlobalSettingsKeys.SingleFileMixdown.ToString(), "false" },
         { GlobalSettingsKeys.RecordingQuality.ToString(), "V3" },
         { GlobalSettingsKeys.RecordingFormat.ToString(), "mp3" },
         { GlobalSettingsKeys.DisallowedAudioTone.ToString(), "false" },
@@ -277,7 +216,6 @@ public class GlobalSettingsStore
 
 
         { GlobalSettingsKeys.AllowXInputController.ToString(), "false" },
-        { GlobalSettingsKeys.LastPresetsFolder.ToString(), AppPaths.PresetsDirectory },
 
         { GlobalSettingsKeys.AutoOpenRadioPanel.ToString(), "true" }
     };

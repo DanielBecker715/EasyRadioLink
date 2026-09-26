@@ -47,10 +47,10 @@
         <ApplicationManifest>Properties\app.manifest</ApplicationManifest>
     </PropertyGroup>
     <ItemGroup>
-        <!-- Built-in data is resolved relative to the exe (AppPaths.ProgramDirectory): the default radio layout,
-             the sound effects (AudioEffects\*.wav, AudioEffects\Background\*.wav) and the radio models. -->
-        <None Remove="radios.json;AudioEffects\**\*.wav;AudioEffects\SOURCES.txt;RadioModels\*.json;RadioModels\HOWTO.md" />
-        <Content Include="radios.json;AudioEffects\**\*.wav;AudioEffects\SOURCES.txt;RadioModels\*.json;RadioModels\HOWTO.md">
+        <!-- Built-in data is resolved relative to the exe (AppPaths.ProgramDirectory): the sound effects
+             (AudioEffects\*.wav, AudioEffects\Background\*.wav) and the radio models. -->
+        <None Remove="AudioEffects\**\*.wav;AudioEffects\SOURCES.txt;RadioModels\*.json;RadioModels\HOWTO.md" />
+        <Content Include="AudioEffects\**\*.wav;AudioEffects\SOURCES.txt;RadioModels\*.json;RadioModels\HOWTO.md">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </Content>
         <Content Include="NLog.config">
@@ -61,6 +61,10 @@
     <ItemGroup>
         <ProjectReference Include="..\EasyRadioLink.Common\EasyRadioLink.Common.csproj" />
         <ProjectReference Include="..\EasyRadioLink.SharedAudio\EasyRadioLink.SharedAudio.csproj" />
+    </ItemGroup>
+    <ItemGroup>
+        <!-- unit tests exercise internal radio logic (rotary tuning, frequency display, direct entry) -->
+        <InternalsVisibleTo Include="EasyRadioLink.Tests" />
     </ItemGroup>
     <ItemGroup>
         <None Update="FodyWeavers.xml">
@@ -107,13 +111,7 @@
         <Page Update="UI\ClientWindow\InputProfileWindow\InputProfileWindow.xaml">
             <Generator>MSBuild:Compile</Generator>
         </Page>
-        <Page Update="UI\ClientWindow\RadioPanel\PresetChannels\PresetChannelsView.xaml">
-            <Generator>MSBuild:Compile</Generator>
-        </Page>
         <Page Update="UI\ClientWindow\RadioPanel\RadioPanelWindow.xaml">
-            <Generator>MSBuild:Compile</Generator>
-        </Page>
-        <Page Update="UI\ClientWindow\RadioPanel\RadioChannelControl.xaml">
             <Generator>MSBuild:Compile</Generator>
         </Page>
     </ItemGroup>

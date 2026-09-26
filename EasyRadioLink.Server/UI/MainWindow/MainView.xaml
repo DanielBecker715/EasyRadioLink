@@ -83,15 +83,30 @@
                 </Grid>
             </GroupBox>
 
+            <!-- Server identity (TLS): clients pin this fingerprint - selectable so the admin can copy and share it -->
+            <GroupBox Header="{x:Static p:Resources.GroupIdentity}">
+                <StackPanel>
+                    <TextBox Margin="0,3,0,3"
+                             Padding="0"
+                             Background="Transparent"
+                             BorderThickness="0"
+                             FontFamily="Consolas"
+                             IsReadOnly="True"
+                             IsTabStop="False"
+                             TextWrapping="Wrap"
+                             Text="{Binding IdentityFingerprint, Mode=OneWay}"
+                             ToolTip="{x:Static p:Resources.TooltipIdentity}" />
+                    <TextBlock Margin="0,3,0,3"
+                               FontSize="11"
+                               TextWrapping="Wrap"
+                               Foreground="{DynamicResource {x:Static SystemColors.GrayTextBrushKey}}"
+                               Text="{x:Static p:Resources.LabelIdentityHint}" />
+                </StackPanel>
+            </GroupBox>
+
             <!-- Radio realism -->
             <GroupBox Header="{x:Static p:Resources.GroupRadioRealism}">
                 <StackPanel>
-                    <CheckBox IsChecked="{Binding AllowRadioEncryption}"
-                              Content="{x:Static p:Resources.LabelRadioEncryption}"
-                              ToolTip="{x:Static p:Resources.TooltipRadioEncryption}" />
-                    <CheckBox IsChecked="{Binding StrictRadioEncryption}"
-                              Content="{x:Static p:Resources.LabelStrictEncryption}"
-                              ToolTip="{x:Static p:Resources.TooltipStrictEncryption}" />
                     <CheckBox IsChecked="{Binding HalfDuplexRadios}"
                               Content="{x:Static p:Resources.LabelRealTx}"
                               ToolTip="{x:Static p:Resources.TooltipRealTx}" />
@@ -142,12 +157,6 @@
                     <CheckBox IsChecked="{Binding ShowTransmitterName}"
                               Content="{x:Static p:Resources.LabelShowTransmitterName}"
                               ToolTip="{x:Static p:Resources.TooltipShowTransmitterName}" />
-                    <CheckBox IsChecked="{Binding ServerPresetsEnabled}"
-                              Content="{x:Static p:Resources.LabelServerPresets}"
-                              ToolTip="{x:Static p:Resources.TooltipServerPresets}" />
-                    <CheckBox IsChecked="{Binding ServerRadioPresetEnabled}"
-                              Content="{x:Static p:Resources.LabelServerRadioPreset}"
-                              ToolTip="{x:Static p:Resources.TooltipServerRadioPreset}" />
                 </StackPanel>
             </GroupBox>
 

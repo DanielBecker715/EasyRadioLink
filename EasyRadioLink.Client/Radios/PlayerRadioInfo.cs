@@ -8,14 +8,16 @@ using EasyRadioLink.Common.Models.Player;
 namespace EasyRadioLink.Client.Radios;
 
 /// <summary>
-///     The local user's radios (<see cref="Constants.MAX_RADIOS" /> slots; slot 0 is reserved, always
-///     <see cref="Modulation.DISABLED" />, never shown and never transmits; user radios are 1..10).
+///     The local user's radio. The network format keeps <see cref="Constants.MAX_RADIOS" /> slots, but only slot
+///     <see cref="RadioId" /> (1) is ever used: slot 0 is reserved and slots 2..10 are always
+///     <see cref="Modulation.DISABLED" />.
 ///     One instance lives for the whole application in <c>ClientStateSingleton.PlayerRadioInfo</c>; it is filled by
 ///     <see cref="RadioStateSyncService" /> after connecting and changed by the user through <c>RadioHelper</c>.
 /// </summary>
 public class PlayerRadioInfo
 {
-    public const int FirstUserRadio = Constants.FIRST_RADIO_INDEX;
+    /// <summary>Slot of THE radio.</summary>
+    public const int RadioId = Constants.FIRST_RADIO_INDEX;
 
     // own background sound, sent to the server so other users hear it (abType is a name from
     // CachedAudioEffectProvider.AvailableBackgroundSounds, "" = none)
@@ -25,13 +27,9 @@ public class PlayerRadioInfo
         abType = ""
     };
 
+    // RadioHelper replaces (never modifies) the radio in slot RadioId on every change, so other threads read it once
+    // into a local and use that snapshot
     public Radio[] radios = new Radio[Constants.MAX_RADIOS];
-
-    // selected radio (1..10), used by PTT, hotkeys and the radio panel
-    public short selected = FirstUserRadio;
-
-    // global simultaneous transmission toggle: PTT also transmits on every radio with Radio.simul
-    public bool simultaneousTransmission;
 
     public PlayerRadioInfo()
     {
@@ -39,11 +37,15 @@ public class PlayerRadioInfo
     }
 
     /// <summary>
-    ///     True while connected and the radios are loaded (set by <see cref="RadioStateSyncService" />). The one
-    ///     condition (together with the connection) that makes radios usable - see <c>RadioHelper.RadiosAvailable</c>.
+    ///     True while connected and the radio is loaded (set by <see cref="RadioStateSyncService" />). The one
+    ///     condition (together with the connection) that makes the radio usable - see <c>RadioHelper.RadiosAvailable</c>.
     /// </summary>
     [JsonIgnore]
     public volatile bool IsActive;
+
+    /// <summary>THE radio (slot <see cref="RadioId" />).</summary>
+    [JsonIgnore]
+    public Radio Radio => radios[RadioId];
 
     public void Reset()
     {
@@ -53,8 +55,6 @@ public class PlayerRadioInfo
             vol = 0.0f,
             abType = ""
         };
-        selected = FirstUserRadio;
-        simultaneousTransmission = false;
         for (var i = 0; i < radios.Length; i++) radios[i] = new Radio();
     }
 
@@ -114,18 +114,24 @@ public class PlayerRadioInfo
         return clone;
     }
 
-    /// <summary>The network view sent to the server (ambient + one <see cref="RadioBase" /> per slot).</summary>
+    /// <summary>
+    ///     The network view sent to the server (ambient + one <see cref="RadioBase" /> per slot). Every slot except
+    ///     <see cref="RadioId" /> is disabled.
+    /// </summary>
     public PlayerRadioInfoBase ConvertToRadioBase()
+    {
+        return ConvertToRadioBase(RadioId < radios.Length ? radios[RadioId] : null);
+    }
+
+    /// <param name="radio">
+    ///     THE radio - read once by the caller: <c>RadioHelper</c> replaces it (never modifies it) when it is tuned.
+    /// </param>
+    private PlayerRadioInfoBase ConvertToRadioBase(Radio radio)
     {
         var radiosBase = new RadioBase[Constants.MAX_RADIOS];
         for (var i = 0; i < radiosBase.Length; i++)
-        {
-            var radio = i < radios.Length ? radios[i] : null;
-            radiosBase[i] = radio?.ToRadioBase() ?? new RadioBase();
-        }
-
-        // reserved slot
-        radiosBase[0].modulation = Modulation.DISABLED;
+            radiosBase[i] = (i == RadioId ? radio?.ToRadioBase() : null)
+                            ?? new RadioBase { modulation = Modulation.DISABLED, secFreq = 0 };
 
         return new PlayerRadioInfoBase
         {
@@ -135,34 +141,35 @@ public class PlayerRadioInfo
     }
 
     /// <summary>
-    ///     Finds the local radio that receives a transmission (same rules as the server's voice routing, see
-    ///     <see cref="PlayerRadioInfoBase.CanHearTransmission" />). A matching radio that cannot decrypt, or that is
-    ///     blocked, may still be returned with <paramref name="decryptable" /> = false - callers must check
-    ///     <paramref name="blockedRadios" /> themselves.
+    ///     Finds out whether the radio receives a transmission (same rules as the server's voice routing, see
+    ///     <see cref="PlayerRadioInfoBase.CanHearTransmission" />). The radio never encrypts, so only unencrypted
+    ///     transmissions are <paramref name="decryptable" />; an encrypted one (older clients) is still returned and
+    ///     played garbled. A radio in <paramref name="blockedRadios" /> (half-duplex while transmitting) does not receive.
     /// </summary>
     /// <returns>The receiving radio or null.</returns>
     public Radio CanHearTransmission(double frequency,
         Modulation modulation,
         byte encryptionKey,
-        bool strictEncryption,
         List<int> blockedRadios,
         out RadioReceivingState receivingState,
         out bool decryptable)
     {
-        var networkView = ConvertToRadioBase();
+        // one snapshot: the radio may be retuned (replaced) by another thread at any time
+        var radio = Radio;
+        var networkView = ConvertToRadioBase(radio);
 
-        var match = networkView.CanHearTransmission(frequency, modulation, encryptionKey, strictEncryption,
-            blockedRadios, out receivingState, out decryptable);
+        var match = networkView.CanHearTransmission(frequency, modulation, encryptionKey, blockedRadios,
+            out receivingState, out decryptable);
 
         if (match == null || receivingState == null
-                          || receivingState.ReceivedOn <= 0
-                          || receivingState.ReceivedOn >= radios.Length)
+                          || receivingState.ReceivedOn != RadioId
+                          || (blockedRadios != null && blockedRadios.Contains(RadioId)))
         {
             receivingState = null;
             decryptable = false;
             return null;
         }
 
-        return radios[receivingState.ReceivedOn];
+        return radio;
     }
 }

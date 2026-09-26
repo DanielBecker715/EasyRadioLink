@@ -2,11 +2,12 @@ using System;
 using System.Net;
 using System.Text.Json.Serialization;
 using EasyRadioLink.Common.Helpers;
+using EasyRadioLink.Common.Network.Crypto;
 
 namespace EasyRadioLink.Common.Models.Player;
 
 /// <summary>
-///     A connected user as seen on the wire: <c>{"ClientGuid","Name","AllowRecord","RadioInfo"}</c>.
+///     A connected user as seen on the wire: <c>{"ClientGuid","Name","AllowRecord","RadioInfo","E2EPublicKey"}</c>.
 ///     Everything marked <see cref="JsonIgnoreAttribute" /> is local runtime state of the server/client.
 /// </summary>
 public class ClientInfo : PropertyChangedBaseClass
@@ -37,6 +38,13 @@ public class ClientInfo : PropertyChangedBaseClass
 
     public PlayerRadioInfoBase RadioInfo { get; set; }
 
+    /// <summary>
+    ///     The client's end-to-end voice public key (<see cref="E2EKeyPair.PublicKey" />: base64 DER SubjectPublicKeyInfo,
+    ///     ECDH P-256, new on every app start). Sent in the SYNC hello, checked for its format by the server, fixed for the
+    ///     connection and announced with the client list; senders wrap their transmission keys for it.
+    /// </summary>
+    public string E2EPublicKey { get; set; }
+
     [JsonIgnore] public string AllowRecordingStatus => AllowRecord ? "R" : "-";
 
     [JsonIgnore] public bool Muted { get; set; }
@@ -52,6 +60,12 @@ public class ClientInfo : PropertyChangedBaseClass
     // server side: voice packet rate limit (see VoiceRouting.AllowVoicePacket)
     [JsonIgnore] internal long VoiceWindowStartTicks { get; set; }
     [JsonIgnore] internal int VoicePacketsInWindow { get; set; }
+
+    /// <summary>
+    ///     Server only: the UDP hop encryption of this client (its key was sent in the client's SYNC reply). Never
+    ///     serialised, never copied, disposed when the client disconnects.
+    /// </summary>
+    [JsonIgnore] internal UdpTransportSession UdpTransport { get; set; }
 
     [JsonIgnore]
     public string TransmittingFrequency
@@ -95,7 +109,8 @@ public class ClientInfo : PropertyChangedBaseClass
             RadioInfo = RadioInfo?.DeepClone(),
             Name = Name,
             AllowRecord = AllowRecord,
-            ClientGuid = ClientGuid
+            ClientGuid = ClientGuid,
+            E2EPublicKey = E2EPublicKey
         };
     }
 }

@@ -3,6 +3,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Net;
+using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization.Metadata;
@@ -13,6 +14,7 @@ using EasyRadioLink.Common.Helpers;
 using EasyRadioLink.Common.Models;
 using EasyRadioLink.Common.Models.EventMessages;
 using EasyRadioLink.Common.Models.Player;
+using EasyRadioLink.Common.Network.Crypto;
 using EasyRadioLink.Common.Settings;
 using EasyRadioLink.Common.Settings.Setting;
 using NLog;
@@ -24,7 +26,9 @@ namespace EasyRadioLink.Common.Network.Server;
 ///     Starts and stops the server parts (UDP voice router, TCP sync server, client export, HTTP API). If the server
 ///     can't be started (e.g. the port is in use) it is stopped again and a <see cref="ServerStartFailedMessage" /> is
 ///     published - what happens then (message box, exit code) is up to the host.
-///     banned.txt and the client export live in the configuration folder (<see cref="ServerSettingsStore.ConfigDirectory" />).
+///     banned.txt, the client export and the TLS identity (<see cref="ServerIdentity.FileName" />, created on the first
+///     start) live in the configuration folder (<see cref="ServerSettingsStore.ConfigDirectory" />). The identity's
+///     fingerprint is logged and published as <see cref="ServerIdentityMessage" /> on every start.
 /// </summary>
 public class ServerState : IHandle<StartServerMessage>, IHandle<StopServerMessage>, IHandle<KickClientMessage>,
     IHandle<BanClientMessage>
@@ -46,6 +50,7 @@ public class ServerState : IHandle<StartServerMessage>, IHandle<StopServerMessag
 
     private UDPVoiceRouter _serverListener;
     private ServerSync _serverSync;
+    private X509Certificate2 _identity;
     private CancellationTokenSource _exportCancellation;
     private HttpServer _httpServer;
 
@@ -59,6 +64,9 @@ public class ServerState : IHandle<StartServerMessage>, IHandle<StopServerMessag
 
     /// <summary>Why the last start failed (null if it did not fail).</summary>
     public string LastStartError { get; private set; }
+
+    /// <summary>Fingerprint of the server identity ("AB:CD:..."), null before the first successful load.</summary>
+    public string IdentityFingerprint { get; private set; }
 
 
     public async Task HandleAsync(BanClientMessage message, CancellationToken cancellationToken)
@@ -115,8 +123,10 @@ public class ServerState : IHandle<StartServerMessage>, IHandle<StopServerMessag
             {
                 PopulateBanList();
 
+                _identity = LoadIdentity();
+
                 _serverListener = new UDPVoiceRouter(_connectedClients, _eventAggregator);
-                _serverSync = new ServerSync(_connectedClients, _bannedIps, _eventAggregator);
+                _serverSync = new ServerSync(_connectedClients, _bannedIps, _eventAggregator, _identity);
             }
             catch (Exception ex)
             {
@@ -140,7 +150,54 @@ public class ServerState : IHandle<StartServerMessage>, IHandle<StopServerMessag
         }
 
         // reported outside the lock - the host may show a (modal) message
-        if (startError != null) ReportStartFailure($"Unable to start the server: {startError.Message}", startError);
+        if (startError != null)
+            ReportStartFailure(startError is ServerStartException
+                ? startError.Message
+                : $"Unable to start the server: {startError.Message}", startError);
+    }
+
+    /// <summary>
+    ///     Loads (on the first start: creates) the TLS identity, logs its fingerprint and publishes it. An existing
+    ///     identity that can't be loaded stops the start - it is never replaced silently.
+    /// </summary>
+    private X509Certificate2 LoadIdentity()
+    {
+        var path = Path.Combine(DataDirectory, ServerIdentity.FileName);
+
+        X509Certificate2 identity;
+        bool created;
+        var existed = File.Exists(path);
+        try
+        {
+            identity = ServerIdentity.LoadOrCreate(DataDirectory, out created);
+        }
+        catch (Exception ex) when (!existed && !File.Exists(path))
+        {
+            // never fall back to a temporary identity: every client would warn about a changed identity on each start
+            throw new ServerStartException(
+                $"Unable to create the server identity {path} ({ex.Message}). The server needs write access to the " +
+                "folder of server.cfg - start it with --cfg (-cfg for the server with window) pointing to a writable folder.",
+                ex);
+        }
+        catch (Exception ex)
+        {
+            throw new ServerStartException(
+                $"Unable to load the server identity {path} ({ex.Message}). Restore the file from a backup, or " +
+                "delete it to create a new identity - every user then has to accept the new identity once.", ex);
+        }
+
+        IdentityFingerprint = ServerIdentity.GetFingerprint(identity);
+        Logger.Info((created ? "Created the server identity" : "Server identity") +
+                    $" {path} - fingerprint (SHA-256 of the public key): {IdentityFingerprint}");
+
+        // the private key must not be readable by other accounts (Windows: ACL; Linux/macOS: 0600 is enforced)
+        var permissionWarning = ServerIdentity.CheckPermissions(path);
+        if (permissionWarning != null) Logger.Warn(permissionWarning);
+
+        _eventAggregator.PublishOnUIThreadAsync(
+            new ServerIdentityMessage(IdentityFingerprint, path, created, permissionWarning));
+
+        return identity;
     }
 
     /// <summary>Runs a start-up task of <paramref name="component" /> and stops the server if it fails.</summary>
@@ -210,6 +267,10 @@ public class ServerState : IHandle<StartServerMessage>, IHandle<StopServerMessag
         _serverSync = null;
         _serverListener?.RequestStop();
         _serverListener = null;
+
+        // every TLS session is closed by now
+        _identity?.Dispose();
+        _identity = null;
         _httpServer?.Stop();
         _httpServer = null;
     }
