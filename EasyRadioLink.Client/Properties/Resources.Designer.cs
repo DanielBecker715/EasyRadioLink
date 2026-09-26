@@ -222,7 +222,7 @@ namespace EasyRadioLink.Client.Properties {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to Controller not detected? Enable "Allow more controller input devices" in Settings and restart EasyRa....
+        ///   Looks up a localized string similar to Controller not detected? Enable "Allow more controller input devices" under Settings &gt; Advanced sett....
         /// </summary>
         public static string AboutTipInputDevices {
             get {
@@ -254,6 +254,24 @@ namespace EasyRadioLink.Client.Properties {
         public static string AboutVersion {
             get {
                 return ResourceManager.GetString("AboutVersion", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Advanced settings.
+        /// </summary>
+        public static string AdvancedSettingsHeader {
+            get {
+                return ResourceManager.GetString("AdvancedSettingsHeader", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Audio processing, voice activation details, recording, effect details, controllers, profiles.
+        /// </summary>
+        public static string AdvancedSettingsSubtitle {
+            get {
+                return ResourceManager.GetString("AdvancedSettingsSubtitle", resourceCulture);
             }
         }
 
@@ -313,15 +331,6 @@ namespace EasyRadioLink.Client.Properties {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to Stereo Balance.
-        /// </summary>
-        public static string AudioHeader {
-            get {
-                return ResourceManager.GetString("AudioHeader", resourceCulture);
-            }
-        }
-
-        /// <summary>
         ///   Looks up a localized string similar to Open the radio when connected.
         /// </summary>
         public static string AutoOpenRadioPanel {
@@ -331,7 +340,7 @@ namespace EasyRadioLink.Client.Properties {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to Radio static (background noise).
+        ///   Looks up a localized string similar to Radio static.
         /// </summary>
         public static string BackgroundRadioNoise {
             get {
@@ -349,11 +358,11 @@ namespace EasyRadioLink.Client.Properties {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to Background Sound.
+        ///   Looks up a localized string similar to None.
         /// </summary>
-        public static string BackgroundSoundHeader {
+        public static string BackgroundSoundNone {
             get {
-                return ResourceManager.GetString("BackgroundSoundHeader", resourceCulture);
+                return ResourceManager.GetString("BackgroundSoundNone", resourceCulture);
             }
         }
 
@@ -390,6 +399,24 @@ namespace EasyRadioLink.Client.Properties {
         public static string BtnTrustIdentity {
             get {
                 return ResourceManager.GetString("BtnTrustIdentity", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to General.
+        /// </summary>
+        public static string GeneralHeader {
+            get {
+                return ResourceManager.GetString("GeneralHeader", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Microphone &amp; Incoming Audio.
+        /// </summary>
+        public static string MicAndIncomingAudioHeader {
+            get {
+                return ResourceManager.GetString("MicAndIncomingAudioHeader", resourceCulture);
             }
         }
 
@@ -853,15 +880,6 @@ namespace EasyRadioLink.Client.Properties {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to Application Settings.
-        /// </summary>
-        public static string GlobalSettingsHeader {
-            get {
-                return ResourceManager.GetString("GlobalSettingsHeader", resourceCulture);
-            }
-        }
-
-        /// <summary>
         ///   Looks up a localized string similar to HF static level (dB).
         /// </summary>
         public static string HFNoiseGainDB {
@@ -921,24 +939,6 @@ namespace EasyRadioLink.Client.Properties {
         public static string IncomingAudioDenoise {
             get {
                 return ResourceManager.GetString("IncomingAudioDenoise", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to Incoming Audio.
-        /// </summary>
-        public static string IncomingAudioHeader {
-            get {
-                return ResourceManager.GetString("IncomingAudioHeader", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to Controllers.
-        /// </summary>
-        public static string InputDevicesHeader {
-            get {
-                return ResourceManager.GetString("InputDevicesHeader", resourceCulture);
             }
         }
 
@@ -1105,24 +1105,6 @@ namespace EasyRadioLink.Client.Properties {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to Push-To-Talk and Controls.
-        /// </summary>
-        public static string IntegrationHeader {
-            get {
-                return ResourceManager.GetString("IntegrationHeader", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to Interface.
-        /// </summary>
-        public static string InterfaceHeader {
-            get {
-                return ResourceManager.GetString("InterfaceHeader", resourceCulture);
-            }
-        }
-
-        /// <summary>
         ///   Looks up a localized string similar to Microphone noise suppression.
         /// </summary>
         public static string MicDenoise {
@@ -1146,15 +1128,6 @@ namespace EasyRadioLink.Client.Properties {
         public static string MicOutputLabel {
             get {
                 return ResourceManager.GetString("MicOutputLabel", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to Microphone.
-        /// </summary>
-        public static string MicrophoneHeader {
-            get {
-                return ResourceManager.GetString("MicrophoneHeader", resourceCulture);
             }
         }
 
@@ -1547,11 +1520,29 @@ namespace EasyRadioLink.Client.Properties {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to FM tone volume.
+        /// </summary>
+        public static string NATORadioToneVolume {
+            get {
+                return ResourceManager.GetString("NATORadioToneVolume", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to Static level (dB).
         /// </summary>
         public static string NoiseGainDB {
             get {
                 return ResourceManager.GetString("NoiseGainDB", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Other.
+        /// </summary>
+        public static string OtherHeader {
+            get {
+                return ResourceManager.GetString("OtherHeader", resourceCulture);
             }
         }
 
@@ -1637,7 +1628,7 @@ namespace EasyRadioLink.Client.Properties {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to Profile.
+        ///   Looks up a localized string similar to Profiles.
         /// </summary>
         public static string ProfileHeader {
             get {
@@ -1646,7 +1637,7 @@ namespace EasyRadioLink.Client.Properties {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to A profile holds the key bindings and the profile settings below (radio effects, background sound, pu....
+        ///   Looks up a localized string similar to A profile holds your key bindings (Controls tab) and the radio settings: the radio sounds and effect....
         /// </summary>
         public static string ProfileHint {
             get {
@@ -1673,11 +1664,11 @@ namespace EasyRadioLink.Client.Properties {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to Profile Settings.
+        ///   Looks up a localized string similar to Active profile.
         /// </summary>
-        public static string ProfileSettingsHeader {
+        public static string ProfileSelection {
             get {
-                return ResourceManager.GetString("ProfileSettingsHeader", resourceCulture);
+                return ResourceManager.GetString("ProfileSelection", resourceCulture);
             }
         }
 
@@ -1687,6 +1678,15 @@ namespace EasyRadioLink.Client.Properties {
         public static string ProfileWindowTitle {
             get {
                 return ResourceManager.GetString("ProfileWindowTitle", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Push-To-Talk &amp; Controllers.
+        /// </summary>
+        public static string PTTAndControllersHeader {
+            get {
+                return ResourceManager.GetString("PTTAndControllersHeader", resourceCulture);
             }
         }
 
@@ -1790,20 +1790,11 @@ namespace EasyRadioLink.Client.Properties {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to Radio Effects.
+        ///   Looks up a localized string similar to Radio Effect Details.
         /// </summary>
-        public static string RadioEffectHeader {
+        public static string RadioEffectDetailsHeader {
             get {
-                return ResourceManager.GetString("RadioEffectHeader", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to Transmit end click.
-        /// </summary>
-        public static string RadioEndTransmitEffect {
-            get {
-                return ResourceManager.GetString("RadioEndTransmitEffect", resourceCulture);
+                return ResourceManager.GetString("RadioEffectDetailsHeader", resourceCulture);
             }
         }
 
@@ -1828,38 +1819,11 @@ namespace EasyRadioLink.Client.Properties {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to Receive clicks.
-        /// </summary>
-        public static string RadioRxEffects {
-            get {
-                return ResourceManager.GetString("RadioRxEffects", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to End.
-        /// </summary>
-        public static string RadioRxEnd {
-            get {
-                return ResourceManager.GetString("RadioRxEnd", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to Squelch tail after received AM / FM transmissions.
+        ///   Looks up a localized string similar to Squelch tail.
         /// </summary>
         public static string RadioRxSquelchTail {
             get {
                 return ResourceManager.GetString("RadioRxSquelchTail", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to Start.
-        /// </summary>
-        public static string RadioRxStart {
-            get {
-                return ResourceManager.GetString("RadioRxStart", resourceCulture);
             }
         }
 
@@ -1891,11 +1855,29 @@ namespace EasyRadioLink.Client.Properties {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to Transmit start click.
+        ///   Looks up a localized string similar to Off.
         /// </summary>
-        public static string RadioStartTransmitEffect {
+        public static string RadioSoundOff {
             get {
-                return ResourceManager.GetString("RadioStartTransmitEffect", resourceCulture);
+                return ResourceManager.GetString("RadioSoundOff", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Radio Sounds.
+        /// </summary>
+        public static string RadioSoundsHeader {
+            get {
+                return ResourceManager.GetString("RadioSoundsHeader", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to These settings belong to the profile "{0}" (Advanced settings &gt; Profiles)..
+        /// </summary>
+        public static string RadioSoundsProfileNotice {
+            get {
+                return ResourceManager.GetString("RadioSoundsProfileNotice", resourceCulture);
             }
         }
 
@@ -1909,29 +1891,11 @@ namespace EasyRadioLink.Client.Properties {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to Transmit clicks.
+        ///   Looks up a localized string similar to Radio Window.
         /// </summary>
-        public static string RadioTxEffects {
+        public static string RadioWindowHeader {
             get {
-                return ResourceManager.GetString("RadioTxEffects", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to End.
-        /// </summary>
-        public static string RadioTxEnd {
-            get {
-                return ResourceManager.GetString("RadioTxEnd", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to Start.
-        /// </summary>
-        public static string RadioTxStart {
-            get {
-                return ResourceManager.GetString("RadioTxStart", resourceCulture);
+                return ResourceManager.GetString("RadioWindowHeader", resourceCulture);
             }
         }
 
@@ -2143,6 +2107,42 @@ namespace EasyRadioLink.Client.Properties {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to When someone stops talking.
+        /// </summary>
+        public static string SoundRxEnd {
+            get {
+                return ResourceManager.GetString("SoundRxEnd", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to When someone starts talking.
+        /// </summary>
+        public static string SoundRxStart {
+            get {
+                return ResourceManager.GetString("SoundRxStart", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to When I release push-to-talk.
+        /// </summary>
+        public static string SoundTxEnd {
+            get {
+                return ResourceManager.GetString("SoundTxEnd", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to When I press push-to-talk.
+        /// </summary>
+        public static string SoundTxStart {
+            get {
+                return ResourceManager.GetString("SoundTxStart", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to Speaker boost.
         /// </summary>
         public static string SpeakerBoost {
@@ -2350,6 +2350,15 @@ namespace EasyRadioLink.Client.Properties {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to Static behind received voices, depending on the frequency. The static levels are under Advanced sett....
+        /// </summary>
+        public static string ToolTipBackgroundRadioNoise {
+            get {
+                return ResourceManager.GetString("ToolTipBackgroundRadioNoise", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to A background sound mixed into your transmissions, e.g. an engine. Everybody who hears you hears it t....
         /// </summary>
         public static string ToolTipBackgroundSound {
@@ -2512,6 +2521,15 @@ namespace EasyRadioLink.Client.Properties {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to Play this sound.
+        /// </summary>
+        public static string ToolTipPlaySound {
+            get {
+                return ResourceManager.GetString("ToolTipPlaySound", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to Radio sound used by Audio Preview - hear yourself through that radio.
         /// </summary>
         public static string ToolTipPreviewModel {
@@ -2629,6 +2647,42 @@ namespace EasyRadioLink.Client.Properties {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to Played when a transmission you receive ends.
+        /// </summary>
+        public static string ToolTipSoundRxEnd {
+            get {
+                return ResourceManager.GetString("ToolTipSoundRxEnd", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Played when a transmission you receive starts.
+        /// </summary>
+        public static string ToolTipSoundRxStart {
+            get {
+                return ResourceManager.GetString("ToolTipSoundRxStart", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Played on your speakers when you stop transmitting. The others hear the sound they chose for "When s....
+        /// </summary>
+        public static string ToolTipSoundTxEnd {
+            get {
+                return ResourceManager.GetString("ToolTipSoundTxEnd", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Played on your speakers when you start transmitting. The others hear the sound they chose for "When ....
+        /// </summary>
+        public static string ToolTipSoundTxStart {
+            get {
+                return ResourceManager.GetString("ToolTipSoundTxStart", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to Boosts all received audio.
         /// </summary>
         public static string ToolTipSpeakerBoost {
@@ -2737,20 +2791,20 @@ namespace EasyRadioLink.Client.Properties {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to Transmit when speaking (VOX).
+        ///   Looks up a localized string similar to Voice Activation Details.
         /// </summary>
-        public static string VOXEnabled {
+        public static string VOXDetailsHeader {
             get {
-                return ResourceManager.GetString("VOXEnabled", resourceCulture);
+                return ResourceManager.GetString("VOXDetailsHeader", resourceCulture);
             }
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to Voice Activation (VOX).
+        ///   Looks up a localized string similar to Voice activation (VOX).
         /// </summary>
-        public static string VOXHeader {
+        public static string VOXEnabled {
             get {
-                return ResourceManager.GetString("VOXHeader", resourceCulture);
+                return ResourceManager.GetString("VOXEnabled", resourceCulture);
             }
         }
 

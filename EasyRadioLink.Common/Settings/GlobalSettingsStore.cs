@@ -74,7 +74,9 @@ public enum GlobalSettingsKeys
 
     AllowXInputController,
 
-    AutoOpenRadioPanel // open the radio window automatically after connecting
+    AutoOpenRadioPanel, // open the radio window automatically after connecting
+
+    SettingsAdvancedExpanded // Settings tab: the "Advanced settings" section is expanded
 }
 
 /// <summary>
@@ -217,7 +219,9 @@ public class GlobalSettingsStore
 
         { GlobalSettingsKeys.AllowXInputController.ToString(), "false" },
 
-        { GlobalSettingsKeys.AutoOpenRadioPanel.ToString(), "true" }
+        { GlobalSettingsKeys.AutoOpenRadioPanel.ToString(), "true" },
+
+        { GlobalSettingsKeys.SettingsAdvancedExpanded.ToString(), "false" }
     };
 
     private readonly Logger Logger = LogManager.GetCurrentClassLogger();

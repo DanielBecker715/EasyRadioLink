@@ -172,7 +172,7 @@
     <value>Speaker boost makes up for the volume the radio effects take away - lower it if the audio distorts. Pick a preview sound to hear yourself through that radio.</value>
   </data>
   <data name="AboutTipInputDevices" xml:space="preserve">
-    <value>Controller not detected? Enable "Allow more controller input devices" in Settings and restart EasyRadioLink.</value>
+    <value>Controller not detected? Enable "Allow more controller input devices" under Settings &gt; Advanced settings and restart EasyRadioLink.</value>
   </data>
   <data name="AboutTipRadioPanel" xml:space="preserve">
     <value>Radio: the underlined digit is the one the knob changes - STEP (or the arrow keys Left / Right) chooses 1 kHz to 100 MHz. Drag the bottom-right corner to resize the radio.</value>
@@ -182,6 +182,12 @@
   </data>
   <data name="AboutVersion" xml:space="preserve">
     <value>Version {0} (network protocol {1})</value>
+  </data>
+  <data name="AdvancedSettingsHeader" xml:space="preserve">
+    <value>Advanced settings</value>
+  </data>
+  <data name="AdvancedSettingsSubtitle" xml:space="preserve">
+    <value>Audio processing, voice activation details, recording, effect details, controllers, profiles</value>
   </data>
   <data name="AllowRotaryIncrement" xml:space="preserve">
     <value>Rotary style frequency steps</value>
@@ -201,20 +207,17 @@
   <data name="audio_headset" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\audio-headset.ico;System.Drawing.Icon, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
-  <data name="AudioHeader" xml:space="preserve">
-    <value>Stereo Balance</value>
-  </data>
   <data name="AutoOpenRadioPanel" xml:space="preserve">
     <value>Open the radio when connected</value>
   </data>
   <data name="BackgroundRadioNoise" xml:space="preserve">
-    <value>Radio static (background noise)</value>
+    <value>Radio static</value>
   </data>
   <data name="BackgroundSound" xml:space="preserve">
     <value>My background sound</value>
   </data>
-  <data name="BackgroundSoundHeader" xml:space="preserve">
-    <value>Background Sound</value>
+  <data name="BackgroundSoundNone" xml:space="preserve">
+    <value>None</value>
   </data>
   <data name="BackgroundSoundVolume" xml:space="preserve">
     <value>Volume of my background sound</value>
@@ -360,8 +363,8 @@
   <data name="FavTitle" xml:space="preserve">
     <value>Saved servers appear in the favourites list on the Radio tab. Drag rows to reorder them, double-click a cell to edit it and use the flag column to choose the default server.</value>
   </data>
-  <data name="GlobalSettingsHeader" xml:space="preserve">
-    <value>Application Settings</value>
+  <data name="GeneralHeader" xml:space="preserve">
+    <value>General</value>
   </data>
   <data name="HFNoiseGainDB" xml:space="preserve">
     <value>HF static level (dB)</value>
@@ -383,12 +386,6 @@
   </data>
   <data name="IncomingAudioDenoise" xml:space="preserve">
     <value>Noise suppression</value>
-  </data>
-  <data name="IncomingAudioHeader" xml:space="preserve">
-    <value>Incoming Audio</value>
-  </data>
-  <data name="InputDevicesHeader" xml:space="preserve">
-    <value>Controllers</value>
   </data>
   <data name="InputDown0001" xml:space="preserve">
     <value>Frequency down 0.001 MHz</value>
@@ -444,11 +441,8 @@
   <data name="InputUp100" xml:space="preserve">
     <value>Frequency up 100 MHz</value>
   </data>
-  <data name="IntegrationHeader" xml:space="preserve">
-    <value>Push-To-Talk and Controls</value>
-  </data>
-  <data name="InterfaceHeader" xml:space="preserve">
-    <value>Interface</value>
+  <data name="MicAndIncomingAudioHeader" xml:space="preserve">
+    <value>Microphone &amp; Incoming Audio</value>
   </data>
   <data name="MicDenoise" xml:space="preserve">
     <value>Microphone noise suppression</value>
@@ -458,9 +452,6 @@
   </data>
   <data name="MicOutputLabel" xml:space="preserve">
     <value>Mic output</value>
-  </data>
-  <data name="MicrophoneHeader" xml:space="preserve">
-    <value>Microphone</value>
   </data>
   <data name="Minimisetotray" xml:space="preserve">
     <value>Minimise to the system tray</value>
@@ -648,8 +639,14 @@ This client: protocol {2} (servers with protocol {3} or newer are supported)</va
   <data name="NATORadioTone" xml:space="preserve">
     <value>FM tone</value>
   </data>
+  <data name="NATORadioToneVolume" xml:space="preserve">
+    <value>FM tone volume</value>
+  </data>
   <data name="NoiseGainDB" xml:space="preserve">
     <value>Static level (dB)</value>
+  </data>
+  <data name="OtherHeader" xml:space="preserve">
+    <value>Other</value>
   </data>
   <data name="OverlayAM" xml:space="preserve">
     <value>AM</value>
@@ -679,10 +676,10 @@ This client: protocol {2} (servers with protocol {3} or newer are supported)</va
     <value>Create</value>
   </data>
   <data name="ProfileHeader" xml:space="preserve">
-    <value>Profile</value>
+    <value>Profiles</value>
   </data>
   <data name="ProfileHint" xml:space="preserve">
-    <value>A profile holds the key bindings and the profile settings below (radio effects, background sound, push-to-talk, stereo balance).</value>
+    <value>A profile holds your key bindings (Controls tab) and the radio settings: the radio sounds and effects, the background sound, the push-to-talk delays, rotary tuning and the radio balance. All other settings apply to every profile.</value>
   </data>
   <data name="ProfileNamePrompt" xml:space="preserve">
     <value>Profile name</value>
@@ -690,11 +687,14 @@ This client: protocol {2} (servers with protocol {3} or newer are supported)</va
   <data name="ProfileRenameButton" xml:space="preserve">
     <value>Rename</value>
   </data>
-  <data name="ProfileSettingsHeader" xml:space="preserve">
-    <value>Profile Settings</value>
+  <data name="ProfileSelection" xml:space="preserve">
+    <value>Active profile</value>
   </data>
   <data name="ProfileWindowTitle" xml:space="preserve">
     <value>Profile</value>
+  </data>
+  <data name="PTTAndControllersHeader" xml:space="preserve">
+    <value>Push-To-Talk &amp; Controllers</value>
   </data>
   <data name="PTTReleaseDelay" xml:space="preserve">
     <value>Push-To-Talk release delay (ms)</value>
@@ -729,11 +729,8 @@ This client: protocol {2} (servers with protocol {3} or newer are supported)</va
   <data name="RadioChannelRight" xml:space="preserve">
     <value>Right</value>
   </data>
-  <data name="RadioEffectHeader" xml:space="preserve">
-    <value>Radio Effects</value>
-  </data>
-  <data name="RadioEndTransmitEffect" xml:space="preserve">
-    <value>Transmit end click</value>
+  <data name="RadioEffectDetailsHeader" xml:space="preserve">
+    <value>Radio Effect Details</value>
   </data>
   <data name="RadioPanelTaskbarItem" xml:space="preserve">
     <value>Hide the radio from the taskbar</value>
@@ -741,17 +738,8 @@ This client: protocol {2} (servers with protocol {3} or newer are supported)</va
   <data name="RadioPanelTitle" xml:space="preserve">
     <value>EasyRadioLink - Radio</value>
   </data>
-  <data name="RadioRxEffects" xml:space="preserve">
-    <value>Receive clicks</value>
-  </data>
-  <data name="RadioRxEnd" xml:space="preserve">
-    <value>End</value>
-  </data>
   <data name="RadioRxSquelchTail" xml:space="preserve">
-    <value>Squelch tail after received AM / FM transmissions</value>
-  </data>
-  <data name="RadioRxStart" xml:space="preserve">
-    <value>Start</value>
+    <value>Squelch tail</value>
   </data>
   <data name="RadiosHeader" xml:space="preserve">
     <value>Radio</value>
@@ -762,20 +750,20 @@ This client: protocol {2} (servers with protocol {3} or newer are supported)</va
   <data name="RadioSoundEffectsClipping" xml:space="preserve">
     <value>Clipping (needs a radio effect strength above 0%)</value>
   </data>
-  <data name="RadioStartTransmitEffect" xml:space="preserve">
-    <value>Transmit start click</value>
+  <data name="RadioSoundOff" xml:space="preserve">
+    <value>Off</value>
+  </data>
+  <data name="RadioSoundsHeader" xml:space="preserve">
+    <value>Radio Sounds</value>
+  </data>
+  <data name="RadioSoundsProfileNotice" xml:space="preserve">
+    <value>These settings belong to the profile "{0}" (Advanced settings &gt; Profiles).</value>
   </data>
   <data name="RadioTab" xml:space="preserve">
     <value>Radio</value>
   </data>
-  <data name="RadioTxEffects" xml:space="preserve">
-    <value>Transmit clicks</value>
-  </data>
-  <data name="RadioTxEnd" xml:space="preserve">
-    <value>End</value>
-  </data>
-  <data name="RadioTxStart" xml:space="preserve">
-    <value>Start</value>
+  <data name="RadioWindowHeader" xml:space="preserve">
+    <value>Radio Window</value>
   </data>
   <data name="RecordingFormat" xml:space="preserve">
     <value>Recording format (restart required)</value>
@@ -846,6 +834,18 @@ This client: protocol {2} (servers with protocol {3} or newer are supported)</va
   <data name="ShowTransmitterName" xml:space="preserve">
     <value>Show who is transmitting (if the server allows it)</value>
   </data>
+  <data name="SoundRxEnd" xml:space="preserve">
+    <value>When someone stops talking</value>
+  </data>
+  <data name="SoundRxStart" xml:space="preserve">
+    <value>When someone starts talking</value>
+  </data>
+  <data name="SoundTxEnd" xml:space="preserve">
+    <value>When I release push-to-talk</value>
+  </data>
+  <data name="SoundTxStart" xml:space="preserve">
+    <value>When I press push-to-talk</value>
+  </data>
   <data name="SpeakerBoost" xml:space="preserve">
     <value>Speaker boost</value>
   </data>
@@ -915,6 +915,9 @@ This client: protocol {2} (servers with protocol {3} or newer are supported)</va
   <data name="ToolTipAutoOpenRadioPanel" xml:space="preserve">
     <value>Shows the radio automatically after connecting to a server</value>
   </data>
+  <data name="ToolTipBackgroundRadioNoise" xml:space="preserve">
+    <value>Static behind received voices, depending on the frequency. The static levels are under Advanced settings &gt; Radio Effect Details.</value>
+  </data>
   <data name="ToolTipBackgroundSound" xml:space="preserve">
     <value>A background sound mixed into your transmissions, e.g. an engine. Everybody who hears you hears it too.</value>
   </data>
@@ -969,6 +972,9 @@ This client: protocol {2} (servers with protocol {3} or newer are supported)</va
   <data name="ToolTipPerRadioModelEffects" xml:space="preserve">
     <value>Transmissions sound like the radio of their band (CB, PMR, airband, ...). Off: every transmission uses the standard sound.</value>
   </data>
+  <data name="ToolTipPlaySound" xml:space="preserve">
+    <value>Play this sound</value>
+  </data>
   <data name="ToolTipPreviewModel" xml:space="preserve">
     <value>Radio sound used by Audio Preview - hear yourself through that radio</value>
   </data>
@@ -1009,6 +1015,18 @@ The password is sent over the encrypted connection, after the server's identity 
   <data name="ToolTipServerStatus" xml:space="preserve">
     <value>Connection to the server</value>
   </data>
+  <data name="ToolTipSoundRxEnd" xml:space="preserve">
+    <value>Played when a transmission you receive ends</value>
+  </data>
+  <data name="ToolTipSoundRxStart" xml:space="preserve">
+    <value>Played when a transmission you receive starts</value>
+  </data>
+  <data name="ToolTipSoundTxEnd" xml:space="preserve">
+    <value>Played on your speakers when you stop transmitting. The others hear the sound they chose for "When someone stops talking".</value>
+  </data>
+  <data name="ToolTipSoundTxStart" xml:space="preserve">
+    <value>Played on your speakers when you start transmitting. The others hear the sound they chose for "When someone starts talking".</value>
+  </data>
   <data name="ToolTipSpeakerBoost" xml:space="preserve">
     <value>Boosts all received audio</value>
   </data>
@@ -1045,11 +1063,11 @@ The password is sent over the encrypted connection, after the server's identity 
   <data name="VOIPConnectionStatusLabel" xml:space="preserve">
     <value>Voice</value>
   </data>
-  <data name="VOXEnabled" xml:space="preserve">
-    <value>Transmit when speaking (VOX)</value>
+  <data name="VOXDetailsHeader" xml:space="preserve">
+    <value>Voice Activation Details</value>
   </data>
-  <data name="VOXHeader" xml:space="preserve">
-    <value>Voice Activation (VOX)</value>
+  <data name="VOXEnabled" xml:space="preserve">
+    <value>Voice activation (VOX)</value>
   </data>
   <data name="VOXMinimimumTXTime" xml:space="preserve">
     <value>Minimum transmission length (ms)</value>

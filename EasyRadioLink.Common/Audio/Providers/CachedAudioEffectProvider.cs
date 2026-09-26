@@ -11,8 +11,9 @@ namespace EasyRadioLink.Common.Audio.Providers;
 
 /// <summary>
 ///     Loads and caches the sound effects shipped in <c>&lt;ProgramDirectory&gt;\AudioEffects</c>:
-///     start/end clicks (user selectable by file-name prefix), the FM tone, the squelch tail noise
-///     sources and the background sounds in <c>AudioEffects\Background</c>.
+///     start/end sounds (clicks and beeps, user selectable by file-name prefix, separately for transmitting and
+///     receiving), the FM tone, the squelch tail noise sources and the background sounds in
+///     <c>AudioEffects\Background</c>.
 /// </summary>
 public class CachedAudioEffectProvider
 {
@@ -42,14 +43,27 @@ public class CachedAudioEffectProvider
     /// <summary><c>&lt;ProgramDirectory&gt;\AudioEffects\Background</c>.</summary>
     public static string BackgroundFolder => Path.Combine(CachedAudioEffect.AudioEffectsFolder, BackgroundFolderName);
 
+    /// <summary>Selectable start sounds (RADIO_TRANS_START*.wav): push-to-talk pressed, a received transmission starts.</summary>
     public List<CachedAudioEffect> RadioTransmissionStart { get; private set; }
+
+    /// <summary>Selectable end sounds (RADIO_TRANS_END*.wav): push-to-talk released, a received transmission ends.</summary>
     public List<CachedAudioEffect> RadioTransmissionEnd { get; private set; }
 
+    /// <summary>Played when you press push-to-talk (profile key RadioTransmissionStartSelection).</summary>
     public CachedAudioEffect SelectedRadioTransmissionStartEffect =>
         FindSelectedEffect(RadioTransmissionStart, ProfileSettingsKeys.RadioTransmissionStartSelection);
 
+    /// <summary>Played when you release push-to-talk (profile key RadioTransmissionEndSelection).</summary>
     public CachedAudioEffect SelectedRadioTransmissionEndEffect =>
         FindSelectedEffect(RadioTransmissionEnd, ProfileSettingsKeys.RadioTransmissionEndSelection);
+
+    /// <summary>Played when a received transmission starts (profile key RadioRxStartSelection).</summary>
+    public CachedAudioEffect SelectedRadioReceiveStartEffect =>
+        FindSelectedEffect(RadioTransmissionStart, ProfileSettingsKeys.RadioRxStartSelection);
+
+    /// <summary>Played when a received transmission ends (profile key RadioRxEndSelection).</summary>
+    public CachedAudioEffect SelectedRadioReceiveEndEffect =>
+        FindSelectedEffect(RadioTransmissionEnd, ProfileSettingsKeys.RadioRxEndSelection);
 
     /// <summary>NATO_TONE.wav - looping FM tone.</summary>
     public CachedAudioEffect NATOTone { get; private set; }
@@ -80,10 +94,22 @@ public class CachedAudioEffectProvider
 
     private void LoadRadioStartAndEndEffects()
     {
+        var (start, end) = LoadTones(CachedAudioEffect.AudioEffectsFolder);
+
+        RadioTransmissionStart = start;
+        RadioTransmissionEnd = end;
+    }
+
+    /// <summary>
+    ///     The selectable start and end sounds of <paramref name="sourceFolder" />, in settings order:
+    ///     RADIO_TRANS_START*.wav / RADIO_TRANS_END*.wav, and the <see cref="CachedAudioEffect.SharedToneNames" /> in
+    ///     both lists. Never empty (a blank effect stands in if the folder is missing).
+    /// </summary>
+    internal static (List<CachedAudioEffect> Start, List<CachedAudioEffect> End) LoadTones(string sourceFolder)
+    {
         var start = new List<CachedAudioEffect>();
         var end = new List<CachedAudioEffect>();
 
-        var sourceFolder = CachedAudioEffect.AudioEffectsFolder;
         try
         {
             if (Directory.Exists(sourceFolder))
@@ -110,6 +136,17 @@ public class CachedAudioEffectProvider
 
                         if (audioEffect.Loaded) end.Add(audioEffect);
                     }
+                    else if (CachedAudioEffect.IsSharedTone(effect))
+                    {
+                        // selectable for every slot: once as a start sound, once as an end sound
+                        var asStart = new CachedAudioEffect(CachedAudioEffect.AudioEffectTypes.RADIO_TRANS_START,
+                            effect, effectPath);
+                        if (!asStart.Loaded) continue;
+
+                        start.Add(asStart);
+                        end.Add(new CachedAudioEffect(CachedAudioEffect.AudioEffectTypes.RADIO_TRANS_END, effect,
+                            effectPath));
+                    }
                 }
             }
             else
@@ -122,18 +159,15 @@ public class CachedAudioEffectProvider
             Logger.Error(ex, $"Unable to list the audio effects in {sourceFolder}");
         }
 
-        // the default (un-suffixed) effect first, then the alternatives
-        start = start.OrderBy(effect => effect.DisplayName == "Default" ? 0 : 1)
-            .ThenBy(effect => effect.DisplayName, StringComparer.OrdinalIgnoreCase).ToList();
-        end = end.OrderBy(effect => effect.DisplayName == "Default" ? 0 : 1)
-            .ThenBy(effect => effect.DisplayName, StringComparer.OrdinalIgnoreCase).ToList();
+        // the default (un-suffixed) click first, then the other shipped sounds, then own files by name
+        start = SortTones(start);
+        end = SortTones(end);
 
         //IF the audio folder is missing - to avoid a crash, init with a blank one
         if (start.Count == 0) start.Add(new CachedAudioEffect(CachedAudioEffect.AudioEffectTypes.RADIO_TRANS_START));
         if (end.Count == 0) end.Add(new CachedAudioEffect(CachedAudioEffect.AudioEffectTypes.RADIO_TRANS_END));
 
-        RadioTransmissionStart = start;
-        RadioTransmissionEnd = end;
+        return (start, end);
     }
 
     private void LoadBackgroundEffects()
@@ -216,12 +250,30 @@ public class CachedAudioEffectProvider
         return _backgroundEffects.TryGetValue(normalised, out var effect) ? effect : null;
     }
 
+    /// <summary>Start/end sounds in the order of the settings lists (see <see cref="CachedAudioEffect.ToneSortOrder" />).</summary>
+    internal static List<CachedAudioEffect> SortTones(IEnumerable<CachedAudioEffect> effects)
+    {
+        return effects.OrderBy(effect => CachedAudioEffect.ToneSortOrder(effect.AudioEffectType, effect.FileName))
+            .ThenBy(effect => effect.DisplayName, StringComparer.OrdinalIgnoreCase)
+            .ThenBy(effect => effect.FileName, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+    }
+
     private static CachedAudioEffect FindSelectedEffect(List<CachedAudioEffect> effects, ProfileSettingsKeys key)
     {
-        var selectedTone = GlobalSettingsStore.Instance.ProfileSettingsStore.GetClientSettingString(key) ?? string.Empty;
+        return FindEffect(effects, GlobalSettingsStore.Instance.ProfileSettingsStore.GetClientSettingString(key));
+    }
+
+    /// <summary>
+    ///     The effect with the file name <paramref name="fileName" /> (case-insensitive), or the first effect (the
+    ///     default click) if the file is not available (e.g. an own sound file that was removed). Null for an empty list.
+    /// </summary>
+    public static CachedAudioEffect FindEffect(IReadOnlyList<CachedAudioEffect> effects, string fileName)
+    {
+        if (effects == null || effects.Count == 0) return null;
 
         foreach (var effect in effects)
-            if (string.Equals(effect.FileName, selectedTone, StringComparison.OrdinalIgnoreCase))
+            if (string.Equals(effect.FileName, fileName ?? string.Empty, StringComparison.OrdinalIgnoreCase))
                 return effect;
 
         return effects[0];
