@@ -2,6 +2,8 @@
 
     <PropertyGroup>
         <OutputType>Exe</OutputType>
+        <!-- no ICU needed (all parsing is culture-invariant) - the Linux server runs without libicu -->
+        <InvariantGlobalization>true</InvariantGlobalization>
         <TargetFramework>net10.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <StartupObject>EasyRadioLink.Server.Program</StartupObject>

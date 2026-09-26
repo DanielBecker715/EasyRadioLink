@@ -526,8 +526,14 @@
                                 <Run Text="{x:Static p:Resources.AboutLicenseLink}" />
                             </Hyperlink>
                         </Paragraph>
-                        <Paragraph Margin="0">
+                        <Paragraph Margin="0,0,0,8">
                             <Run Text="{x:Static p:Resources.AboutCredit}" />
+                        </Paragraph>
+                        <Paragraph Margin="0">
+                            <Run Text="{x:Static p:Resources.AboutSourceCode}" />
+                            <Hyperlink NavigateUri="https://github.com/DanielBecker715/EasyRadioLink">
+                                <Run Text="https://github.com/DanielBecker715/EasyRadioLink" />
+                            </Hyperlink>
                         </Paragraph>
                     </FlowDocument>
                 </FlowDocumentScrollViewer>

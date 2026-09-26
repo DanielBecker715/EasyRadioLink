@@ -80,7 +80,6 @@
     </ItemGroup>
     <ItemGroup>
 
-        <PackageReference Include="Extended.Wpf.Toolkit" Version="5.1.2" />
         <PackageReference Include="Fody" Version="6.9.3">
           <PrivateAssets>all</PrivateAssets>
           <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>

@@ -60,6 +60,15 @@ namespace EasyRadioLink.Client.Properties {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to Source code: .
+        /// </summary>
+        public static string AboutSourceCode {
+            get {
+                return ResourceManager.GetString("AboutSourceCode", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to Based on DCS-SimpleRadio Standalone by Ciribob and contributors (GPL-3.0).
         /// </summary>
         public static string AboutCredit {

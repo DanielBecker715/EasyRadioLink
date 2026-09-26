@@ -811,7 +811,7 @@ public class InputDeviceManager : IDisposable
         {
             MessageBox.Show(
                 $"An error occurred while querying your {deviceName} input device.\nThis could for example be caused by unplugging " +
-                $"your joystick or disabling it in the Windows settings.\n\nAll controls bound to this input device will not work anymore until you press 'Rescan Controller Input' on the Controls tab or restart EasyRadioLink.",
+                $"your joystick or disabling it in the Windows settings.\n\nAll controls bound to this input device will not work anymore until you press 'Rescan Controllers' on the Controls tab or restart EasyRadioLink.",
                 "Input device error",
                 MessageBoxButton.OK,
                 MessageBoxImage.Error);

@@ -81,11 +81,6 @@ ControlzEx
   License:   MIT
   Copyright (c) 2015 - 2020 Jan Karger, Bastian Schmidt, James Willock
 
-Extended WPF Toolkit
-  License:   Xceed Community License Agreement,
-             https://github.com/xceedsoftware/wpftoolkit/blob/master/license.md
-  Copyright (c) Xceed Software Inc. 2010-2026
-
 MahApps.Metro
   License:   MIT
   Copyright (c) .NET Foundation and Contributors

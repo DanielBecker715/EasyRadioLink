@@ -655,10 +655,10 @@ public partial class RadioChannelControl : UserControl
                 : Properties.Resources.BtnEnable;
     }
 
-    private void EncryptionKeySpinner_OnValueChanged(object sender, RoutedPropertyChangedEventArgs<object> e)
+    private void EncryptionKeySpinner_OnValueChanged(object sender, RoutedPropertyChangedEventArgs<double?> e)
     {
         if (EncryptionKeySpinner?.Value != null)
-            RadioHelper.SetEncryptionKey(RadioId, EncryptionKeySpinner.Value.Value);
+            RadioHelper.SetEncryptionKey(RadioId, (int)Math.Round(EncryptionKeySpinner.Value.Value));
     }
 
     #endregion

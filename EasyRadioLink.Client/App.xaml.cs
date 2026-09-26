@@ -63,7 +63,7 @@ public partial class App : Application
                 {
                     Caption = "Installation Error!",
                     Heading = $"You are missing the {dll}",
-                    Text = "Reinstall EasyRadioLink using the installer and don't move the client out of its installation directory!",
+                    Text = "Extract the complete EasyRadioLink download again and keep all of its files together in one folder.",
                     Icon = TaskDialogIcon.Error,
                     Buttons = { TaskDialogButton.OK }
                 });
