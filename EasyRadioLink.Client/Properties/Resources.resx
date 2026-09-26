@@ -1107,7 +1107,7 @@ This client: protocol {2} (servers with protocol {3} or newer are supported)</va
     <value>Your name - shown to other users and in the server's user list</value>
   </data>
   <data name="ToolTipEncryptionKey" xml:space="preserve">
-    <value>Encryption key 1-252 - both sides need the same key</value>
+    <value>Encryption key 1-252 (type it, or use the mouse wheel / arrow keys) - both sides need the same key</value>
   </data>
   <data name="ToolTipFavAdd" xml:space="preserve">
     <value>Add this server to the favourites</value>

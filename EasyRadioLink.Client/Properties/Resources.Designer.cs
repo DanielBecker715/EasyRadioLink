@@ -2950,7 +2950,7 @@ namespace EasyRadioLink.Client.Properties {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to Encryption key 1-252 - both sides need the same key.
+        ///   Looks up a localized string similar to Encryption key 1-252 (type it, or use the mouse wheel / arrow keys) - both sides need the same key.
         /// </summary>
         public static string ToolTipEncryptionKey {
             get {
