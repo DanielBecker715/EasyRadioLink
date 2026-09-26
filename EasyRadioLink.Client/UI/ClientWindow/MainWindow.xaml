@@ -163,6 +163,7 @@
                                             Orientation="Horizontal">
                                     <Button x:Name="StartStop"
                                             Width="150"
+                                            controls:ControlsHelper.ContentCharacterCasing="Upper"
                                             Command="{Binding Path=ConnectCommand}"
                                             Content="{Binding Path=ConnectText}"
                                             IsEnabled="{Binding ConnectIsEnabled}"

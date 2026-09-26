@@ -1,3 +1,4 @@
+using System.IO;
 using EasyRadioLink.Common.Network.Server.TransmissionLogging;
 using NLog;
 using NLog.Config;
@@ -13,7 +14,13 @@ public static class LoggingHelper
     // Must match the logger created by LogManager.GetCurrentClassLogger() inside TransmissionLoggingQueue.
     private static readonly string TransmissionLoggerName = typeof(TransmissionLoggingQueue).FullName;
 
-    public static LoggingConfiguration GenerateTransmissionLoggingConfig(LoggingConfiguration config, int archiveFiles)
+    /// <summary>
+    ///     Adds the transmission log (CSV, one file per day) to <paramref name="config" />. The files are written to
+    ///     <paramref name="directory" /> (the server's configuration folder), archives to its TransmissionLogArchive
+    ///     sub folder.
+    /// </summary>
+    public static LoggingConfiguration GenerateTransmissionLoggingConfig(LoggingConfiguration config, int archiveFiles,
+        string directory)
     {
         config ??= new LoggingConfiguration();
 
@@ -22,9 +29,9 @@ public static class LoggingHelper
 
         var transmissionFileTarget = new FileTarget
         {
-            FileName = @"${date:format=yyyy-MM-dd}-transmissionlog.csv",
+            FileName = Path.Combine(directory, "${date:format=yyyy-MM-dd}-transmissionlog.csv"),
             ArchiveOldFileOnStartup = true,
-            ArchiveFileName = @"${basedir}/TransmissionLogArchive/transmissionlog.old.csv",
+            ArchiveFileName = Path.Combine(directory, "TransmissionLogArchive", "transmissionlog.old.csv"),
             MaxArchiveFiles = archiveFiles,
             ArchiveEvery = FileArchivePeriod.Day,
             Layout = @"${longdate}, ${message}"

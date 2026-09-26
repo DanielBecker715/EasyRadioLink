@@ -57,6 +57,25 @@ public static class VoiceRouting
         return false;
     }
 
+    /// <summary>
+    ///     True if a UDP datagram received from <paramref name="source" /> may act for <paramref name="client" />: it must
+    ///     come from the IP address the client's TCP connection authenticated from
+    ///     (<see cref="ClientInfo.SessionAddress" />). Knowing another user's client id is not enough to receive or send
+    ///     voice as that user.
+    /// </summary>
+    public static bool IsFromClientAddress(ClientInfo client, IPEndPoint source)
+    {
+        var expected = client?.SessionAddress;
+        if (expected == null || source?.Address == null) return false;
+
+        return Normalise(expected).Equals(Normalise(source.Address));
+    }
+
+    private static IPAddress Normalise(IPAddress address)
+    {
+        return address.IsIPv4MappedToIPv6 ? address.MapToIPv4() : address;
+    }
+
     /// <summary>UDP endpoints that must receive <paramref name="packet" /> sent by <paramref name="sender" />.</summary>
     public static HashSet<IPEndPoint> SelectRecipients(IEnumerable<ClientInfo> clients,
         ClientInfo sender,

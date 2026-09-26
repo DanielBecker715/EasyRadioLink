@@ -22,7 +22,7 @@ public enum GlobalSettingsKeys
     StartMinimised,
 
     ExpandControls,
-    RadioOverlayTaskbarHide,
+    RadioPanelTaskbarHide,
 
     AudioInputDeviceId,
     AudioOutputDeviceId,
@@ -216,7 +216,7 @@ public class GlobalSettingsStore
     private readonly Dictionary<string, string> defaultGlobalSettings = new()
     {
         { GlobalSettingsKeys.Version.ToString(), "0" },
-        { GlobalSettingsKeys.RadioOverlayTaskbarHide.ToString(), "false" },
+        { GlobalSettingsKeys.RadioPanelTaskbarHide.ToString(), "false" },
         { GlobalSettingsKeys.ExpandControls.ToString(), "false" },
 
         { GlobalSettingsKeys.MinimiseToTray.ToString(), "false" },
@@ -286,15 +286,9 @@ public class GlobalSettingsStore
 
     private GlobalSettingsStore()
     {
-        //check commandline - "-cfg=<directory>" overrides the configuration directory
-        var args = Environment.GetCommandLineArgs();
-
-        foreach (var arg in args)
-            if (arg.Trim().StartsWith("-cfg="))
-            {
-                Path = arg.Trim().Substring("-cfg=".Length).Trim().Trim('"');
-                Logger.Info($"Found -cfg loading: {Path + ConfigFileName}");
-            }
+        // "-cfg=<directory>" overrides the configuration directory - resolved by Path (the client may have replaced
+        // an unusable -cfg directory by the default one before the store is created)
+        if (CommandLineConfigDirectory() != null) Logger.Info($"Found -cfg loading: {Path + ConfigFileName}");
 
         try
         {
@@ -353,6 +347,18 @@ public class GlobalSettingsStore
 
             Save();
         }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            // e.g. a -cfg directory that can't be read - continue with the defaults (saving fails and is logged)
+            Logger.Error(ex, $"Unable to read the client config file {Path}{ConfigFileName}, using the default config");
+
+            _configuration = new Configuration
+            {
+                new Section("Position Settings"),
+                new Section("Client Settings")
+            };
+            SetClientSetting(GlobalSettingsKeys.Version, CurrentVersion);
+        }
 
         ProfileSettingsStore = new ProfileSettingsStore(this);
     }
@@ -376,7 +382,10 @@ public class GlobalSettingsStore
 
     private static string _path;
 
-    /// <summary>The directory of the (last) <c>-cfg=&lt;directory&gt;</c> command line argument, or null.</summary>
+    /// <summary>
+    ///     The directory of the (last) <c>-cfg=&lt;directory&gt;</c> command line argument as a full path (a relative
+    ///     path is resolved against the working directory once), or null.
+    /// </summary>
     private static string CommandLineConfigDirectory()
     {
         string directory = null;
@@ -388,7 +397,17 @@ public class GlobalSettingsStore
                 if (!string.IsNullOrWhiteSpace(value)) directory = value;
             }
 
-        return directory;
+        if (directory == null) return null;
+
+        try
+        {
+            return System.IO.Path.GetFullPath(directory);
+        }
+        catch (Exception)
+        {
+            // invalid path - reported when the directory is used
+            return directory;
+        }
     }
 
     private static string WithTrailingSeparator(string directory)
@@ -587,9 +606,9 @@ public class GlobalSettingsStore
             {
                 _configuration.SaveToFile(Path + ConfigFileName, new UTF8Encoding(false, true));
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                Logger.Error("Unable to save settings!");
+                Logger.Error(ex, $"Unable to save settings to {Path}{ConfigFileName}!");
             }
         }
     }

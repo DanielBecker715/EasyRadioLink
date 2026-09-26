@@ -96,24 +96,6 @@ namespace EasyRadioLink.Server.Properties {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to OFF.
-        /// </summary>
-        public static string BtnOff {
-            get {
-                return ResourceManager.GetString("BtnOff", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to ON.
-        /// </summary>
-        public static string BtnOn {
-            get {
-                return ResourceManager.GetString("BtnOn", resourceCulture);
-            }
-        }
-
-        /// <summary>
         ///   Looks up a localized string similar to Start Server.
         /// </summary>
         public static string BtnStartServer {
@@ -128,6 +110,51 @@ namespace EasyRadioLink.Server.Properties {
         public static string BtnStopServer {
             get {
                 return ResourceManager.GetString("BtnStopServer", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Access.
+        /// </summary>
+        public static string GroupAccess {
+            get {
+                return ResourceManager.GetString("GroupAccess", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Client features.
+        /// </summary>
+        public static string GroupClientFeatures {
+            get {
+                return ResourceManager.GetString("GroupClientFeatures", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Frequencies.
+        /// </summary>
+        public static string GroupFrequencies {
+            get {
+                return ResourceManager.GetString("GroupFrequencies", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Logging and export.
+        /// </summary>
+        public static string GroupLogging {
+            get {
+                return ResourceManager.GetString("GroupLogging", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Radio realism.
+        /// </summary>
+        public static string GroupRadioRealism {
+            get {
+                return ResourceManager.GetString("GroupRadioRealism", resourceCulture);
             }
         }
 
@@ -155,6 +182,15 @@ namespace EasyRadioLink.Server.Properties {
         public static string LabelClients {
             get {
                 return ResourceManager.GetString("LabelClients", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Settings file:.
+        /// </summary>
+        public static string LabelConfigFile {
+            get {
+                return ResourceManager.GetString("LabelConfigFile", resourceCulture);
             }
         }
 
@@ -312,6 +348,33 @@ namespace EasyRadioLink.Server.Properties {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to The server could not be started. {0} Close the other server, or change SERVER_PORT / SERVER_IP in {1} and click "Start Server"..
+        /// </summary>
+        public static string MsgBoxStartFailed {
+            get {
+                return ResourceManager.GetString("MsgBoxStartFailed", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Server running.
+        /// </summary>
+        public static string StatusRunning {
+            get {
+                return ResourceManager.GetString("StatusRunning", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Server stopped.
+        /// </summary>
+        public static string StatusStopped {
+            get {
+                return ResourceManager.GetString("StatusStopped", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to Connected Clients.
         /// </summary>
         public static string TitleClientList {
@@ -330,11 +393,29 @@ namespace EasyRadioLink.Server.Properties {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to How many days of transmission logs are kept (0-7)..
+        /// </summary>
+        public static string TooltipArchiveTime {
+            get {
+                return ResourceManager.GetString("TooltipArchiveTime", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to Transmissions on these frequencies are played without radio effects (static, filters, clicks). Comma separated, use a dot as decimal separator, e.g. 145.5,446.1.
         /// </summary>
         public static string TooltipCleanFreq {
             get {
                 return ResourceManager.GetString("TooltipCleanFreq", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Writes the connected clients to clients-list.json next to server.cfg every 5 seconds (path: CLIENT_EXPORT_FILE_PATH in server.cfg)..
+        /// </summary>
+        public static string TooltipExportList {
+            get {
+                return ResourceManager.GetString("TooltipExportList", resourceCulture);
             }
         }
 
@@ -393,6 +474,15 @@ namespace EasyRadioLink.Server.Properties {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to Clients see the name of the user who is transmitting..
+        /// </summary>
+        public static string TooltipShowTransmitterName {
+            get {
+                return ResourceManager.GetString("TooltipShowTransmitterName", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to Encrypted radios only understand transmissions with the same key; unencrypted transmissions are scrambled for them too..
         /// </summary>
         public static string TooltipStrictEncryption {
@@ -407,6 +497,15 @@ namespace EasyRadioLink.Server.Properties {
         public static string TooltipTestFreq {
             get {
                 return ResourceManager.GetString("TooltipTestFreq", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Writes one CSV line per transmission to a daily &lt;date&gt;-transmissionlog.csv file next to server.cfg..
+        /// </summary>
+        public static string TooltipTransmissionLog {
+            get {
+                return ResourceManager.GetString("TooltipTransmissionLog", resourceCulture);
             }
         }
 

@@ -32,13 +32,14 @@ field / the Sound selector stores. Keys are lower case letters and digits only (
 | `version` | yes | Always `1`. |
 | `displayName` | no | Name shown in the Sound selector (default: the key). |
 | `description` | no | Short description (tool tip). |
-| `sortOrder` | no | Position in the Sound selector (lower first, default 1000). |
+| `sortOrder` | no | Position in the Sound selector (lower first, default 1000; `standard` is always first). |
 | `txEffect` | yes | Effect applied to transmissions made with this model (microphone + transmitter). |
 | `rxEffect` | yes | Receive filter (receiver + speaker). A gentle highpass 270 / lowpass 4500 is typical. |
 | `encryptionEffect` | no | Applied after `txEffect` when the transmission is encrypted, usually `cvsd`. |
 | `noiseGain` | yes | Static level in dB, added to the frequency dependent base level (lower frequencies are noisier). Above 30 MHz the static is always subtle. At or below 30 MHz (CB/HF) it is much stronger and rises steeply: `-22` is heavy (`cb`), `-33` light (`standard`); above about `-18` the static drowns the voice. |
 
-Property names are camelCase. Comments (`// ...`) and trailing commas are allowed. Unknown properties of filters
+Property names are camelCase (not case sensitive). `"$type"` may appear anywhere in an object. Comments (`// ...`)
+and trailing commas are allowed. Unknown properties of filters
 make the file invalid. Frequencies are in Hz, gains and thresholds in dB, times in seconds.
 
 ## Effects
@@ -75,5 +76,6 @@ Example:
 }
 ```
 
-Tip: start from a copy of a built-in model, change one thing at a time and compare with the microphone preview.
+Tip: start from a copy of a built-in model, change one thing at a time and compare with the Audio Preview button.
+The preview plays no static, so judge `noiseGain` with a real transmission on the band the model is meant for.
 Keep the final `gain` so the model is about as loud as `standard`.

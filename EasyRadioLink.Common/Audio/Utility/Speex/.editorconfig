@@ -1,0 +1,5 @@
+# C# port of the Speex jitter buffer (BSD-3-Clause) - kept unchanged, as close to the original as possible.
+# Some tuning fields of the original are never assigned or read in this port.
+[JitterBuffer.cs]
+dotnet_diagnostic.CS0649.severity = none
+dotnet_diagnostic.CS0414.severity = none

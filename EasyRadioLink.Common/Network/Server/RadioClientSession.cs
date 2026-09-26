@@ -26,6 +26,7 @@ public class RadioClientSession : TcpSession
     private string _ip;
     private long _lastFullRadioSent;
     private int _port;
+    private volatile bool _rejected;
 
     public RadioClientSession(ServerSync server,
         HashSet<IPAddress> bannedIps) : base(server)
@@ -57,6 +58,19 @@ public class RadioClientSession : TcpSession
     /// <summary>"ip:port" of the remote end (for logs).</summary>
     public string RemoteAddress => $"{_ip}:{_port}";
 
+    /// <summary>IP address of the remote end.</summary>
+    public IPAddress RemoteIp { get; private set; }
+
+    /// <summary>
+    ///     Set when the handshake was refused (e.g. wrong password): the connection is closed shortly and every further
+    ///     message on it is ignored.
+    /// </summary>
+    public bool Rejected
+    {
+        get => _rejected;
+        set => _rejected = value;
+    }
+
     protected override void OnConnected()
     {
         ConnectedAtUtc = DateTime.UtcNow;
@@ -72,10 +86,17 @@ public class RadioClientSession : TcpSession
 
         _ip = clientIp.Address.ToString();
         _port = clientIp.Port;
+        RemoteIp = clientIp.Address;
 
         if (_bannedIps.Contains(clientIp.Address))
         {
             Logger.Warn("Disconnecting Banned Client -  " + clientIp.Address + " " + clientIp.Port);
+
+            Disconnect();
+        }
+        else if (((ServerSync)Server).IsLockedOut(clientIp.Address))
+        {
+            Logger.Info($"Disconnecting {RemoteAddress} - too many wrong passwords, try again later");
 
             Disconnect();
         }

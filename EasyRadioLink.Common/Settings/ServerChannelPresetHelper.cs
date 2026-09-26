@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Globalization;
 using System.IO;
 using System.Text.RegularExpressions;
+using EasyRadioLink.Common.Helpers;
 using EasyRadioLink.Common.Models.Player;
 using NLog;
 
@@ -55,46 +55,43 @@ public partial class ServerChannelPresetHelper
         }
     }
 
-    // One channel per line: "Name|MHz" or just "MHz" (invariant culture, e.g. "Channel 19|27.185").
     private List<ServerPresetChannel> ReadFrequenciesFromFile(string filePath)
     {
+        return ParsePresetLines(File.ReadAllLines(filePath));
+    }
+
+    /// <summary>
+    ///     One channel per line: "Name|MHz" or just "MHz", e.g. "Channel 19|27.185". Same rules as the client's preset
+    ///     files (<see cref="RadioCalculator.TryParseMHz" />): a dot is the decimal separator, a single comma is accepted
+    ///     too ("27,185"). Invalid lines are skipped.
+    /// </summary>
+    internal static List<ServerPresetChannel> ParsePresetLines(IEnumerable<string> lines)
+    {
         var channels = new List<ServerPresetChannel>();
-        var lines = File.ReadAllLines(filePath);
+        if (lines == null) return channels;
 
-        if (lines?.Length > 0)
-            foreach (var line in lines)
+        foreach (var line in lines)
+        {
+            var trimmed = line?.Trim() ?? "";
+            if (trimmed.Length == 0) continue;
+
+            var split = trimmed.Split('|');
+            var name = split.Length >= 2 ? split[0].Trim() : trimmed;
+            var frequencyText = split.Length >= 2 ? split[1] : trimmed;
+
+            if (!RadioCalculator.TryParseMHz(frequencyText, out var frequencyHz))
             {
-                var trimmed = line.Trim();
-                if (trimmed.Length > 0)
-                    try
-                    {
-                        var split = trimmed.Split('|');
-
-                        var name = "";
-                        double frequency = 0;
-                        if (split.Length >= 2)
-                        {
-                            name = split[0].Trim();
-                            frequency = double.Parse(split[1].Trim(), NumberStyles.Float, CultureInfo.InvariantCulture);
-                        }
-                        else
-                        {
-                            name = trimmed;
-                            frequency = double.Parse(trimmed, NumberStyles.Float, CultureInfo.InvariantCulture);
-                        }
-
-                        //assume its in MHz - will transform client side to save some bytes 
-                        channels.Add(new ServerPresetChannel
-                        {
-                            Name = name,
-                            Frequency = frequency
-                        });
-                    }
-                    catch (Exception)
-                    {
-                        Logger.Log(LogLevel.Info, "Error parsing frequency  " + trimmed);
-                    }
+                Logger.Log(LogLevel.Info, "Error parsing frequency  " + trimmed);
+                continue;
             }
+
+            //in MHz - will transform client side to save some bytes
+            channels.Add(new ServerPresetChannel
+            {
+                Name = name,
+                Frequency = frequencyHz / RadioCalculator.MHz
+            });
+        }
 
         return channels;
     }

@@ -1,4 +1,5 @@
 using System;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Threading.Tasks;
@@ -17,6 +18,9 @@ namespace EasyRadioLink.Installer
         private static readonly Logger Logger = LogManager.GetCurrentClassLogger();
         private readonly string _currentDirectory;
         private ProgressBarDialog _progressBarDialog;
+
+        /// <summary>True while an install or uninstall runs; the window cannot be closed then.</summary>
+        private bool _busy;
 
         public MainWindow()
         {
@@ -82,13 +86,25 @@ namespace EasyRadioLink.Installer
                 return;
             }
 
-            if (SetupEngine.PathsEqual(installPath, _currentDirectory) ||
+            if (SetupEngine.LooksLikeInstallation(_currentDirectory) ||
+                SetupEngine.PathsEqual(installPath, _currentDirectory) ||
                 SetupEngine.IsInsideDirectory(SetupEngine.SetupProcessPath, installPath) &&
                 SetupEngine.LooksLikeInstallation(installPath))
             {
-                // Installing from the install folder onto itself would delete the files it is copying.
+                // Installing from an installation would delete the files it is copying.
                 MessageBox.Show(this, Properties.Resources.MsgBoxRunningFromInstallText, Properties.Resources.MsgBoxInstallTitle,
                     MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            if (SetupEngine.IsForeignFolder(installPath))
+            {
+                // Never install into (and later clean up) a folder that holds files of another program.
+                Logger.Warn($"Install folder {installPath} contains files of another program");
+                MessageBox.Show(this,
+                    string.Format(Properties.Resources.MsgBoxFolderNotEmptyText, installPath,
+                        Path.Combine(installPath, SetupEngine.ProductName)),
+                    Properties.Resources.MsgBoxFolder, MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
 
@@ -107,6 +123,7 @@ namespace EasyRadioLink.Installer
 
             SetButtonsEnabled(false);
             InstallButton.Content = Properties.Resources.InstallingButton;
+            _busy = true;
 
             _progressBarDialog = UninstallFlow.CreateProgressDialog(this);
             _progressBarDialog.Show();
@@ -116,9 +133,11 @@ namespace EasyRadioLink.Installer
             {
                 result = await Task.Run(() =>
                     SetupEngine.Install(options, text => _progressBarDialog.UpdateProgress(false, text)));
+                _busy = false;
             }
             catch (Exception ex)
             {
+                _busy = false;
                 Logger.Error(ex, "Error Running Installer");
                 _progressBarDialog.UpdateProgress(true, Properties.Resources.MsgBoxInstallError);
 
@@ -186,7 +205,17 @@ namespace EasyRadioLink.Installer
             SetButtonsEnabled(false);
             RemoveButton.Content = Properties.Resources.RemovingButton;
 
-            var outcome = await UninstallFlow.RunAsync(this, installPath);
+            UninstallOutcome outcome;
+            _busy = true;
+            try
+            {
+                outcome = await UninstallFlow.RunAsync(this, installPath);
+            }
+            finally
+            {
+                _busy = false;
+            }
+
             if (outcome == UninstallOutcome.Cancelled)
             {
                 SetButtonsEnabled(true);
@@ -200,6 +229,19 @@ namespace EasyRadioLink.Installer
             }
 
             Close();
+        }
+
+        protected override void OnClosing(CancelEventArgs e)
+        {
+            // Closing the window ends the setup; while it installs or uninstalls that would stop it halfway.
+            if (_busy)
+            {
+                Logger.Info("Close request ignored - setup is busy");
+                e.Cancel = true;
+                return;
+            }
+
+            base.OnClosing(e);
         }
 
         private void SetButtonsEnabled(bool enabled)

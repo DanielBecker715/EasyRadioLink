@@ -35,7 +35,7 @@ public class ClientSettingsViewModel : PropertyChangedBaseClass
 
     public ClientSettingsViewModel()
     {
-        ResetOverlayCommand = new DelegateCommand(() =>
+        ResetRadioPanelCommand = new DelegateCommand(() =>
         {
             // an open radio panel closes without saving, so it can't overwrite the defaults below
             EventBus.Instance.PublishOnUIThreadAsync(new ResetRadioPanelMessage());
@@ -47,12 +47,14 @@ public class ClientSettingsViewModel : PropertyChangedBaseClass
         {
             var inputProfileWindow = new InputProfileWindow.InputProfileWindow(name =>
             {
-                if (name.Trim().Length > 0)
+                name = name.Trim();
+                if (name.Length > 0 && !ProfileExists(name))
                 {
                     _globalSettings.ProfileSettingsStore.AddNewProfile(name);
 
+                    // the list first, so the drop down contains the new profile when it is selected
                     NotifyPropertyChanged(nameof(AvailableProfiles));
-                    ReloadSettings();
+                    SelectedProfile = name;
                 }
             });
             inputProfileWindow.WindowStartupLocation = WindowStartupLocation.CenterOwner;
@@ -65,11 +67,14 @@ public class ClientSettingsViewModel : PropertyChangedBaseClass
             var current = _globalSettings.ProfileSettingsStore.CurrentProfileName;
             var inputProfileWindow = new InputProfileWindow.InputProfileWindow(name =>
             {
-                if (name.Trim().Length > 0)
+                name = name.Trim();
+                if (name.Length > 0 && !ProfileExists(name))
                 {
                     _globalSettings.ProfileSettingsStore.CopyProfile(current, name);
+
+                    // continue with the copy (the drop down and the settings below show it)
                     NotifyPropertyChanged(nameof(AvailableProfiles));
-                    ReloadSettings();
+                    SelectedProfile = name;
                 }
             });
             inputProfileWindow.WindowStartupLocation = WindowStartupLocation.CenterOwner;
@@ -93,12 +98,18 @@ public class ClientSettingsViewModel : PropertyChangedBaseClass
                 var oldName = current;
                 var inputProfileWindow = new InputProfileWindow.InputProfileWindow(name =>
                 {
-                    if (name.Trim().Length > 0)
+                    name = name.Trim();
+
+                    // unchanged (the dialog starts with the old name), or only the case changed (same profile file)
+                    if (name.Length == 0 || string.Equals(name, oldName, StringComparison.OrdinalIgnoreCase)) return;
+
+                    if (!ProfileExists(name))
                     {
                         _globalSettings.ProfileSettingsStore.RenameProfile(oldName, name);
-                        SelectedProfile = _globalSettings.ProfileSettingsStore.CurrentProfileName;
+
+                        // stay on the renamed profile
                         NotifyPropertyChanged(nameof(AvailableProfiles));
-                        ReloadSettings();
+                        SelectedProfile = name;
                     }
                 }, true, oldName);
                 inputProfileWindow.WindowStartupLocation = WindowStartupLocation.CenterOwner;
@@ -139,7 +150,7 @@ public class ClientSettingsViewModel : PropertyChangedBaseClass
 
     }
 
-    public ICommand ResetOverlayCommand { get; set; }
+    public ICommand ResetRadioPanelCommand { get; set; }
 
     public ICommand CreateProfileCommand { get; set; }
     public ICommand CopyProfileCommand { get; set; }
@@ -164,12 +175,12 @@ public class ClientSettingsViewModel : PropertyChangedBaseClass
         }
     }
 
-    public bool RadioOverlayTaskbarItem
+    public bool RadioPanelTaskbarItem
     {
-        get => _globalSettings.GetClientSettingBool(GlobalSettingsKeys.RadioOverlayTaskbarHide);
+        get => _globalSettings.GetClientSettingBool(GlobalSettingsKeys.RadioPanelTaskbarHide);
         set
         {
-            _globalSettings.SetClientSetting(GlobalSettingsKeys.RadioOverlayTaskbarHide, value);
+            _globalSettings.SetClientSetting(GlobalSettingsKeys.RadioPanelTaskbarHide, value);
             NotifyPropertyChanged();
         }
     }
@@ -927,10 +938,28 @@ public class ClientSettingsViewModel : PropertyChangedBaseClass
 
 
 
+    /// <summary>
+    ///     True (and an error is shown) if a profile with this name exists already. Profiles are files, so the case
+    ///     is ignored - a new profile would overwrite the existing one.
+    /// </summary>
+    private bool ProfileExists(string name)
+    {
+        if (!_globalSettings.ProfileSettingsStore.ProfileNames.Any(profile =>
+                string.Equals(profile, name, StringComparison.OrdinalIgnoreCase)))
+            return false;
+
+        MessageBox.Show(Application.Current.MainWindow,
+            string.Format(Resources.MsgBoxProfileExistsText, name),
+            Resources.MsgBoxError,
+            MessageBoxButton.OK,
+            MessageBoxImage.Error);
+
+        return true;
+    }
+
     private void ReloadSettings()
     {
-        //ResetOverlayCommand
-        NotifyPropertyChanged(nameof(RadioOverlayTaskbarItem));
+        NotifyPropertyChanged(nameof(RadioPanelTaskbarItem));
 
         NotifyPropertyChanged(nameof(MinimiseToTray));
         NotifyPropertyChanged(nameof(StartMinimised));

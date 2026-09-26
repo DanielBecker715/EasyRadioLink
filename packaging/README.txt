@@ -6,57 +6,64 @@ radios to a frequency and talk to everybody on the same frequency - with the
 sound of a real radio: filters, static, squelch, clicks, tones and scrambled
 encryption.
 
+Website and source code: https://github.com/DanielBecker715/EasyRadioLink
 
-CONTENTS OF THIS PACKAGE
-------------------------
-  EasyRadioLink-Setup.exe      Installs, updates and uninstalls EasyRadioLink
-  Client\                      The EasyRadioLink program (EasyRadioLink.exe)
-  Server\                      The server with a window (EasyRadioLink.Server.exe)
-  ServerCommandLine-Windows\   The server without a window, for Windows
-  ServerCommandLine-Linux\     The server without a window, for Linux (x64)
-  VC_redist.x64.exe            Microsoft Visual C++ Runtime (installed by the setup)
-  README.txt                   This file
-  LICENSE.txt                  GNU General Public License v3.0
+
+DOWNLOADS
+---------
+  EasyRadioLink-Client-<version>.zip
+      EasyRadioLink for everybody who wants to talk (EasyRadioLink.exe,
+      Windows).
+
+  EasyRadioLink-Server-<version>-Windows.zip
+      Only needed to host a server on Windows:
+        Server\EasyRadioLink.Server.exe            server with a window
+        CommandLine\EasyRadioLink.Server.Cli.exe   server without a window
+
+  EasyRadioLink-Server-<version>-Linux.tar.gz
+      Only needed to host a server on Linux (x64): EasyRadioLink.Server.Cli,
+      a server without a window.
+
+  Every download also contains this README.txt, LICENSE.txt (GNU General
+  Public License v3.0) and THIRD-PARTY-NOTICES.txt.
 
 
 REQUIREMENTS
 ------------
-  - Windows 10 or Windows 11, 64-bit
-  - Microsoft .NET 10 Desktop Runtime (x64) for EasyRadioLink, the server
-    with a window and the setup. If Windows reports that .NET is missing,
-    install it from https://dotnet.microsoft.com/download/dotnet/10.0
-    ("Desktop Runtime", x64). The command-line servers need no .NET install.
+  - Windows 10 or Windows 11, 64-bit (EasyRadioLink and the Windows servers).
+  - Microsoft .NET 10 Desktop Runtime (x64) for EasyRadioLink and the server
+    with a window. If Windows reports that .NET is missing, install it from
+    https://dotnet.microsoft.com/download/dotnet/10.0 ("Desktop Runtime",
+    x64). The servers without a window need no .NET installation.
+  - Microsoft Visual C++ Redistributable (x64) for EasyRadioLink (its audio
+    libraries need it). Most PCs already have it. If it is missing, install
+    it from https://aka.ms/vs/17/release/vc_redist.x64.exe
+  - Linux server: 64-bit (x64) Linux with glibc, for example Debian, Ubuntu
+    or Fedora. No .NET installation needed.
   - A microphone and headphones or speakers.
 
 
-1. INSTALLATION
----------------
-  1. Extract the WHOLE zip file into a folder (right-click the zip file >
-     "Extract All..."). The setup does not work from inside the zip file.
-  2. Run EasyRadioLink-Setup.exe and allow it to make changes.
+1. GETTING STARTED
+------------------
+  1. Extract the WHOLE zip file into a folder of your choice (right-click the
+     zip file > "Extract All..."). EasyRadioLink does not work from inside
+     the zip file.
+  2. Start EasyRadioLink.exe in the extracted folder.
      If Windows SmartScreen shows "Windows protected your PC", click
      "More info" and then "Run anyway".
-  3. Keep the install folder (C:\Program Files\EasyRadioLink) or choose
-     another one, choose the shortcuts you want and click "Install / Update".
-  4. Start EasyRadioLink from the Start menu (folder "EasyRadioLink").
 
-  Update: run the setup of the new version and click "Install / Update".
-  Your settings are kept.
-
-  Uninstall: Windows Settings > Apps > Installed apps > EasyRadioLink >
-  Uninstall, or Start menu > EasyRadioLink > Uninstall EasyRadioLink.
-  Your settings and recordings are kept (see "Files and folders").
-
-  Without the setup: you can also run Client\EasyRadioLink.exe directly from
-  the extracted folder (install VC_redist.x64.exe once if there is no sound).
+  Update: extract the new version and use it instead of the old folder. Your
+  settings are kept: they are stored in %AppData%\EasyRadioLink, not in the
+  program folder (see "Files and folders").
 
 
 2. FIRST START
 --------------
   1. Radio tab > Audio Devices: choose your microphone and your speakers or
-     headset. "Preview" lets you hear your own voice with the radio sound.
+     headset. "Audio Preview" lets you hear your own voice with the radio
+     sound.
   2. Controls tab: assign a key, mouse button or joystick button to
-     "Push To Talk - PTT".
+     "Push-To-Talk (PTT)".
   3. Radio tab > Connection: enter your name and the server address, for
      example 203.0.113.10:5010 (5010 is the default port), and the server
      password if the server has one. Click "Connect".
@@ -106,15 +113,21 @@ REQUIREMENTS
       446.00625
   The server can also provide preset channels for everybody.
 
-  Your own radio layout: copy Client\radios.json from the install folder to
-  %AppData%\EasyRadioLink\radios-custom.json and edit it (frequencies in Hz).
-  Delete the file to go back to the default radios.
+  Your own radio layout: copy radios.json from the EasyRadioLink folder to
+  your settings folder as radios-custom.json
+  (%AppData%\EasyRadioLink\radios-custom.json) and edit it (frequencies in
+  Hz). Delete the file to go back to the default radios.
 
 
 4. HOSTING A SERVER
 -------------------
-  Server with a window: Start menu > EasyRadioLink > EasyRadioLink Server
-  (or Server\EasyRadioLink.Server.exe). The server starts immediately.
+  Extract EasyRadioLink-Server-<version>-Windows.zip (Windows) or
+  EasyRadioLink-Server-<version>-Linux.tar.gz (Linux) into a folder where
+  you may write files, for example C:\EasyRadioLink-Server or your home
+  folder. The server keeps its settings and logs in its own folder.
+
+  Server with a window (Windows): start Server\EasyRadioLink.Server.exe.
+  The server starts immediately.
 
   - Port: 5010, TCP AND UDP. Allow the server in the Windows firewall
     (Windows asks on the first start). For users on the internet, forward
@@ -131,52 +144,70 @@ REQUIREMENTS
     channels and the server radio layout, transmission logging. Connected
     users can be muted, kicked or banned in the client list.
 
-  Command-line server (no window, for a dedicated PC or a Linux server):
-    Windows:  ServerCommandLine-Windows\EasyRadioLink.Server.Cli.exe --password=secret
-    Linux:    chmod +x EasyRadioLink.Server.Cli
-              ./EasyRadioLink.Server.Cli --password=secret
+  Server without a window (for a dedicated PC or a Linux server):
+    Windows (Command Prompt):
+      cd <extracted folder>\CommandLine
+      EasyRadioLink.Server.Cli.exe --password=secret
+    Linux:
+      tar xzf EasyRadioLink-Server-<version>-Linux.tar.gz
+      cd EasyRadioLink-Server-<version>
+      ./EasyRadioLink.Server.Cli --password=secret
   Run it with --help to see all options (on/off options take a value, for
-  example --half-duplex=true). Options are saved to server.cfg. Stop the
-  server with Ctrl+C.
+  example --half-duplex=true). The options you give are saved to server.cfg,
+  so later starts without options keep them. To remove the password again,
+  start it once with --password "" (a space, not "="). Stop the server with
+  Ctrl+C.
 
-  Server files: server.cfg (all settings), Presets\*.txt (preset channels),
-  server-radios.json (server radio layout), banned.txt and the log files.
-  When the server is started from the Start menu they are all kept in
-  C:\Program Files\EasyRadioLink\Server. Start the server with
-  -cfg=<path to a server.cfg> to keep server.cfg, Presets and
-  server-radios.json somewhere else (banned.txt and the logs always stay
-  next to the server program).
+  Server files: server.cfg (all settings) is kept next to the server
+  program; Server\ and CommandLine\ each have their own. Presets\*.txt
+  (preset channels), server-radios.json (server radio layout), banned.txt
+  and the log files are kept in the same folder as server.cfg. Start the
+  server with --cfg=<path to a server.cfg> to keep all of them in another
+  folder.
+
+  Update a server: extract the new version, then copy server.cfg (and
+  Presets\, server-radios.json and banned.txt if you use them) from the old
+  server folder into the new one.
 
 
 5. FILES AND FOLDERS
 --------------------
-  %AppData%\EasyRadioLink             Settings, profiles, favourite servers,
-                                      saved radio state, radios-custom.json
+  %AppData%\EasyRadioLink             Settings folder: settings, profiles,
+                                      favourite servers, saved radio state,
+                                      radios-custom.json
   %AppData%\EasyRadioLink\Presets     Preset channel files (*.txt)
   %AppData%\EasyRadioLink\RadioModels Your own radio models (*.json)
+  %AppData%\EasyRadioLink\Logs        Log files (clientlog.txt)
   Documents\EasyRadioLink\Recordings  Recordings
-  <install folder>\Client             Program files, built-in radio models
-  <install folder>\Server             Server program, server.cfg, logs
+  EasyRadioLink folder                Program, radios.json, built-in radio
+                                      models and sounds
+  Server folder                       Server program, server.cfg, Presets,
+                                      banned.txt, log files
 
   Tip: type %AppData%\EasyRadioLink into the address bar of the File
-  Explorer to open your settings folder.
+  Explorer to open your settings folder. The About tab has a link to the
+  log folder.
 
 
 6. TROUBLESHOOTING
 ------------------
   - "You must install .NET" when starting: install the .NET 10 Desktop
     Runtime (x64), see REQUIREMENTS.
+  - No sound at all, or an error about opus.dll or another missing DLL:
+    install the Microsoft Visual C++ Redistributable (x64), see
+    REQUIREMENTS.
   - Cannot connect: check the address and the port, the password, the
     firewall and the port forwarding (TCP and UDP 5010) on the server PC.
-  - "Version mismatch": the client and the server must be compatible
+  - "Incompatible server": the client and the server must be compatible
     EasyRadioLink versions. Update both.
   - Nobody hears you: same frequency AND same modulation? Encryption on both
     sides with the same key, or off on both? PTT assigned? Correct
     microphone selected (watch the level meter)?
   - You only hear scrambled noise: the other station uses encryption with a
     different key.
-  - No sound at all or errors about missing DLLs: run VC_redist.x64.exe from
-    this package.
+  - Anything else: the log files usually tell what went wrong - clientlog.txt
+    in %AppData%\EasyRadioLink\Logs (link on the About tab) and serverlog.txt
+    in the server folder. Please include them when you report a problem.
 
 
 7. LICENSE AND CREDITS
@@ -185,5 +216,11 @@ REQUIREMENTS
   under the terms of the GNU General Public License version 3 (see
   LICENSE.txt). It comes with ABSOLUTELY NO WARRANTY.
 
+  Source code: https://github.com/DanielBecker715/EasyRadioLink
+  The source code of every release is available there under its version
+  tag (for example v1.0.0).
+
   Based on DCS-SimpleRadio Standalone by Ciribob and contributors (GPL-3.0).
-  The source code of EasyRadioLink is published together with this release.
+
+  EasyRadioLink uses third-party components under their own licenses, see
+  THIRD-PARTY-NOTICES.txt.

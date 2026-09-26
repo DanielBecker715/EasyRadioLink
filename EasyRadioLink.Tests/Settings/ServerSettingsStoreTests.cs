@@ -182,6 +182,97 @@ public class ServerSettingsStoreTests
     }
 
     [TestMethod]
+    public void UnreadableValuesFallBackToDefaults()
+    {
+        File.WriteAllText(ConfigFile,
+            "[General Settings]\nSHOW_TUNED_COUNT = maybe\nTRANSMISSION_LOG_RETENTION = two\n" +
+            "[Server Settings]\nSERVER_PORT = 5010x\nHTTP_SERVER_PORT = 70000\nUPNP_ENABLED = false\n");
+
+        var store = new ServerSettingsStore(ConfigFile);
+
+        Assert.AreEqual(5010, store.GetServerPort());
+        Assert.AreEqual(8080, store.GetServerSetting(ServerSettingsKeys.HTTP_SERVER_PORT).IntValue);
+        Assert.IsTrue(store.GetGeneralSetting(ServerSettingsKeys.SHOW_TUNED_COUNT).BoolValue);
+        Assert.AreEqual(2, store.GetGeneralSetting(ServerSettingsKeys.TRANSMISSION_LOG_RETENTION).IntValue);
+
+        // valid values are kept
+        Assert.IsFalse(store.GetServerSetting(ServerSettingsKeys.UPNP_ENABLED).BoolValue);
+    }
+
+    [TestMethod]
+    public void OutOfRangePortSetAtRuntimeFallsBackToDefault()
+    {
+        var store = new ServerSettingsStore(ConfigFile);
+        store.SetServerSetting(ServerSettingsKeys.SERVER_PORT, "70000");
+
+        Assert.AreEqual(5010, store.GetServerPort());
+
+        store.SetServerSetting(ServerSettingsKeys.SERVER_PORT, "6000");
+        Assert.AreEqual(6000, store.GetServerPort());
+    }
+
+    [TestMethod]
+    public void PortValidation()
+    {
+        Assert.IsTrue(ServerSettingsStore.IsValidPort(1));
+        Assert.IsTrue(ServerSettingsStore.IsValidPort(5010));
+        Assert.IsTrue(ServerSettingsStore.IsValidPort(65535));
+        Assert.IsFalse(ServerSettingsStore.IsValidPort(0));
+        Assert.IsFalse(ServerSettingsStore.IsValidPort(-1));
+        Assert.IsFalse(ServerSettingsStore.IsValidPort(65536));
+        Assert.IsFalse(ServerSettingsStore.IsValidPort(70000));
+    }
+
+    [TestMethod]
+    public void DefaultConfigFileIsNextToTheExecutable()
+    {
+        var expected = Path.Combine(AppContext.BaseDirectory, "server.cfg");
+
+        Assert.AreEqual(expected, ServerSettingsStore.ResolveConfigFilePath(null));
+        Assert.AreEqual(expected, ServerSettingsStore.ResolveConfigFilePath("  "));
+        Assert.AreEqual(expected, ServerSettingsStore.ResolveConfigFilePath("\"\""));
+    }
+
+    [TestMethod]
+    public void ConfigFilePathIsResolvedOnce()
+    {
+        // relative: against the current directory at start-up
+        Assert.AreEqual(Path.GetFullPath("my-server.cfg"), ServerSettingsStore.ResolveConfigFilePath("my-server.cfg"));
+
+        // absolute (quotes from a shortcut are removed)
+        Assert.AreEqual(ConfigFile, ServerSettingsStore.ResolveConfigFilePath("\"" + ConfigFile + "\""));
+    }
+
+    [TestMethod]
+    public void ServerFilesLiveNextToTheConfigFile()
+    {
+        var store = new ServerSettingsStore(ConfigFile);
+
+        Assert.AreEqual(ConfigFile, store.ConfigFilePath);
+        Assert.AreEqual(_directory, store.ConfigDirectory);
+        Assert.AreEqual(Path.Combine(_directory, ServerSettingsStore.SERVER_RADIOS_FILE), store.ServerRadiosFilePath);
+        Assert.AreEqual(Path.Combine(_directory, "banned.txt"), store.GetDataFilePath("banned.txt"));
+        Assert.IsNull(store.LastSaveError);
+    }
+
+    [TestMethod]
+    public void ServerPresetsAreReadFromTheConfigFolder()
+    {
+        var presets = Path.Combine(_directory, "Presets");
+        Directory.CreateDirectory(presets);
+        File.WriteAllLines(Path.Combine(presets, "CB Radio.txt"), new[] { "Channel 19|27.185", "Channel 9|27,065" });
+
+        var store = new ServerSettingsStore(ConfigFile);
+        store.SetGeneralSetting(ServerSettingsKeys.SERVER_PRESETS_ENABLED, true);
+
+        var json = store.ToDictionary()[ServerSettingsKeys.SERVER_PRESETS.ToString()];
+
+        StringAssert.Contains(json, "cbradio");
+        StringAssert.Contains(json, "Channel 19");
+        StringAssert.Contains(json, "27.065");
+    }
+
+    [TestMethod]
     public void CorruptConfigIsBackedUpAndReset()
     {
         File.WriteAllText(ConfigFile, "[General Settings\nthis is = not [valid");

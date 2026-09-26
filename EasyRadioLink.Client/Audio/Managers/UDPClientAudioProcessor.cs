@@ -305,7 +305,7 @@ public class UDPClientAudioProcessor : IDisposable
                     _audioManager.PlaySoundEffectStartTransmit(sendingOn,
                         sendingRadio.enc && sendingRadio.encKey > 0);
 
-                //set radio overlay state
+                // radio panel: transmitting indicator
                 _clientStateSingleton.RadioSendingState = new RadioSendingState
                 {
                     IsSending = true,

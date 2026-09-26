@@ -270,4 +270,28 @@ public class VoiceRoutingTests
 
         Assert.IsNull(info.CanHearTransmission(Cb19, Modulation.AM, 0, false, null, out _, out _));
     }
+
+    [TestMethod]
+    public void UdpIsOnlyAcceptedFromTheAuthenticatedAddress()
+    {
+        var client = new ClientInfo
+        {
+            ClientGuid = "client_______________1",
+            SessionAddress = IPAddress.Parse("192.168.1.20")
+        };
+
+        // same IP, any port (the UDP port differs from the TCP one)
+        Assert.IsTrue(VoiceRouting.IsFromClientAddress(client, new IPEndPoint(IPAddress.Parse("192.168.1.20"), 50123)));
+        Assert.IsTrue(VoiceRouting.IsFromClientAddress(client,
+            new IPEndPoint(IPAddress.Parse("192.168.1.20").MapToIPv6(), 50123)));
+
+        // somebody else who knows the client id
+        Assert.IsFalse(VoiceRouting.IsFromClientAddress(client, new IPEndPoint(IPAddress.Parse("192.168.1.21"), 50123)));
+        Assert.IsFalse(VoiceRouting.IsFromClientAddress(client, null));
+
+        // not authenticated on TCP
+        Assert.IsFalse(VoiceRouting.IsFromClientAddress(new ClientInfo { ClientGuid = client.ClientGuid },
+            new IPEndPoint(IPAddress.Parse("192.168.1.20"), 50123)));
+        Assert.IsFalse(VoiceRouting.IsFromClientAddress(null, new IPEndPoint(IPAddress.Loopback, 1)));
+    }
 }

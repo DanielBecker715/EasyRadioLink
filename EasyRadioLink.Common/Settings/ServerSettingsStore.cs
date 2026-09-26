@@ -19,12 +19,17 @@ namespace EasyRadioLink.Common.Settings;
 ///         <item>"[General Settings]" - sent to every client (<see cref="ToDictionary" />),</item>
 ///         <item>"[Server Settings]" - server only (port, bind IP, UPnP, HTTP API, client export path, SERVER_PASSWORD).</item>
 ///     </list>
-///     All server files (server.cfg, Presets/*.txt, server-radios.json) live next to the configuration file.
+///     The configuration file defaults to server.cfg next to the server executable (never the working directory). All
+///     other server files (Presets/*.txt, server-radios.json, banned.txt, logs, transmission logs, client export) live
+///     in the same folder as the configuration file (<see cref="ConfigDirectory" />).
 /// </summary>
 public class ServerSettingsStore
 {
     public const string GENERAL_SECTION = "General Settings";
     public const string SERVER_SECTION = "Server Settings";
+
+    /// <summary>Default name of the configuration file.</summary>
+    public const string DEFAULT_CFG_FILE_NAME = "server.cfg";
 
     /// <summary>Server radio layout file (same schema as the client's radios.json), next to server.cfg.</summary>
     public const string SERVER_RADIOS_FILE = "server-radios.json";
@@ -35,9 +40,9 @@ public class ServerSettingsStore
     private static ServerSettingsStore instance;
     private static readonly object _instanceLock = new();
 
-    //Can be overridden by a command line flag - hence being static
-    //if overwritten, it will contain a full path
-    public static string CFG_FILE_NAME = "server.cfg";
+    //Full path of the configuration file used by Instance. Can be overridden by a command line flag (-cfg / --cfg)
+    //through SetConfigFile - hence being static
+    public static string CFG_FILE_NAME = ResolveConfigFilePath(null);
 
     private readonly object _lock = new();
     private readonly Configuration _configuration;
@@ -56,11 +61,12 @@ public class ServerSettingsStore
     /// <summary>Loads (or creates) the configuration file <paramref name="configFilePath" />.</summary>
     public ServerSettingsStore(string configFilePath)
     {
-        ConfigFilePath = string.IsNullOrWhiteSpace(configFilePath) ? "server.cfg" : configFilePath.Trim();
+        ConfigFilePath = ResolveConfigFilePath(configFilePath);
 
         try
         {
             _configuration = Configuration.LoadFromFile(ConfigFilePath);
+            RepairInvalidValues();
         }
         catch (Exception ex) when (ex is FileNotFoundException or DirectoryNotFoundException)
         {
@@ -103,14 +109,50 @@ public class ServerSettingsStore
         }
     }
 
-    /// <summary>Path of the configuration file as passed in (may be relative to the working directory).</summary>
+    /// <summary>Full path of the configuration file.</summary>
     public string ConfigFilePath { get; }
 
-    /// <summary>Directory that holds server.cfg, Presets/ and server-radios.json ("" = working directory).</summary>
-    public string ConfigDirectory => Path.GetDirectoryName(ConfigFilePath) ?? "";
+    /// <summary>
+    ///     Folder of the configuration file. Holds every other server file too: Presets/, server-radios.json,
+    ///     banned.txt, the logs, the transmission logs and the client export.
+    /// </summary>
+    public string ConfigDirectory => Path.GetDirectoryName(ConfigFilePath) ?? AppContext.BaseDirectory;
 
     /// <summary>Full path of the server radio layout file.</summary>
-    public string ServerRadiosFilePath => Path.Combine(ConfigDirectory, SERVER_RADIOS_FILE);
+    public string ServerRadiosFilePath => GetDataFilePath(SERVER_RADIOS_FILE);
+
+    /// <summary>Error message of the last failed save (null if the last save worked).</summary>
+    public string LastSaveError { get; private set; }
+
+    /// <summary>Full path of a server file in <see cref="ConfigDirectory" />, e.g. <c>GetDataFilePath("banned.txt")</c>.</summary>
+    public string GetDataFilePath(string fileName)
+    {
+        return Path.Combine(ConfigDirectory, fileName);
+    }
+
+    /// <summary>
+    ///     Full path of a configuration file given on the command line. Empty = server.cfg next to the server
+    ///     executable; a relative path is resolved against the current working directory (once, at start-up).
+    /// </summary>
+    public static string ResolveConfigFilePath(string configFilePath)
+    {
+        var path = configFilePath?.Trim().Trim('"').Trim();
+        if (string.IsNullOrEmpty(path)) return Path.Combine(AppContext.BaseDirectory, DEFAULT_CFG_FILE_NAME);
+
+        return Path.GetFullPath(path);
+    }
+
+    /// <summary>Uses <paramref name="configFilePath" /> (see <see cref="ResolveConfigFilePath" />) for <see cref="Instance" />.</summary>
+    public static void SetConfigFile(string configFilePath)
+    {
+        CFG_FILE_NAME = ResolveConfigFilePath(configFilePath);
+    }
+
+    /// <summary>TCP/UDP ports must be 1..65535.</summary>
+    public static bool IsValidPort(int port)
+    {
+        return port is >= 1 and <= 65535;
+    }
 
     private static Configuration CreateDefaultConfiguration()
     {
@@ -118,6 +160,50 @@ public class ServerSettingsStore
         configuration.Add(new Section(GENERAL_SECTION));
         configuration.Add(new Section(SERVER_SECTION));
         return configuration;
+    }
+
+    /// <summary>
+    ///     Replaces hand-edited values that can't be read (e.g. <c>SERVER_PORT = 5010x</c>, <c>UPNP_ENABLED = maybe</c>)
+    ///     with their defaults, so reading them later never throws. Only on/off, number and port settings are checked.
+    /// </summary>
+    private void RepairInvalidValues()
+    {
+        foreach (var section in _configuration)
+        foreach (var setting in section)
+        {
+            if (!DefaultServerSettings.Defaults.TryGetValue(setting.Name, out var defaultValue)) continue;
+            if (IsValidValue(setting, defaultValue)) continue;
+
+            _logger.Warn(
+                $"Invalid value '{setting.RawValue}' for {setting.Name} in {ConfigFilePath} - using the default '{defaultValue}'");
+            setting.StringValue = defaultValue;
+        }
+    }
+
+    private static bool IsValidValue(SharpConfig.Setting setting, string defaultValue)
+    {
+        try
+        {
+            if (bool.TryParse(defaultValue, out _))
+            {
+                _ = setting.BoolValue;
+                return true;
+            }
+
+            if (int.TryParse(defaultValue, NumberStyles.Integer, CultureInfo.InvariantCulture, out _))
+            {
+                var value = setting.IntValue;
+                return setting.Name != nameof(ServerSettingsKeys.SERVER_PORT) &&
+                       setting.Name != nameof(ServerSettingsKeys.HTTP_SERVER_PORT)
+                       || IsValidPort(value);
+            }
+
+            return true;
+        }
+        catch (Exception)
+        {
+            return false;
+        }
     }
 
     /// <summary>
@@ -266,20 +352,23 @@ public class ServerSettingsStore
                 if (!string.IsNullOrEmpty(directory)) Directory.CreateDirectory(directory);
 
                 _configuration.SaveToFile(ConfigFilePath, new UTF8Encoding(false, true));
+                LastSaveError = null;
             }
             catch (Exception ex)
             {
-                _logger.Error(ex, "Unable to save settings!");
+                LastSaveError = ex.Message;
+                _logger.Error(ex, $"Unable to save settings to {ConfigFilePath}!");
             }
         }
     }
 
+    /// <summary>The TCP/UDP port; the default port if the stored value is not a valid port.</summary>
     public int GetServerPort()
     {
         lock (_lock)
         {
             if (!_configuration.Contains(SERVER_SECTION))
-                return GetServerSetting(ServerSettingsKeys.SERVER_PORT).IntValue;
+                return ReadServerPort();
 
             // Migrate from old "port" setting value to new "SERVER_PORT" one
             if (_configuration[SERVER_SECTION].Contains("port"))
@@ -300,8 +389,25 @@ public class ServerSettingsStore
                 Save();
             }
 
-            return GetServerSetting(ServerSettingsKeys.SERVER_PORT).IntValue;
+            return ReadServerPort();
         }
+    }
+
+    private int ReadServerPort()
+    {
+        var setting = GetServerSetting(ServerSettingsKeys.SERVER_PORT);
+        try
+        {
+            if (IsValidPort(setting.IntValue)) return setting.IntValue;
+        }
+        catch (Exception)
+        {
+            // handled below
+        }
+
+        _logger.Warn(
+            $"Invalid SERVER_PORT '{setting.RawValue}' in {ConfigFilePath} - using {DefaultServerSettings.DEFAULT_SERVER_PORT}");
+        return int.Parse(DefaultServerSettings.DEFAULT_SERVER_PORT, CultureInfo.InvariantCulture);
     }
 
     /// <summary>

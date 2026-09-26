@@ -60,21 +60,21 @@
 
                             <TextBlock Grid.Row="1"
                                        Style="{StaticResource SettingText}"
-                                       Text="{x:Static p:Resources.RadioOverlayTaskbarItem}" />
+                                       Text="{x:Static p:Resources.RadioPanelTaskbarItem}" />
                             <clientSettingsControl:SettingsToggleControl Grid.Row="1"
                                                                          Grid.Column="1"
                                                                          Style="{StaticResource SettingToggle}"
-                                                                         ToggleValue="{Binding RadioOverlayTaskbarItem, Mode=TwoWay}" />
+                                                                         ToggleValue="{Binding RadioPanelTaskbarItem, Mode=TwoWay}" />
 
                             <TextBlock Grid.Row="2"
                                        Style="{StaticResource SettingText}"
-                                       Text="{x:Static p:Resources.ResetRadioOverlay}" />
+                                       Text="{x:Static p:Resources.ResetRadioPanel}" />
                             <Button Grid.Row="2"
                                     Grid.Column="1"
                                     Width="100"
                                     Margin="0,3,0,3"
                                     HorizontalAlignment="Left"
-                                    Command="{Binding ResetOverlayCommand}"
+                                    Command="{Binding ResetRadioPanelCommand}"
                                     Content="{x:Static p:Resources.Reset}"
                                     ToolTip="{x:Static p:Resources.ToolTipResetRadioPanel}" />
 

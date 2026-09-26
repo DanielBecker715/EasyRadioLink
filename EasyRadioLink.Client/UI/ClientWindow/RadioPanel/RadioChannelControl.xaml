@@ -10,13 +10,14 @@
     Height="116">
 
     <UserControl.Resources>
-        <!-- frequency step buttons above / below the frequency display -->
+        <!-- frequency step buttons above (up) / below (down) the frequency display, labelled with their step in MHz -->
         <Style x:Key="StepButton"
                BasedOn="{StaticResource DarkStyle-Button}"
                TargetType="{x:Type Button}">
-            <Setter Property="Width" Value="18" />
-            <Setter Property="Height" Value="10" />
-            <Setter Property="Margin" Value="0,0,2,0" />
+            <Setter Property="Height" Value="12" />
+            <Setter Property="Margin" Value="1,0,1,0" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="FontSize" Value="8" />
             <Setter Property="IsEnabled" Value="False" />
             <Setter Property="Focusable" Value="False" />
         </Style>
@@ -92,30 +93,36 @@
                     <RowDefinition Height="Auto" />
                 </Grid.RowDefinitions>
 
-                <StackPanel Grid.Row="0"
-                            Margin="1,2,0,1"
-                            Orientation="Horizontal">
+                <UniformGrid Grid.Row="0"
+                             Margin="0,2,0,1"
+                             Columns="5"
+                             Rows="1">
                     <Button x:Name="Up10"
                             Click="Up10_Click"
+                            Content="+10"
                             Style="{StaticResource StepButton}"
-                            ToolTip="+10 MHz" />
+                            ToolTip="{x:Static p:Resources.InputUp10}" />
                     <Button x:Name="Up1"
                             Click="Up1_Click"
+                            Content="+1"
                             Style="{StaticResource StepButton}"
-                            ToolTip="+1 MHz" />
+                            ToolTip="{x:Static p:Resources.InputUp1}" />
                     <Button x:Name="Up01"
                             Click="Up01_Click"
+                            Content="+0.1"
                             Style="{StaticResource StepButton}"
-                            ToolTip="+0.1 MHz" />
+                            ToolTip="{x:Static p:Resources.InputUp01}" />
                     <Button x:Name="Up001"
                             Click="Up001_Click"
+                            Content="+0.01"
                             Style="{StaticResource StepButton}"
-                            ToolTip="+0.01 MHz" />
+                            ToolTip="{x:Static p:Resources.InputUp001}" />
                     <Button x:Name="Up0001"
                             Click="Up0001_Click"
+                            Content="+0.001"
                             Style="{StaticResource StepButton}"
-                            ToolTip="+0.001 MHz" />
-                </StackPanel>
+                            ToolTip="{x:Static p:Resources.InputUp0001}" />
+                </UniformGrid>
 
                 <!-- display: frequency + mode / guard / channel / key / users, or the transmitter's name -->
                 <Grid Grid.Row="1" Height="18">
@@ -182,30 +189,36 @@
                              ToolTip="{x:Static p:Resources.ToolTipSelectedRadio}" />
                 </Grid>
 
-                <StackPanel Grid.Row="2"
-                            Margin="1,1,0,2"
-                            Orientation="Horizontal">
+                <UniformGrid Grid.Row="2"
+                             Margin="0,1,0,2"
+                             Columns="5"
+                             Rows="1">
                     <Button x:Name="Down10"
                             Click="Down10_Click"
+                            Content="-10"
                             Style="{StaticResource StepButton}"
-                            ToolTip="-10 MHz" />
+                            ToolTip="{x:Static p:Resources.InputDown10}" />
                     <Button x:Name="Down1"
                             Click="Down1_Click"
+                            Content="-1"
                             Style="{StaticResource StepButton}"
-                            ToolTip="-1 MHz" />
+                            ToolTip="{x:Static p:Resources.InputDown1}" />
                     <Button x:Name="Down01"
                             Click="Down01_Click"
+                            Content="-0.1"
                             Style="{StaticResource StepButton}"
-                            ToolTip="-0.1 MHz" />
+                            ToolTip="{x:Static p:Resources.InputDown01}" />
                     <Button x:Name="Down001"
                             Click="Down001_Click"
+                            Content="-0.01"
                             Style="{StaticResource StepButton}"
-                            ToolTip="-0.01 MHz" />
+                            ToolTip="{x:Static p:Resources.InputDown001}" />
                     <Button x:Name="Down0001"
                             Click="Down0001_Click"
+                            Content="-0.001"
                             Style="{StaticResource StepButton}"
-                            ToolTip="-0.001 MHz" />
-                </StackPanel>
+                            ToolTip="{x:Static p:Resources.InputDown0001}" />
+                </UniformGrid>
 
                 <Grid Grid.Row="3">
                     <Grid.ColumnDefinitions>

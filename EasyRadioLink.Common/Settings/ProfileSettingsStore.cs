@@ -204,7 +204,7 @@ public class ProfileSettingsStore
                     if (device != null) inputProfile[bind] = device;
                 }
 
-                _configuration.SaveToFile(Path + GetProfileCfgFileName(profile), new UTF8Encoding(false, true));
+                SaveProfileFile(_configuration, profile);
             }
             catch (FileNotFoundException)
             {
@@ -216,14 +216,19 @@ public class ProfileSettingsStore
                 Logger.Info(
                     "Error with input config - creating a new default ");
             }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+            {
+                // e.g. a -cfg directory that can't be read - continue with a default profile in memory
+                Logger.Error(ex, $"Unable to read the profile {profile}, using the defaults");
+            }
 
             if (_configuration == null)
             {
                 _configuration = new Configuration();
                 var inputProfile = new Dictionary<InputBinding, InputDevice>();
                 InputProfiles[GetProfileName(profile)] = inputProfile;
-                InputConfigs[GetProfileCfgFileName(profile)] = new Configuration();
-                _configuration.SaveToFile(Path + GetProfileCfgFileName(profile), new UTF8Encoding(false, true));
+                InputConfigs[GetProfileCfgFileName(profile)] = _configuration;
+                SaveProfileFile(_configuration, profile);
             }
         }
 
@@ -235,7 +240,7 @@ public class ProfileSettingsStore
             var inputProfile = new Dictionary<InputBinding, InputDevice>();
             InputProfiles[GetProfileName("default")] = inputProfile;
 
-            InputConfigs[GetProfileCfgFileName("default")].SaveToFile(Path + GetProfileCfgFileName("default"), new UTF8Encoding(false, true));
+            SaveProfileFile(InputConfigs[GetProfileCfgFileName("default")], "default");
         }
     }
 
@@ -490,9 +495,9 @@ public class ProfileSettingsStore
                 var configuration = GetCurrentProfile();
                 configuration.SaveToFile(Path + GetProfileCfgFileName(CurrentProfileName), new UTF8Encoding(false, true));
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                Logger.Error("Unable to save settings!");
+                Logger.Error(ex, "Unable to save settings!");
             }
         }
     }
@@ -516,8 +521,12 @@ public class ProfileSettingsStore
         CurrentProfileName = "default";
     }
 
+    /// <summary>Renames a profile and makes it the current profile.</summary>
     public void RenameProfile(string oldName, string newName)
     {
+        // renaming to the same name would remove the profile
+        if (string.Equals(GetProfileName(oldName), GetProfileName(newName), StringComparison.Ordinal)) return;
+
         InputConfigs[GetProfileCfgFileName(newName)] = InputConfigs[GetProfileCfgFileName(oldName)];
         InputProfiles[GetProfileName(newName)] = InputProfiles[GetProfileName(oldName)];
 
@@ -527,9 +536,9 @@ public class ProfileSettingsStore
         var profiles = InputProfiles.Keys.ToList();
         _globalSettings.SetClientSetting(GlobalSettingsKeys.SettingsProfiles, profiles.ToArray());
 
-        CurrentProfileName = "default";
+        CurrentProfileName = GetProfileName(newName);
 
-        InputConfigs[GetProfileCfgFileName(newName)].SaveToFile(Path + GetProfileCfgFileName(newName), new UTF8Encoding(false, true));
+        SaveProfileFile(InputConfigs[GetProfileCfgFileName(newName)], newName);
 
         try
         {
@@ -540,6 +549,7 @@ public class ProfileSettingsStore
         }
     }
 
+    /// <summary>Copies a profile and makes the copy the current profile.</summary>
     public void CopyProfile(string profileToCopy, string profileName)
     {
         var config = Configuration.LoadFromFile(Path + GetProfileCfgFileName(profileToCopy));
@@ -558,8 +568,21 @@ public class ProfileSettingsStore
         var profiles = InputProfiles.Keys.ToList();
         _globalSettings.SetClientSetting(GlobalSettingsKeys.SettingsProfiles, profiles.ToArray());
 
-        CurrentProfileName = "default";
+        CurrentProfileName = GetProfileName(profileName);
 
-        InputConfigs[GetProfileCfgFileName(profileName)].SaveToFile(Path + GetProfileCfgFileName(profileName), new UTF8Encoding(false, true));
+        SaveProfileFile(InputConfigs[GetProfileCfgFileName(profileName)], profileName);
+    }
+
+    /// <summary>Writes a profile file; a failure (e.g. a read-only configuration directory) is only logged.</summary>
+    private void SaveProfileFile(Configuration configuration, string profile)
+    {
+        try
+        {
+            configuration.SaveToFile(Path + GetProfileCfgFileName(profile), new UTF8Encoding(false, true));
+        }
+        catch (Exception ex)
+        {
+            Logger.Error(ex, $"Unable to save the profile {profile} to {Path}");
+        }
     }
 }

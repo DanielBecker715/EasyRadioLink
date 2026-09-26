@@ -18,9 +18,14 @@ using LogManager = NLog.LogManager;
 
 namespace EasyRadioLink.Server;
 
-internal class Program : IHandle<ClientConnectionMessage>
+internal class Program : IHandle<ClientConnectionMessage>, IHandle<ServerStartFailedMessage>
 {
+    // exit codes: 0 = normal shutdown, 1 = the server could not be started, 2 = invalid command line options
+    private const int ExitCodeStartFailed = 1;
+    private const int ExitCodeInvalidOptions = 2;
+
     private readonly EventAggregator _eventAggregator = new();
+    private readonly TaskCompletionSource _shutdownRequested = new(TaskCreationOptions.RunContinuationsAsynchronously);
     private ServerState _serverState;
 
     public Program()
@@ -29,6 +34,10 @@ internal class Program : IHandle<ClientConnectionMessage>
     }
 
     public bool ConsoleLogs { get; set; }
+
+    public int ExitCode { get; private set; }
+
+    private Task ShutdownRequested => _shutdownRequested.Task;
 
     public Task HandleAsync(ClientConnectionMessage message, CancellationToken cancellationToken)
     {
@@ -43,7 +52,21 @@ internal class Program : IHandle<ClientConnectionMessage>
         return Task.CompletedTask;
     }
 
-    private static async Task Main(string[] args)
+    public Task HandleAsync(ServerStartFailedMessage message, CancellationToken cancellationToken)
+    {
+        Console.Error.WriteLine(message.Error);
+        ExitCode = ExitCodeStartFailed;
+        RequestShutdown();
+
+        return Task.CompletedTask;
+    }
+
+    private void RequestShutdown()
+    {
+        _shutdownRequested.TrySetResult();
+    }
+
+    private static async Task<int> Main(string[] args)
     {
 #if false
         // Useful to track down threading issues.
@@ -65,43 +88,55 @@ internal class Program : IHandle<ClientConnectionMessage>
         CultureInfo.CurrentCulture = CultureInfo.InvariantCulture;
 
         GCSettings.LatencyMode = GCLatencyMode.SustainedLowLatency;
+        var exitCode = 0;
         var parser = Parser.Default.ParseArguments<Options>(args);
-        await parser.WithParsedAsync(ProcessArgsAsync);
+        await parser.WithParsedAsync(async options => exitCode = await ProcessArgsAsync(options));
+        parser.WithNotParsed(errors => exitCode = errors.IsHelp() || errors.IsVersion() ? 0 : ExitCodeInvalidOptions);
+
+        return exitCode;
     }
 
-    private static async Task ProcessArgsAsync(Options options)
+    private static async Task<int> ProcessArgsAsync(Options options)
     {
-        if (options.ConfigFile != null && options.ConfigFile.Trim().Length > 0)
-            ServerSettingsStore.CFG_FILE_NAME = options.ConfigFile.Trim();
+        var optionsError = options.Validate();
+        if (optionsError != null)
+        {
+            Console.Error.WriteLine(optionsError);
+            return ExitCodeInvalidOptions;
+        }
+
+        // default: server.cfg next to the executable; a relative --cfg is relative to the current directory
+        if (!string.IsNullOrWhiteSpace(options.ConfigFile))
+            ServerSettingsStore.SetConfigFile(options.ConfigFile);
 
         Console.WriteLine($"{AppVersion.Product} Server (command line) {AppVersion.Version}");
         Console.WriteLine($"Settings From Command Line: \n{options}");
+        Console.WriteLine($"Configuration file: {ServerSettingsStore.CFG_FILE_NAME}");
 
         var p = new Program();
         var serverThread = new Thread(() => { p.StartServer(options); });
         serverThread.Start();
 
-        var completionSource = new TaskCompletionSource();
         using var waitForMainExit = new ManualResetEventSlim();
 
         Console.CancelKeyPress += new((_, e) =>
         {
             // Ignore the cancel here and there, allow the program to terminate.
             e.Cancel = true;
-            completionSource.TrySetResult();
+            p.RequestShutdown();
             Console.WriteLine("Shutting down gracefully...");
         });
         using var termSignal = PosixSignalRegistration.Create(PosixSignal.SIGTERM, (_) => {
             // We got a SIGTERM, signal that graceful shutdown has started
-            completionSource.TrySetResult();
+            p.RequestShutdown();
             Console.WriteLine("Shutting down gracefully...");
             // Don't unwind until main exists
             waitForMainExit.Wait();
         });
 
         Console.WriteLine("Waiting for shutdown SIGTERM");
-        // Wait for shutdown to start
-        await completionSource.Task;
+        // Wait for shutdown to start (Ctrl+C, SIGTERM or a failed start)
+        await p.ShutdownRequested;
 
         // This is where the application performs graceful shutdown
         p.StopServer();
@@ -110,6 +145,9 @@ internal class Program : IHandle<ClientConnectionMessage>
         // Now we're done with main, tell the shutdown handler
         waitForMainExit.Set();
         serverThread.Join(TimeSpan.FromSeconds(5));
+        LogManager.Flush();
+
+        return p.ExitCode;
     }
 
     private void StopServer()
@@ -123,8 +161,10 @@ internal class Program : IHandle<ClientConnectionMessage>
     public void StartServer(Options options)
     {
         EventBus.Instance.SubscribeOnPublishedThread(this);
+        // before the server exists: a start failure is reported through this aggregator
+        _eventAggregator.SubscribeOnPublishedThread(this);
 
-        ConsoleLogs = options.ConsoleLogs;
+        ConsoleLogs = options.ConsoleLogs ?? true;
 
         var store = ServerSettingsStore.Instance;
 
@@ -177,6 +217,11 @@ internal class Program : IHandle<ClientConnectionMessage>
         if (!string.IsNullOrWhiteSpace(options.HttpServerAddress))
             store.SetServerSetting(ServerSettingsKeys.HTTP_SERVER_ADDRESS, options.HttpServerAddress);
 
+        if (store.LastSaveError != null)
+            Console.Error.WriteLine(
+                $"Warning: unable to save the settings to {store.ConfigFilePath} ({store.LastSaveError}) - " +
+                "the options above only apply to this run. Use --cfg to put server.cfg in a writable folder.");
+
         Console.WriteLine("Final Settings (secrets masked):");
         foreach (var setting in store.GetAllSettings()) Console.WriteLine(setting);
 
@@ -192,11 +237,14 @@ internal class Program : IHandle<ClientConnectionMessage>
         // If there is a configuration file then this will already be set
         if (LogManager.Configuration != null) return;
 
+        // the log lives next to the configuration file, like every other server file
+        var dataDirectory = Path.GetDirectoryName(ServerSettingsStore.CFG_FILE_NAME) ?? "";
+
         var config = new LoggingConfiguration();
         var fileTarget = new FileTarget
         {
-            FileName = "serverlog.txt",
-            ArchiveFileName = "serverlog.old.txt",
+            FileName = Path.Combine(dataDirectory, "serverlog.txt"),
+            ArchiveFileName = Path.Combine(dataDirectory, "serverlog.old.txt"),
             MaxArchiveFiles = 1,
             ArchiveAboveSize = 104857600,
             Layout =
@@ -216,13 +264,13 @@ public class Options
     private string _configFile;
 
     [Option("console-logs",
-        HelpText = "Show basic console logs (client connect/disconnect).",
-        Default = true,
+        HelpText =
+            "Print client connects/disconnects to the console (--console-logs=false hides them, not saved to server.cfg). Default is true.",
         Required = false)]
-    public bool ConsoleLogs { get; set; }
+    public bool? ConsoleLogs { get; set; }
 
     [Option('p', "port",
-        HelpText = "TCP and UDP port - 5010 is the default",
+        HelpText = "TCP and UDP port (1-65535) - 5010 is the default",
         Required = false)]
     public int? Port { get; set; }
 
@@ -248,7 +296,8 @@ public class Options
     public bool? ClientExportEnabled { get; set; }
 
     [Option("client-export-path",
-        HelpText = "Sets a custom client export path. Default is clients-list.json next to the server. It must be the full path!",
+        HelpText =
+            "Sets a custom client export file. Default is clients-list.json next to server.cfg; a relative path is relative to the folder of server.cfg.",
         Required = false)]
     public string ClientExportPath { get; set; }
 
@@ -325,7 +374,7 @@ public class Options
     public bool? HttpServerEnabled { get; set; }
 
     [Option("http-port",
-        HelpText = "Sets the HTTP Server Port if Enabled. Default is 8080.",
+        HelpText = "Sets the HTTP Server Port (1-65535) if Enabled. Default is 8080.",
         Required = false)]
     public int? HttpServerPort { get; set; }
 
@@ -336,7 +385,7 @@ public class Options
 
     [Option('c', "cfg", Required = false,
         HelpText =
-            "Configuration file path, e.g. --cfg=C:\\some-path\\server.cfg (Presets and server-radios.json are read from the same folder)")]
+            "Configuration file path, e.g. --cfg=C:\\some-path\\server.cfg. Default is server.cfg next to the server executable; a relative path is relative to the current directory. Presets, server-radios.json, banned.txt, the logs and the client export live in the same folder.")]
     public string ConfigFile
     {
         get => _configFile;
@@ -351,6 +400,18 @@ public class Options
                 if (_configFile.StartsWith("fg=")) _configFile = _configFile.Substring("fg=".Length);
             }
         }
+    }
+
+    /// <summary>Checks the values the parser can't check. Returns an error message, or null if everything is fine.</summary>
+    public string Validate()
+    {
+        if (Port.HasValue && !ServerSettingsStore.IsValidPort(Port.Value))
+            return $"Invalid --port {Port.Value}: the port must be between 1 and 65535.";
+
+        if (HttpServerPort.HasValue && !ServerSettingsStore.IsValidPort(HttpServerPort.Value))
+            return $"Invalid --http-port {HttpServerPort.Value}: the port must be between 1 and 65535.";
+
+        return null;
     }
 
     public override string ToString()
