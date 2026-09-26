@@ -12,6 +12,9 @@ using SharpConfig;
 
 namespace EasyRadioLink.Common.Settings;
 
+/// <summary>
+///     Settings of a profile (&lt;profile&gt;.cfg), persisted by NAME - renaming a member orphans the saved value.
+/// </summary>
 public enum ProfileSettingsKeys
 {
     // Stereo balance of the radio (-1 left .. +1 right). The name is kept from the multi-radio versions so the saved
@@ -22,13 +25,16 @@ public enum ProfileSettingsKeys
     RadioEffectsClipping,
     NATOTone, // FM tone (user-visible label "FM tone")
 
-    RadioRxEffects_Start, // Recieving Radio Effects
+    // Radio sounds on / off: receive start / end ("When someone starts / stops talking") and transmit start / end
+    // ("When I press / release push-to-talk"). The sound itself is the matching *Selection key.
+    RadioRxEffects_Start,
     RadioRxEffects_End,
-    RadioTxEffects_Start, // Recieving Radio Effects
+    RadioTxEffects_Start,
     RadioTxEffects_End,
 
     PTTReleaseDelay,
 
+    // File names of the transmit start / end sounds (RADIO_TRANS_START*.wav / RADIO_TRANS_END*.wav).
     RadioTransmissionStartSelection,
     RadioTransmissionEndSelection,
     RadioBackgroundNoiseEffect,
@@ -56,7 +62,13 @@ public enum ProfileSettingsKeys
 
     // Listener: play the background sounds of other users, and their relative volume.
     BackgroundSoundEffect,
-    BackgroundSoundEffectVolume
+    BackgroundSoundEffectVolume,
+
+    // File names of the receive start / end sounds (RADIO_TRANS_START*.wav / RADIO_TRANS_END*.wav). Until 1.1 the
+    // receive sounds were the transmit sounds: a profile without these keys starts with its transmit selections
+    // (see ProfileSettingsStore.GetDefaultValue).
+    RadioRxStartSelection,
+    RadioRxEndSelection
 }
 
 public class ProfileSettingsStore
@@ -77,11 +89,11 @@ public class ProfileSettingsStore
 
         {
             ProfileSettingsKeys.RadioTransmissionStartSelection.ToString(),
-            CachedAudioEffect.AudioEffectTypes.RADIO_TRANS_START + ".wav"
+            CachedAudioEffect.FancyReleaseFile
         },
         {
             ProfileSettingsKeys.RadioTransmissionEndSelection.ToString(),
-            CachedAudioEffect.AudioEffectTypes.RADIO_TRANS_END + ".wav"
+            CachedAudioEffect.AlmostFancyFile
         },
 
         { ProfileSettingsKeys.RadioTxEffects_Start.ToString(), "true" },
@@ -107,7 +119,32 @@ public class ProfileSettingsStore
         { ProfileSettingsKeys.BackgroundSoundEffect.ToString(), "true" },
         {
             ProfileSettingsKeys.BackgroundSoundEffectVolume.ToString(), "1.0"
-        } //relative volume as the incoming volume is variable
+        }, //relative volume as the incoming volume is variable
+
+        {
+            ProfileSettingsKeys.RadioRxStartSelection.ToString(),
+            CachedAudioEffect.FancyReleaseFile
+        },
+        {
+            ProfileSettingsKeys.RadioRxEndSelection.ToString(),
+            CachedAudioEffect.AlmostFancyFile
+        }
+    };
+
+    /// <summary>
+    ///     Settings added later whose first value is the value of an older setting of the same profile (if the profile
+    ///     has it), so that an update keeps the behaviour: until 1.1 the receive sounds were the transmit sounds.
+    /// </summary>
+    internal static readonly IReadOnlyDictionary<string, string> InheritedDefaults = new Dictionary<string, string>
+    {
+        {
+            ProfileSettingsKeys.RadioRxStartSelection.ToString(),
+            ProfileSettingsKeys.RadioTransmissionStartSelection.ToString()
+        },
+        {
+            ProfileSettingsKeys.RadioRxEndSelection.ToString(),
+            ProfileSettingsKeys.RadioTransmissionEndSelection.ToString()
+        }
     };
 
     private readonly GlobalSettingsStore _globalSettings;
@@ -329,8 +366,8 @@ public class ProfileSettingsStore
 
         if (!_configuration[section].Contains(setting))
         {
-            var defaultValue = "";
-            if (!DefaultSettingsProfileSettings.TryGetValue(setting, out defaultValue))
+            var defaultValue = GetDefaultValue(_configuration[section], setting);
+            if (defaultValue == null)
             {
                 Logger.Warn("Setting {0} not found in default settings, creating with empty value", setting);
             }
@@ -343,6 +380,19 @@ public class ProfileSettingsStore
         }
 
         return _configuration[section][setting];
+    }
+
+    /// <summary>
+    ///     The value a setting that is missing in <paramref name="section" /> starts with: the value of the older
+    ///     setting it inherits from (<see cref="InheritedDefaults" />) if the section has it, else the default of
+    ///     <see cref="DefaultSettingsProfileSettings" />; null for an unknown setting.
+    /// </summary>
+    internal static string GetDefaultValue(Section section, string setting)
+    {
+        if (section != null && InheritedDefaults.TryGetValue(setting, out var source) && section.Contains(source))
+            return section[source].RawValue;
+
+        return DefaultSettingsProfileSettings.TryGetValue(setting, out var defaultValue) ? defaultValue : null;
     }
 
     public bool GetClientSettingBool(ProfileSettingsKeys key)

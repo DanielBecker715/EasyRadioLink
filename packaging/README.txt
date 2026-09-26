@@ -119,6 +119,20 @@ REQUIREMENTS
   27.405 MHz (CB channel 40) or 446.19375 MHz (PMR channel 16) is sent back
   to you, so you can hear how you sound.
 
+  Settings tab: at the top you choose the radio sounds - the sound when you
+  press and when you release push-to-talk, and when someone starts and stops
+  talking: Click, Soft click, Chirp, Key-up beep, Roger beep, Double beep,
+  Three-tone beep, Fancy Release, Almost Fancy or Off (default: Fancy
+  Release at the start, Almost Fancy at the end). The play button next
+  to each lets you listen, also without a connection. Only you hear your
+  push-to-talk sounds; the others hear the sounds they chose. Below that:
+  squelch tail, radio static, FM tone, your background sound, the radio
+  effect strength, and general options such as opening the radio when
+  connected and voice activation (VOX).
+  Everything else is under "Advanced settings": microphone and incoming
+  audio, voice activation details, recording, radio effect details,
+  push-to-talk delays and controllers, the radio window and profiles.
+
 
 4. HOSTING A SERVER
 -------------------

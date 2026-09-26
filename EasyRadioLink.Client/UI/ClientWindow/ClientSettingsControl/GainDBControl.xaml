@@ -7,8 +7,9 @@
     mc:Ignorable="d"
     d:DesignHeight="450" d:DesignWidth="800"
     Name="GainDBSlider">
+    <!-- same margins as the other sliders of the Settings tab -->
     <StackPanel
-        Margin="10">
+        Margin="0,4,10,4">
 
         <Slider x:Name="GainDB"
                 TickPlacement="BottomRight"
@@ -21,6 +22,6 @@
                 Maximum="60"
                 Value="{Binding ElementName=GainDBSlider, Path=GainDBValue, Mode=TwoWay}"
                 Minimum="-100" />
-        <Label FontSize="10" Content="{Binding ElementName=GainDBSlider, Path=GainDBValue}" ContentStringFormat="{}{0} dB" HorizontalAlignment="Center" />
+        <TextBlock FontSize="10" Text="{Binding ElementName=GainDBSlider, Path=GainDBValue, StringFormat={}{0} dB}" HorizontalAlignment="Center" />
     </StackPanel>
 </UserControl>

@@ -1,13 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
-using System.IO;
 using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
+using System.Runtime.CompilerServices;
 using System.Windows;
 using System.Windows.Input;
 using Caliburn.Micro;
+using EasyRadioLink.Client.Audio.Managers;
 using EasyRadioLink.Client.Properties;
 using EasyRadioLink.Client.UI.ClientWindow.RadioPanel;
 using EasyRadioLink.Client.Utils;
@@ -23,17 +22,52 @@ using LogManager = NLog.LogManager;
 namespace EasyRadioLink.Client.UI.ClientWindow.ClientSettingsControl;
 
 /// <summary>
-///     Settings tab: application settings (global.cfg) and the settings of the current profile (radio effects,
-///     background sound, push-to-talk, stereo balance).
+///     Settings tab: application settings (global.cfg) and the settings of the current profile (radio sounds, radio
+///     effects, background sound, push-to-talk, stereo balance). The tab shows the basic settings (radio sounds,
+///     general) and an "Advanced settings" section.
 /// </summary>
 public class ClientSettingsViewModel : PropertyChangedBaseClass
 {
+    // everything that belongs to the profile - re-read when another profile is selected
+    private static readonly string[] ProfileProperties =
+    {
+        nameof(TxStartSound), nameof(TxEndSound), nameof(RxStartSound), nameof(RxEndSound),
+        nameof(RadioRxSquelchTail), nameof(BackgroundRadioNoiseToggle), nameof(NATORadioToneToggle),
+        nameof(BackgroundSound), nameof(HasBackgroundSound), nameof(BackgroundSoundVolume),
+        nameof(RadioSoundEffectsRatio),
+        nameof(RadioSoundEffectsClipping), nameof(PerRadioModelEffects), nameof(NoiseGainDB), nameof(HFNoiseGainDB),
+        nameof(NATORadioToneVolume), nameof(AmbientEffectToggle), nameof(AmbientEffectVolume), nameof(RadioBalance),
+        nameof(AllowRotaryIncrement), nameof(PTTReleaseDelay), nameof(PTTStartDelay),
+        nameof(HasSeveralProfiles), nameof(ProfileNotice)
+    };
+
+    // application settings (global.cfg) - re-read as well, they may have been changed elsewhere
+    private static readonly string[] GlobalProperties =
+    {
+        nameof(AutoOpenRadioPanel), nameof(ShowTransmitterName), nameof(MinimiseToTray), nameof(StartMinimised),
+        nameof(PlayConnectionSounds), nameof(VOXEnabled),
+        nameof(MicDenoise), nameof(IncomingAudioAGC), nameof(IncomingAudioAGCMaxDB), nameof(IncomingAudioAGCTarget),
+        nameof(IncomingAudioDenoise),
+        nameof(VOXMinimimumTXTime), nameof(VOXMode), nameof(VOXMinimumRMS),
+        nameof(AllowTransmissionsRecording), nameof(RecordTransmissions), nameof(SelectedRecordingFormat),
+        nameof(RecordingQuality), nameof(DisallowedAudioTone),
+        nameof(ExpandInputDevices), nameof(AllowXInputController), nameof(RadioPanelTaskbarItem),
+        nameof(RequireAdminToggle), nameof(AdvancedSettingsExpanded)
+    };
+
+    private readonly CachedAudioEffectProvider _effects = CachedAudioEffectProvider.Instance;
     private readonly GlobalSettingsStore _globalSettings = GlobalSettingsStore.Instance;
     private readonly Logger Logger = LogManager.GetCurrentClassLogger();
 
 
     public ClientSettingsViewModel()
     {
+        StartSoundOptions = RadioSoundChoice.BuildOptions(_effects.RadioTransmissionStart, Resources.RadioSoundOff);
+        EndSoundOptions = RadioSoundChoice.BuildOptions(_effects.RadioTransmissionEnd, Resources.RadioSoundOff);
+
+        PlaySoundCommand = new DelegateCommand(PlaySound,
+            parameter => parameter is string fileName && fileName.Length > 0);
+
         ResetRadioPanelCommand = new DelegateCommand(() =>
         {
             // an open radio window closes without saving, so it can't overwrite the defaults below
@@ -155,6 +189,20 @@ public class ClientSettingsViewModel : PropertyChangedBaseClass
     public ICommand CopyProfileCommand { get; set; }
     public ICommand RenameProfileCommand { get; set; }
     public ICommand DeleteProfileCommand { get; set; }
+
+    /// <summary>Plays the sound whose file name is the command parameter once on the speakers (play buttons).</summary>
+    public ICommand PlaySoundCommand { get; }
+
+    /// <summary>The "Advanced settings" section is expanded (remembered in global.cfg).</summary>
+    public bool AdvancedSettingsExpanded
+    {
+        get => _globalSettings.GetClientSettingBool(GlobalSettingsKeys.SettingsAdvancedExpanded);
+        set
+        {
+            _globalSettings.SetClientSetting(GlobalSettingsKeys.SettingsAdvancedExpanded, value);
+            NotifyPropertyChanged();
+        }
+    }
 
     /**
          * Global Settings
@@ -442,49 +490,90 @@ public class ClientSettingsViewModel : PropertyChangedBaseClass
         }
     }
 
-    public bool RadioRxStart
+    #region Radio sounds
+
+    /// <summary>"Off" and the start sounds (RADIO_TRANS_START*.wav): push-to-talk pressed / someone starts talking.</summary>
+    public IReadOnlyList<RadioSoundOption> StartSoundOptions { get; }
+
+    /// <summary>"Off" and the end sounds (RADIO_TRANS_END*.wav): push-to-talk released / someone stops talking.</summary>
+    public IReadOnlyList<RadioSoundOption> EndSoundOptions { get; }
+
+    /// <summary>When I press push-to-talk: RadioTxEffects_Start + RadioTransmissionStartSelection.</summary>
+    public string TxStartSound
     {
-        get => _globalSettings.ProfileSettingsStore.GetClientSettingBool(ProfileSettingsKeys.RadioRxEffects_Start);
-        set
-        {
-            _globalSettings.ProfileSettingsStore.SetClientSettingBool(ProfileSettingsKeys.RadioRxEffects_Start,
-                value);
-            NotifyPropertyChanged();
-        }
+        get => GetSound(ProfileSettingsKeys.RadioTxEffects_Start, ProfileSettingsKeys.RadioTransmissionStartSelection,
+            _effects.RadioTransmissionStart);
+        set => SetSound(value, ProfileSettingsKeys.RadioTxEffects_Start,
+            ProfileSettingsKeys.RadioTransmissionStartSelection, _effects.RadioTransmissionStart);
     }
 
-    public bool RadioRxEnd
+    /// <summary>When I release push-to-talk: RadioTxEffects_End + RadioTransmissionEndSelection.</summary>
+    public string TxEndSound
     {
-        get => _globalSettings.ProfileSettingsStore.GetClientSettingBool(ProfileSettingsKeys.RadioRxEffects_End);
-        set
-        {
-            _globalSettings.ProfileSettingsStore.SetClientSettingBool(ProfileSettingsKeys.RadioRxEffects_End,
-                value);
-            NotifyPropertyChanged();
-        }
+        get => GetSound(ProfileSettingsKeys.RadioTxEffects_End, ProfileSettingsKeys.RadioTransmissionEndSelection,
+            _effects.RadioTransmissionEnd);
+        set => SetSound(value, ProfileSettingsKeys.RadioTxEffects_End,
+            ProfileSettingsKeys.RadioTransmissionEndSelection, _effects.RadioTransmissionEnd);
     }
 
-    public bool RadioTxStart
+    /// <summary>When someone starts talking: RadioRxEffects_Start + RadioRxStartSelection.</summary>
+    public string RxStartSound
     {
-        get => _globalSettings.ProfileSettingsStore.GetClientSettingBool(ProfileSettingsKeys.RadioTxEffects_Start);
-        set
-        {
-            _globalSettings.ProfileSettingsStore.SetClientSettingBool(ProfileSettingsKeys.RadioTxEffects_Start,
-                value);
-            NotifyPropertyChanged();
-        }
+        get => GetSound(ProfileSettingsKeys.RadioRxEffects_Start, ProfileSettingsKeys.RadioRxStartSelection,
+            _effects.RadioTransmissionStart);
+        set => SetSound(value, ProfileSettingsKeys.RadioRxEffects_Start, ProfileSettingsKeys.RadioRxStartSelection,
+            _effects.RadioTransmissionStart);
     }
 
-    public bool RadioTxEnd
+    /// <summary>When someone stops talking: RadioRxEffects_End + RadioRxEndSelection.</summary>
+    public string RxEndSound
     {
-        get => _globalSettings.ProfileSettingsStore.GetClientSettingBool(ProfileSettingsKeys.RadioTxEffects_End);
-        set
-        {
-            _globalSettings.ProfileSettingsStore.SetClientSettingBool(ProfileSettingsKeys.RadioTxEffects_End,
-                value);
-            NotifyPropertyChanged();
-        }
+        get => GetSound(ProfileSettingsKeys.RadioRxEffects_End, ProfileSettingsKeys.RadioRxEndSelection,
+            _effects.RadioTransmissionEnd);
+        set => SetSound(value, ProfileSettingsKeys.RadioRxEffects_End, ProfileSettingsKeys.RadioRxEndSelection,
+            _effects.RadioTransmissionEnd);
     }
+
+    private string GetSound(ProfileSettingsKeys enabledKey, ProfileSettingsKeys selectionKey,
+        IReadOnlyList<CachedAudioEffect> effects)
+    {
+        var profile = _globalSettings.ProfileSettingsStore;
+
+        return RadioSoundChoice.FromSettings(profile.GetClientSettingBool(enabledKey),
+            profile.GetClientSettingString(selectionKey), effects);
+    }
+
+    private void SetSound(string choice, ProfileSettingsKeys enabledKey, ProfileSettingsKeys selectionKey,
+        IReadOnlyList<CachedAudioEffect> effects, [CallerMemberName] string propertyName = "")
+    {
+        if (RadioSoundChoice.TryApply(choice, effects, out var enabled, out var fileName))
+        {
+            var profile = _globalSettings.ProfileSettingsStore;
+
+            if (fileName != null) profile.SetClientSettingString(selectionKey, fileName);
+            profile.SetClientSettingBool(enabledKey, enabled);
+        }
+
+        NotifyPropertyChanged(propertyName);
+    }
+
+    private void PlaySound(object parameter)
+    {
+        if (parameter is not string fileName || fileName.Length == 0) return;
+
+        var effect = _effects.RadioTransmissionStart.Concat(_effects.RadioTransmissionEnd)
+            .FirstOrDefault(sound => string.Equals(sound.FileName, fileName, StringComparison.OrdinalIgnoreCase));
+
+        if (effect == null)
+        {
+            Logger.Warn($"The sound {fileName} is not available");
+            return;
+        }
+
+        SoundEffectPreview.Play(effect);
+    }
+
+    #endregion Radio sounds
 
     public bool AllowRotaryIncrement
     {
@@ -553,7 +642,7 @@ public class ClientSettingsViewModel : PropertyChangedBaseClass
     {
         get
         {
-            var options = new List<KeyValuePair<string, string>> { new("", "None") };
+            var options = new List<KeyValuePair<string, string>> { new("", Resources.BackgroundSoundNone) };
             foreach (var sound in CachedAudioEffectProvider.Instance.AvailableBackgroundSounds)
                 options.Add(new KeyValuePair<string, string>(sound,
                     sound.Length > 0 ? char.ToUpperInvariant(sound[0]) + sound.Substring(1) : sound));
@@ -572,8 +661,12 @@ public class ClientSettingsViewModel : PropertyChangedBaseClass
             _globalSettings.ProfileSettingsStore.SetClientSettingString(ProfileSettingsKeys.BackgroundSound,
                 CachedAudioEffectProvider.NormaliseBackgroundName(value));
             NotifyPropertyChanged();
+            NotifyPropertyChanged(nameof(HasBackgroundSound));
         }
     }
+
+    /// <summary>A background sound is selected (enables its volume).</summary>
+    public bool HasBackgroundSound => BackgroundSound.Length > 0;
 
     /// <summary>Sender: volume of the own background sound in percent (0..100).</summary>
     public float BackgroundSoundVolume
@@ -588,43 +681,7 @@ public class ClientSettingsViewModel : PropertyChangedBaseClass
             NotifyPropertyChanged();
         }
     }
-/***
- *
- */
-    public List<CachedAudioEffect> RadioTransmissionStart =>
-        CachedAudioEffectProvider.Instance.RadioTransmissionStart;
-
-    public CachedAudioEffect SelectedRadioTransmissionStartEffect
-    {
-        set
-        {
-            GlobalSettingsStore.Instance.ProfileSettingsStore.SetClientSettingString(
-                ProfileSettingsKeys.RadioTransmissionStartSelection, value.FileName);
-            NotifyPropertyChanged();
-        }
-        get => CachedAudioEffectProvider.Instance.SelectedRadioTransmissionStartEffect;
-    }
-
-    public List<CachedAudioEffect> RadioTransmissionEnd => CachedAudioEffectProvider.Instance.RadioTransmissionEnd;
-
-    public CachedAudioEffect SelectedRadioTransmissionEndEffect
-    {
-        set
-        {
-            GlobalSettingsStore.Instance.ProfileSettingsStore.SetClientSettingString(
-                ProfileSettingsKeys.RadioTransmissionEndSelection, value.FileName);
-            NotifyPropertyChanged();
-        }
-        get => CachedAudioEffectProvider.Instance.SelectedRadioTransmissionEndEffect;
-    }
-/***
- *
- */
-
-/***
- *
- */
-    // Add the new float property for the slider (0-100%)
+    /// <summary>Radio effect strength in percent: 0 = clean voice, 100 = full radio effect (dry/wet ratio).</summary>
     public float RadioSoundEffectsRatio
     {
         get
@@ -759,6 +816,11 @@ public class ClientSettingsViewModel : PropertyChangedBaseClass
         get => _globalSettings.ProfileSettingsStore.ProfileNames;
     }
 
+    /// <summary>More than the default profile exists (the radio sounds show which profile they belong to).</summary>
+    public bool HasSeveralProfiles => _globalSettings.ProfileSettingsStore.ProfileNames.Count > 1;
+
+    /// <summary>"Saved in the profile ..." above the radio sounds.</summary>
+    public string ProfileNotice => string.Format(Resources.RadioSoundsProfileNotice, SelectedProfile);
 
 
     /// <summary>
@@ -782,54 +844,9 @@ public class ClientSettingsViewModel : PropertyChangedBaseClass
 
     private void ReloadSettings()
     {
-        NotifyPropertyChanged(nameof(RadioPanelTaskbarItem));
-
-        NotifyPropertyChanged(nameof(MinimiseToTray));
-        NotifyPropertyChanged(nameof(StartMinimised));
-        NotifyPropertyChanged(nameof(ShowTransmitterName));
-        
-        NotifyPropertyChanged(nameof(MicDenoise));
-
-        NotifyPropertyChanged(nameof(VOXEnabled));
-        NotifyPropertyChanged(nameof(VOXMinimimumTXTime));
-        NotifyPropertyChanged(nameof(VOXMode));
-        NotifyPropertyChanged(nameof(VOXMinimumRMS));
-
-        NotifyPropertyChanged(nameof(AllowTransmissionsRecording));
-        NotifyPropertyChanged(nameof(RecordTransmissions));
-        NotifyPropertyChanged(nameof(RecordingQuality));
-
-        NotifyPropertyChanged(nameof(RequireAdminToggle));
-        NotifyPropertyChanged(nameof(ExpandInputDevices));
-        NotifyPropertyChanged(nameof(AllowXInputController));
-        NotifyPropertyChanged(nameof(PlayConnectionSounds));
-        //TODO handle Profile list??
-
-        NotifyPropertyChanged(nameof(AllowRotaryIncrement));
-        NotifyPropertyChanged(nameof(PTTReleaseDelay));
-        NotifyPropertyChanged(nameof(PTTStartDelay));
-        NotifyPropertyChanged(nameof(RadioRxStart));
-        NotifyPropertyChanged(nameof(RadioRxEnd));
-        NotifyPropertyChanged(nameof(RadioTxStart));
-        NotifyPropertyChanged(nameof(RadioTxEnd));
-        NotifyPropertyChanged(nameof(SelectedRadioTransmissionStartEffect));
-        NotifyPropertyChanged(nameof(SelectedRadioTransmissionEndEffect));
-        NotifyPropertyChanged(nameof(RadioSoundEffectsRatio));
-        NotifyPropertyChanged(nameof(RadioSoundEffectsClipping));
-        NotifyPropertyChanged(nameof(NATORadioToneToggle));
-        NotifyPropertyChanged(nameof(NATORadioToneVolume));
-        NotifyPropertyChanged(nameof(BackgroundRadioNoiseToggle));
-        NotifyPropertyChanged(nameof(NoiseGainDB));
-        NotifyPropertyChanged(nameof(HFNoiseGainDB));
-
-        NotifyPropertyChanged(nameof(AmbientEffectToggle));
-        NotifyPropertyChanged(nameof(AmbientEffectVolume));
-        NotifyPropertyChanged(nameof(RadioRxSquelchTail));
-        NotifyPropertyChanged(nameof(BackgroundSound));
-        NotifyPropertyChanged(nameof(BackgroundSoundVolume));
-
-        NotifyPropertyChanged(nameof(PerRadioModelEffects));
-        NotifyPropertyChanged(nameof(RadioBalance));
+        // not AvailableProfiles / SelectedProfile: this runs while the profile drop-down changes its selection
+        foreach (var property in GlobalProperties) NotifyPropertyChanged(property);
+        foreach (var property in ProfileProperties) NotifyPropertyChanged(property);
 
         //TODO send message to tell input to reload!
         //TODO pick up in inputhandler that settings have changed?

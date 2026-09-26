@@ -315,19 +315,20 @@ public class RadioMixingProvider : ISampleProvider
             effectsBuffer.Write(effect.AudioEffectFloat, 0, effect.AudioEffectFloat.Length);
     }
 
+    /// <summary>Queues the receive end sound ("When someone stops talking") on this radio.</summary>
     private void PlaySoundEffectEndReceive()
     {
         if (!profileSettings.GetClientSettingBool(ProfileSettingsKeys.RadioRxEffects_End)) return;
 
-        WriteEffect(_cachedAudioEffectsProvider.SelectedRadioTransmissionEndEffect);
+        WriteEffect(_cachedAudioEffectsProvider.SelectedRadioReceiveEndEffect);
     }
 
-    /// <summary>Queues the receive start effect (selected click) on this radio.</summary>
+    /// <summary>Queues the receive start sound ("When someone starts talking") on this radio.</summary>
     public void PlaySoundEffectStartReceive()
     {
         if (!profileSettings.GetClientSettingBool(ProfileSettingsKeys.RadioRxEffects_Start)) return;
 
-        WriteEffect(_cachedAudioEffectsProvider.SelectedRadioTransmissionStartEffect);
+        WriteEffect(_cachedAudioEffectsProvider.SelectedRadioReceiveStartEffect);
     }
 
     /// <summary>
@@ -365,7 +366,7 @@ public class RadioMixingProvider : ISampleProvider
         }
     }
 
-    /// <summary>Queues the transmit start effect (selected click) on this radio.</summary>
+    /// <summary>Queues the transmit start sound ("When I press push-to-talk") on this radio.</summary>
     public void PlaySoundEffectStartTransmit()
     {
         if (!profileSettings.GetClientSettingBool(ProfileSettingsKeys.RadioTxEffects_Start)) return;
@@ -373,7 +374,7 @@ public class RadioMixingProvider : ISampleProvider
         WriteEffect(_cachedAudioEffectsProvider.SelectedRadioTransmissionStartEffect);
     }
 
-    /// <summary>Queues the transmit end effect (selected click) on this radio.</summary>
+    /// <summary>Queues the transmit end sound ("When I release push-to-talk") on this radio.</summary>
     public void PlaySoundEffectEndTransmit()
     {
         if (!profileSettings.GetClientSettingBool(ProfileSettingsKeys.RadioTxEffects_End)) return;
