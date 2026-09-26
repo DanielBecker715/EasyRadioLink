@@ -9,14 +9,15 @@
         <StartupObject>EasyRadioLink.Server.Program</StartupObject>
         <PlatformTarget>x64</PlatformTarget>
         <PublishSingleFile>false</PublishSingleFile>
-        <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+        <!-- nothing is extracted at start-up: the server needs no native audio libraries (it never decodes audio),
+             and a sandboxed service user has no home folder to extract to -->
+        <IncludeNativeLibrariesForSelfExtract>false</IncludeNativeLibrariesForSelfExtract>
         <AssemblyName>EasyRadioLink.Server.Cli</AssemblyName>
         <RootNamespace>EasyRadioLink.Server</RootNamespace>
         <IsPackable>false</IsPackable>
     </PropertyGroup>
     <ItemGroup>
         <ProjectReference Include="..\EasyRadioLink.Common\EasyRadioLink.Common.csproj" />
-        <ProjectReference Include="..\EasyRadioLink.SharedAudio\EasyRadioLink.SharedAudio.csproj" />
     </ItemGroup>
     <ItemGroup>
         <PackageReference Include="CommandLineParser" Version="2.9.1" />
