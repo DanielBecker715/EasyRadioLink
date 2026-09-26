@@ -54,7 +54,10 @@ namespace EasyRadioLink.Common.Audio.Dsp
             // a minimum value of 0dB.
 
             // transfer function
-            double gr = overdB * (Ratio - 1.0);	// gain reduction (dB)
+            // above the threshold the output rises by only 1/Ratio dB per dB of input (a Ratio below 1 would
+            // expand, so it is treated as 1 - no compression)
+            var ratio = Ratio < 1.0 ? 1.0 : Ratio;
+            double gr = overdB * (1.0 / ratio - 1.0); // gain reduction (dB, never positive)
             gr = Decibels.DecibelsToLinear(gr) * Decibels.DecibelsToLinear(MakeUpGain); // convert dB -> linear
 
             // output gain

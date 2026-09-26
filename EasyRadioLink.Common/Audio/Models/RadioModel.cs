@@ -164,14 +164,17 @@ namespace EasyRadioLink.Common.Audio.Models
 
             public override ISampleProvider ToSampleProvider(ISampleProvider source)
             {
-                return new SimpleCompressorEffect(source)
+                // self-keyed: the sidechain is the signal itself (NoopSampleProvider leaves the copied buffer as it is)
+                return new SidechainCompressorProvider
                 {
-                    Attack = Attack * 1000,
-                    MakeUpGain = MakeUp,
-                    Release = Release * 1000,
-                    Threshold = Threshold,
-                    Ratio = Ratio,
-                    Enabled = true,
+                    Compressor = new Dsp.SidechainCompressor(Attack * 1000, Release * 1000, source.WaveFormat.SampleRate)
+                    {
+                        MakeUpGain = MakeUp,
+                        Threshold = Threshold,
+                        Ratio = Ratio,
+                    },
+                    SignalProvider = source,
+                    SidechainProvider = new NoopSampleProvider { WaveFormat = source.WaveFormat }
                 };
             }
         };
@@ -628,7 +631,7 @@ namespace EasyRadioLink.Common.Audio.Models
                     },
                     new GainEffect()
                     {
-                        Gain = 12,
+                        Gain = 10,
                     }
 
                 }
@@ -735,7 +738,7 @@ namespace EasyRadioLink.Common.Audio.Models
 
                     new GainEffect
                     {
-                        Gain = 8,
+                        Gain = 10.9f,
                     }
                 }
             },

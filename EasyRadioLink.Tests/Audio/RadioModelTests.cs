@@ -149,8 +149,49 @@ public class RadioModelTests
 
         var standard = levels[RadioModelFactory.DefaultModelKey];
         foreach (var level in levels)
-            Assert.IsLessThan(15.0, Math.Abs(level.Value - standard),
+            Assert.IsLessThan(4.0, Math.Abs(level.Value - standard),
                 $"{level.Key} is {level.Value - standard:0.0} dB louder/quieter than standard");
+    }
+
+    [TestMethod]
+    public void LoudSpeechDoesNotClip()
+    {
+        // a loud talker (about 3x the normal test level) must not be turned into hard-clipped crackle
+        var factory = ShippedModels();
+        foreach (var key in CuratedModels)
+        {
+            var loud = new NAudio.Wave.SampleProviders.VolumeSampleProvider(new TestSignal()) { Volume = 3f };
+            var output = Render(new RadioFilter(loud, key, false, factory), 50).Skip(Constants.OUTPUT_SEGMENT_FRAMES * 25).ToArray();
+            var clipped = 100.0 * output.Count(sample => Math.Abs(sample) >= 0.999f) / output.Length;
+            Assert.IsLessThan(10.0, clipped, $"{key} clips {clipped:0.0}% of the samples");
+        }
+    }
+
+    [TestMethod]
+    public void CompressorCompressesAboveTheThreshold()
+    {
+        // ratio 4: 10 dB more input above the threshold may only give 2.5 dB more output (it used to expand)
+        static double OutputDb(double inputDb)
+        {
+            var compressor = new EasyRadioLink.Common.Audio.Dsp.SidechainCompressor(1, 50, 48000)
+                { Threshold = -40, Ratio = 4, MakeUpGain = 0 };
+            var amplitude = Math.Pow(10, inputDb / 20);
+            double sum = 0;
+            for (var n = 0; n < 48000; n++)
+            {
+                var x = amplitude * Math.Sin(2 * Math.PI * 1000 * n / 48000.0);
+                var y = compressor.Process(x, x);
+                if (n >= 24000) sum += y * y;
+            }
+
+            return 10 * Math.Log10(sum / 24000) + 3.01; // RMS -> peak dB of a sine
+        }
+
+        var quiet = OutputDb(-20);
+        var loud = OutputDb(-10);
+        Assert.IsLessThan(-20.0, quiet, "no gain above the threshold");
+        Assert.IsLessThan(4.0, loud - quiet, $"10 dB more input gave {loud - quiet:0.0} dB more output");
+        Assert.IsGreaterThan(1.0, loud - quiet);
     }
 
     [TestMethod]

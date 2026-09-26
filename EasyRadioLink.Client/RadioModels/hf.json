@@ -56,7 +56,7 @@
       },
       {
         "$type": "gain",
-        "gain": 15
+        "gain": 31.3
       }
     ]
   },
@@ -76,5 +76,5 @@
   "encryptionEffect": {
     "$type": "cvsd"
   },
-  "noiseGain": -24
+  "noiseGain": -12
 }

@@ -44,7 +44,7 @@ Put your own model files into **`%AppData%\EasyRadioLink\RadioModels`** and rest
   "displayName": "My CB",
   "description": "Old AM CB with a hot power microphone.",
   "sortOrder": 100,
-  "noiseGain": -22,
+  "noiseGain": -8,
   "txEffect": { "$type": "chain", "effects": [ ... ] },
   "rxEffect": { "$type": "filters", "filters": [ ... ] },
   "encryptionEffect": { "$type": "cvsd" }
@@ -57,7 +57,7 @@ Put your own model files into **`%AppData%\EasyRadioLink\RadioModels`** and rest
 | `displayName` | no | Name shown in the Sound selector (default: the key). |
 | `description` | no | Short description shown as tool tip. |
 | `sortOrder` | no | Position in the Sound selector (lower first, default 1000; `standard` is always first). |
-| `noiseGain` | yes | Level of the background static in dB, added to the frequency-dependent base level (lower frequencies are noisier). Above 30 MHz the static stays subtle. At or below 30 MHz (CB/HF) it is much stronger and rises steeply: `-22` is heavy (`cb`), `-33` is light (`standard`), `-60` is practically silent. Above about `-18` the static drowns the voice on CB/HF. |
+| `noiseGain` | yes | Level of the background static in dB, added to the frequency-dependent base level (lower frequencies are noisier). Above 30 MHz the static stays subtle. The shipped models range from `-33` (`standard`, subtle) over `-24`/`-23` (`airband`, `tactical`, `walkie`, moderate) to `-8` (`cb`, clearly audible on 27 MHz) and `-12` (`hf`, heavy); `-60` is practically silent. Every +6 dB doubles the static. |
 | `txEffect` | yes | Effect applied to a transmission made with this model (microphone + transmitter sound). |
 | `rxEffect` | yes | Effect applied to received audio (receiver + speaker). A gentle `highpass 270` / `lowpass 4500` is typical. |
 | `encryptionEffect` | no | Applied after `txEffect` when the transmission is encrypted. Usually `cvsd`. |
@@ -128,7 +128,7 @@ Dynamic range compressor.
 | `attack` | Attack time in seconds. |
 | `release` | Release time in seconds. |
 | `threshold` | Threshold in dB. |
-| `ratio` | Compression ratio. |
+| `ratio` | Compression ratio (`4` = 4:1: above the threshold, 4 dB more input gives only 1 dB more output). Values below `1` are treated as `1` (no compression). |
 | `makeUp` | Make-up gain in dB. |
 
 ```json
@@ -213,7 +213,7 @@ A filter object has only these properties:
           { "$type": "lowpass", "frequency": 3200, "q": 0.5 }
         ]
       },
-      { "$type": "gain", "gain": 12 }
+      { "$type": "gain", "gain": 19.6 }
     ]
   },
   "rxEffect": {
@@ -224,7 +224,7 @@ A filter object has only these properties:
     ]
   },
   "encryptionEffect": { "$type": "cvsd" },
-  "noiseGain": -22
+  "noiseGain": -8
 }
 ```
 
@@ -235,7 +235,7 @@ Then select *My CB* in the Sound selector of a radio (or set `"model": "mycb"` i
 - Change one thing at a time and compare with the **Audio Preview** button on the Radio tab. The preview plays no
   static, so judge `noiseGain` with a real transmission (for example on a radio check frequency) on the band the
   model is meant for.
-- Keep the final `gain` so that the model is about as loud as `standard`; very loud models clip.
+- Keep the final `gain` so that the model is about as loud as `standard` (all shipped models are matched to it); a model that is much louder clips and crackles.
 - Radio voice lives between roughly 300 Hz and 3.5 kHz; narrower sounds more "radio", wider sounds cleaner.
 - The static level also depends on the frequency (lower frequencies are noisier) and on the listener's noise
   settings, so test on the band the model is meant for.
