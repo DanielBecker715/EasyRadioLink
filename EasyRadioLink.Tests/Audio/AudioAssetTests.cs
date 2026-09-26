@@ -328,7 +328,9 @@ public class AudioAssetTests
         foreach (var key in Enum.GetNames<ProfileSettingsKeys>())
             Assert.IsTrue(defaults.ContainsKey(key), $"{key} has no default");
 
-        Assert.AreEqual("true", defaults[nameof(ProfileSettingsKeys.RadioRxSquelchTail)]);
+        // owner's choice (1.3): the squelch tail is off by default, the voice distortion at 35 %
+        Assert.AreEqual("false", defaults[nameof(ProfileSettingsKeys.RadioRxSquelchTail)]);
+        Assert.AreEqual("35", defaults[nameof(ProfileSettingsKeys.VoiceDistortion)]);
         Assert.AreEqual("", defaults[nameof(ProfileSettingsKeys.BackgroundSound)], "no background sound by default");
         Assert.AreEqual("true", defaults[nameof(ProfileSettingsKeys.BackgroundSoundEffect)]);
         // owner's choice: Fancy Release when a transmission starts, Almost Fancy when it ends (sending and receiving)
@@ -376,7 +378,8 @@ public class AudioAssetTests
         // other settings keep their plain defaults
         Assert.AreEqual("FancyRelease.wav",
             ProfileSettingsStore.GetDefaultValue(older, nameof(ProfileSettingsKeys.RadioTransmissionStartSelection)));
-        Assert.AreEqual("true", ProfileSettingsStore.GetDefaultValue(older, nameof(ProfileSettingsKeys.RadioRxSquelchTail)));
+        Assert.AreEqual("false", ProfileSettingsStore.GetDefaultValue(older, nameof(ProfileSettingsKeys.RadioRxSquelchTail)));
+        Assert.AreEqual("35", ProfileSettingsStore.GetDefaultValue(older, nameof(ProfileSettingsKeys.VoiceDistortion)));
         Assert.IsNull(ProfileSettingsStore.GetDefaultValue(older, "NoSuchSetting"));
     }
 

@@ -2692,6 +2692,15 @@ namespace EasyRadioLink.Client.Properties {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to Degrades the voices you receive (and your Audio Preview): narrower sound, overdrive, lo-fi crunch and fading; above 50% also crackle and short dropouts (digital: breakup). 0% = clean voice, 35% = rough but easy to understand, 100% = badly broken reception. Acts on the whole received voice at any radio effect strength; off only while the radio effect strength is 0%.
+        /// </summary>
+        public static string ToolTipVoiceDistortion {
+            get {
+                return ResourceManager.GetString("ToolTipVoiceDistortion", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Voice connection (UDP) to the server.
         /// </summary>
         public static string ToolTipVoiceStatus {
@@ -2781,6 +2790,15 @@ namespace EasyRadioLink.Client.Properties {
             }
         }
 
+        /// <summary>
+        ///   Looks up a localized string similar to Voice distortion.
+        /// </summary>
+        public static string VoiceDistortion {
+            get {
+                return ResourceManager.GetString("VoiceDistortion", resourceCulture);
+            }
+        }
+        
         /// <summary>
         ///   Looks up a localized string similar to Voice.
         /// </summary>

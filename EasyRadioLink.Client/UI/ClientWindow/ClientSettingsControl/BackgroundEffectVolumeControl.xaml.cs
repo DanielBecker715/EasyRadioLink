@@ -18,6 +18,14 @@ public partial class BackgroundEffectVolumeControl : UserControl, INotifyPropert
             typeof(BackgroundEffectVolumeControl),
             new PropertyMetadata(200f, MaximumPercentageChanged));
 
+    /// <summary>Distance of the ticks the slider snaps to, in percent (default 10).</summary>
+    public static readonly DependencyProperty TickStepProperty =
+        DependencyProperty.Register(
+            nameof(TickStep),
+            typeof(double),
+            typeof(BackgroundEffectVolumeControl),
+            new PropertyMetadata(10.0));
+
     public BackgroundEffectVolumeControl()
     {
         InitializeComponent();
@@ -36,6 +44,12 @@ public partial class BackgroundEffectVolumeControl : UserControl, INotifyPropert
     }
 
     public float HalfMaximumPercentage => MaximumPercentage / 2f;
+
+    public double TickStep
+    {
+        get => (double)GetValue(TickStepProperty);
+        set => SetValue(TickStepProperty, value);
+    }
 
     private static void MaximumPercentageChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
     {

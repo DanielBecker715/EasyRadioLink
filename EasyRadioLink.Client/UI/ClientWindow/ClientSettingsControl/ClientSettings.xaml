@@ -103,6 +103,7 @@
                             <RowDefinition Height="Auto" />
                             <RowDefinition Height="Auto" />
                             <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
                         </Grid.RowDefinitions>
 
                         <TextBlock Grid.Row="0"
@@ -233,6 +234,22 @@
                                                                              MaximumPercentage="100"
                                                                              ToolTip="{x:Static p:Resources.ToolTipRadioSoundEffects}"
                                                                              VolumeValue="{Binding RadioSoundEffectsRatio, Mode=TwoWay}" />
+
+                        <!-- degrades the received voice itself (off while the radio effect strength is 0) -->
+                        <TextBlock Grid.Row="10"
+                                   IsEnabled="{Binding HasRadioEffects}"
+                                   Style="{StaticResource SettingText}"
+                                   Text="{x:Static p:Resources.VoiceDistortion}"
+                                   ToolTip="{x:Static p:Resources.ToolTipVoiceDistortion}"
+                                   ToolTipService.ShowOnDisabled="True" />
+                        <clientSettingsControl:BackgroundEffectVolumeControl Grid.Row="10"
+                                                                             Grid.Column="1"
+                                                                             IsEnabled="{Binding HasRadioEffects}"
+                                                                             MaximumPercentage="100"
+                                                                             TickStep="5"
+                                                                             ToolTip="{x:Static p:Resources.ToolTipVoiceDistortion}"
+                                                                             ToolTipService.ShowOnDisabled="True"
+                                                                             VolumeValue="{Binding VoiceDistortion, Mode=TwoWay}" />
                     </Grid>
                 </StackPanel>
             </GroupBox>

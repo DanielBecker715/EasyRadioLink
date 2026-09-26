@@ -34,7 +34,7 @@ public class ClientSettingsViewModel : PropertyChangedBaseClass
         nameof(TxStartSound), nameof(TxEndSound), nameof(RxStartSound), nameof(RxEndSound),
         nameof(RadioRxSquelchTail), nameof(BackgroundRadioNoiseToggle), nameof(NATORadioToneToggle),
         nameof(BackgroundSound), nameof(HasBackgroundSound), nameof(BackgroundSoundVolume),
-        nameof(RadioSoundEffectsRatio),
+        nameof(RadioSoundEffectsRatio), nameof(VoiceDistortion), nameof(HasRadioEffects),
         nameof(RadioSoundEffectsClipping), nameof(PerRadioModelEffects), nameof(NoiseGainDB), nameof(HFNoiseGainDB),
         nameof(NATORadioToneVolume), nameof(AmbientEffectToggle), nameof(AmbientEffectVolume), nameof(RadioBalance),
         nameof(AllowRotaryIncrement), nameof(PTTReleaseDelay), nameof(PTTStartDelay),
@@ -694,6 +694,29 @@ public class ClientSettingsViewModel : PropertyChangedBaseClass
         {
             float clamped = Math.Clamp(value, 0f, 100f) / 100f; // 0–100% → 0.0–1.0
             _globalSettings.ProfileSettingsStore.SetClientSettingFloat(ProfileSettingsKeys.RadioEffectsRatio, clamped);
+            NotifyPropertyChanged();
+            NotifyPropertyChanged(nameof(HasRadioEffects));
+        }
+    }
+
+    /// <summary>Radio effects are on (strength above 0) - the voice distortion only applies then.</summary>
+    public bool HasRadioEffects => RadioSoundEffectsRatio > 0f;
+
+    /// <summary>
+    ///     Voice distortion in percent: 0 = clean voice, 100 = badly broken reception. Degrades received voices (and the
+    ///     Audio Preview) - band narrowing, overdrive, lo-fi, fading and, above 50 %, crackle and dropouts.
+    /// </summary>
+    public float VoiceDistortion
+    {
+        get
+        {
+            var value = _globalSettings.ProfileSettingsStore.GetClientSettingFloat(ProfileSettingsKeys.VoiceDistortion);
+            return float.IsFinite(value) ? Math.Clamp(value, 0f, 100f) : VoiceDistortionProvider.DefaultPercent;
+        }
+        set
+        {
+            var percent = float.IsFinite(value) ? (float)Math.Round(Math.Clamp(value, 0f, 100f)) : 0f;
+            _globalSettings.ProfileSettingsStore.SetClientSettingFloat(ProfileSettingsKeys.VoiceDistortion, percent);
             NotifyPropertyChanged();
         }
     }

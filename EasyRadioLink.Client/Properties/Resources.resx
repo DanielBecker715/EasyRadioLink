@@ -1030,6 +1030,9 @@ The password is sent over the encrypted connection, after the server's identity 
   <data name="ToolTipSpeakerBoost" xml:space="preserve">
     <value>Boosts all received audio</value>
   </data>
+  <data name="ToolTipVoiceDistortion" xml:space="preserve">
+    <value>Degrades the voices you receive (and your Audio Preview): narrower sound, overdrive, lo-fi crunch and fading; above 50% also crackle and short dropouts (digital: breakup). 0% = clean voice, 35% = rough but easy to understand, 100% = badly broken reception. Acts on the whole received voice at any radio effect strength; off only while the radio effect strength is 0%</value>
+  </data>
   <data name="ToolTipVoiceStatus" xml:space="preserve">
     <value>Voice connection (UDP) to the server</value>
   </data>
@@ -1059,6 +1062,9 @@ The password is sent over the encrypted connection, after the server's identity 
   </data>
   <data name="ValueYes" xml:space="preserve">
     <value>Yes</value>
+  </data>
+  <data name="VoiceDistortion" xml:space="preserve">
+    <value>Voice distortion</value>
   </data>
   <data name="VOIPConnectionStatusLabel" xml:space="preserve">
     <value>Voice</value>

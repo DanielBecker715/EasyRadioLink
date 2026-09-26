@@ -60,7 +60,7 @@ REQUIREMENTS
 --------------
   1. Radio tab > Audio Devices: choose your microphone and your speakers or
      headset. "Audio Preview" lets you hear your own voice with the radio
-     sound.
+     sound (including the voice distortion, see below).
   2. Controls tab: assign a key, mouse button or joystick button to
      "Push-To-Talk (PTT)".
   3. Radio tab > Connection: enter your name and the server address, for
@@ -126,9 +126,24 @@ REQUIREMENTS
   Release at the start, Almost Fancy at the end). The play button next
   to each lets you listen, also without a connection. Only you hear your
   push-to-talk sounds; the others hear the sounds they chose. Below that:
-  squelch tail, radio static, FM tone, your background sound, the radio
-  effect strength, and general options such as opening the radio when
-  connected and voice activation (VOX).
+  squelch tail (the short "kssht" when an AM/FM transmission ends - off by
+  default; profiles that already have the setting keep it), radio static,
+  FM tone, your background sound, the radio effect strength and the voice
+  distortion, and general options such as opening the radio when connected
+  and voice activation (VOX).
+
+  Voice distortion (0-100 %, default 35 %) roughens the voices you receive
+  themselves instead of only adding effects around a clean voice: narrower
+  sound, overdrive, lo-fi crunch and slow fading; above 50 % also crackle
+  and short dropouts. Below 30 MHz (HF, CB) the fading is deeper, on the DIG
+  band the voice breaks up digitally (short mutes and robotic repeats)
+  instead of fading and crackling. 35 % is rough but easy to understand,
+  100 % sounds badly broken but the words stay recognisable. It acts on the
+  whole received voice at any radio effect strength, but is not used on
+  clean frequencies or when the radio effect strength is 0 %; the squelch
+  tail, the start/end sounds and your own voice on the mic output device
+  stay clean. "Audio Preview" on the Radio tab uses it too, so you can tune
+  it while you hear yourself.
   Everything else is under "Advanced settings": microphone and incoming
   audio, voice activation details, recording, radio effect details,
   push-to-talk delays and controllers, the radio window and profiles.

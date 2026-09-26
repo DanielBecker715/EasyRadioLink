@@ -52,6 +52,7 @@ public enum ProfileSettingsKeys
     RotaryStyleIncrement,
 
     // Short fading noise burst when a received AM/FM transmission ends (not for DIGITAL or clean frequencies).
+    // Off by default since 1.3 (profiles that have the setting keep their value).
     RadioRxSquelchTail,
 
     // Sender: background sound mixed into your own transmissions ("" = none, or a name from
@@ -68,7 +69,11 @@ public enum ProfileSettingsKeys
     // receive sounds were the transmit sounds: a profile without these keys starts with its transmit selections
     // (see ProfileSettingsStore.GetDefaultValue).
     RadioRxStartSelection,
-    RadioRxEndSelection
+    RadioRxEndSelection,
+
+    // Listener: how much received voices are degraded (band narrowing, overdrive, lo-fi, fading, crackle / dropouts),
+    // 0..100 percent. See VoiceDistortionProvider.
+    VoiceDistortion
 }
 
 public class ProfileSettingsStore
@@ -112,7 +117,7 @@ public class ProfileSettingsStore
 
         { ProfileSettingsKeys.RotaryStyleIncrement.ToString(), "false" },
 
-        { ProfileSettingsKeys.RadioRxSquelchTail.ToString(), "true" },
+        { ProfileSettingsKeys.RadioRxSquelchTail.ToString(), "false" },
 
         { ProfileSettingsKeys.BackgroundSound.ToString(), "" }, // none
         { ProfileSettingsKeys.BackgroundSoundVolume.ToString(), "0.25" },
@@ -128,7 +133,9 @@ public class ProfileSettingsStore
         {
             ProfileSettingsKeys.RadioRxEndSelection.ToString(),
             CachedAudioEffect.AlmostFancyFile
-        }
+        },
+
+        { ProfileSettingsKeys.VoiceDistortion.ToString(), "35" } // percent
     };
 
     /// <summary>

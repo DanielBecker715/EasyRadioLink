@@ -25,7 +25,7 @@ public class ClientAudioProvider : AudioProvider
     private readonly Dictionary<string, int>[] backgroundEffectProgress;
 
     private readonly CachedAudioEffectProvider audioEffectProvider = CachedAudioEffectProvider.Instance;
-    private readonly ClientTransmissionPipelineProvider pipeline = new ClientTransmissionPipelineProvider();
+    private readonly ClientTransmissionPipelineProvider pipeline;
 
     private readonly ProfileSettingsStore settingsStore = GlobalSettingsStore.Instance.ProfileSettingsStore;
     private bool backgroundSoundEffectEnabled = true;
@@ -37,8 +37,14 @@ public class ClientAudioProvider : AudioProvider
     private double lastLoaded;
 
     //   private readonly WaveFileWriter waveWriter;
-    public ClientAudioProvider()
+    /// <param name="localPassthrough">
+    ///     true for the own voice (mic output device, recording of the own transmissions): the sender's radio model like
+    ///     for received audio, but no voice distortion - nothing was received over a radio link.
+    /// </param>
+    public ClientAudioProvider(bool localPassthrough = false)
     {
+        pipeline = new ClientTransmissionPipelineProvider { VoiceDistortionEnabled = !localPassthrough };
+
         var radios = Constants.MAX_RADIOS;
         JitterBufferProviderInterface =
                 new JitterBufferProviderInterface[radios];

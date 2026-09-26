@@ -213,7 +213,7 @@ public class GlobalSettingsStore
 
         { GlobalSettingsKeys.VOX.ToString(), "false" },
         { GlobalSettingsKeys.VOXMode.ToString(), "3" },
-        { GlobalSettingsKeys.VOXMinimumTime.ToString(), "300" },
+        { GlobalSettingsKeys.VOXMinimumTime.ToString(), "700" },
         { GlobalSettingsKeys.VOXMinimumDB.ToString(), "-59.0" },
 
 

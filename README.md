@@ -20,7 +20,9 @@ simply runs a server and connects.
 **Radio sound**
 - Radio sound models per band (CB, walkie-talkie, airband, tactical, HF, vintage tube, digital). Customise them as
   JSON effect chains ([docs/radio-models.md](docs/radio-models.md)).
-- Frequency-dependent static and HF noise, squelch tail and FM tone.
+- Frequency-dependent static and HF noise, FM tone and an optional squelch tail (off by default).
+- *Voice distortion* (0 - 100 %, default 35 %): roughens the received voice itself, not just the sound around it -
+  narrower band, overdrive, lo-fi crunch and fading; above 50 % also crackle and short dropouts (digital: breakup).
 - Radio sounds of your choice when you press / release push-to-talk and when someone starts / stops talking: clicks,
   chirp, beeps, roger beep and more - or none (see [Settings](#settings)).
 - Optional background sound (jet, prop or helicopter) that the other stations hear behind your voice.
@@ -326,8 +328,20 @@ The **Settings** tab shows the everyday settings first:
   *Off* (default: *Fancy Release* when a transmission starts, *Almost Fancy* when it ends). The ▶ button next to
   each plays the chosen sound on your speakers, also without a connection. Only you hear
   your push-to-talk sounds; the others hear what they chose for someone starting / stopping to talk. A start sound
-  is played before the received voice, so a long one delays the voice by its length. Below: squelch tail, radio
-  static, FM tone, your background sound and its volume, and the radio effect strength.
+  is played before the received voice, so a long one delays the voice by its length. Below: squelch tail (the
+  short "kssht" when an AM / FM transmission ends; off by default, profiles that already have the setting keep it),
+  radio static, FM tone, your background sound and its volume, the radio effect strength and the voice distortion.
+- **Voice distortion** (0 - 100 %, default 35 %) makes the voices you receive sound like a real, imperfect radio
+  link instead of a clean voice with effects on top: the band gets narrower (up to 500 Hz - 2.3 kHz), the voice is
+  overdriven (up to +20 dB, at the same loudness), gets lo-fi crunch (down to 6 bits and 8 kHz) and fades slowly in
+  and out (up to +-2 dB at 35 %, +-5 dB at 70 %, +-8 dB at 100 %; half as much again below 30 MHz - HF, CB, MW).
+  Above 50 % crackle and short dropouts join in. On the DIG band there is no fading or crackle; the voice breaks up
+  digitally instead (short mutes and robotic repeats). 35 % is rough but easy to understand, 100 % sounds like a
+  badly broken link in which the words are still recognisable. It applies to everything you receive (also the radio
+  check echo), to the whole voice at any radio effect strength (the clean share of that mix included), but not on
+  clean frequencies and not when the radio effect strength is 0 %; the squelch tail and the start / end sounds stay
+  clean, and so does your own voice on the mic output device. The **Audio Preview** on the
+  Radio tab uses it too, so you can tune it while you hear yourself.
 - **General**: open the radio when connected, show who is transmitting, minimise to the system tray, start
   minimised, connect / disconnect sounds and voice activation (VOX).
 
