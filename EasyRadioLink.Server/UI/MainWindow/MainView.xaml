@@ -83,6 +83,27 @@
                 </Grid>
             </GroupBox>
 
+            <!-- Server identity (TLS): clients pin this fingerprint - selectable so the admin can copy and share it -->
+            <GroupBox Header="{x:Static p:Resources.GroupIdentity}">
+                <StackPanel>
+                    <TextBox Margin="0,3,0,3"
+                             Padding="0"
+                             Background="Transparent"
+                             BorderThickness="0"
+                             FontFamily="Consolas"
+                             IsReadOnly="True"
+                             IsTabStop="False"
+                             TextWrapping="Wrap"
+                             Text="{Binding IdentityFingerprint, Mode=OneWay}"
+                             ToolTip="{x:Static p:Resources.TooltipIdentity}" />
+                    <TextBlock Margin="0,3,0,3"
+                               FontSize="11"
+                               TextWrapping="Wrap"
+                               Foreground="{DynamicResource {x:Static SystemColors.GrayTextBrushKey}}"
+                               Text="{x:Static p:Resources.LabelIdentityHint}" />
+                </StackPanel>
+            </GroupBox>
+
             <!-- Radio realism -->
             <GroupBox Header="{x:Static p:Resources.GroupRadioRealism}">
                 <StackPanel>

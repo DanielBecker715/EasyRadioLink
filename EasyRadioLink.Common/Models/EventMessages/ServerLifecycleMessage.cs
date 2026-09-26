@@ -46,6 +46,36 @@ public class ServerStartFailedMessage
     public string Error { get; }
 }
 
+/// <summary>
+///     Published when the server loaded (or created) its TLS identity - hosts show <see cref="Fingerprint" /> so the
+///     admin can share it with the users.
+/// </summary>
+public class ServerIdentityMessage
+{
+    public ServerIdentityMessage(string fingerprint, string filePath, bool created, string permissionWarning = null)
+    {
+        Fingerprint = fingerprint;
+        FilePath = filePath;
+        Created = created;
+        PermissionWarning = permissionWarning;
+    }
+
+    /// <summary>SHA-256 of the server's public key, "AB:CD:...".</summary>
+    public string Fingerprint { get; }
+
+    /// <summary>Full path of server-identity.pfx.</summary>
+    public string FilePath { get; }
+
+    /// <summary>True if the identity was created by this start.</summary>
+    public bool Created { get; }
+
+    /// <summary>
+    ///     Set if accounts other than the server's own (and SYSTEM/Administrators) can read the identity file
+    ///     (<c>ServerIdentity.CheckPermissions</c>) - hosts show it as a warning.
+    /// </summary>
+    public string PermissionWarning { get; }
+}
+
 public class KickClientMessage
 {
     public KickClientMessage(ClientInfo client)

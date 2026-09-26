@@ -61,7 +61,7 @@ Put your own model files into **`%AppData%\EasyRadioLink\RadioModels`** and rest
 | `noiseGain` | yes | Level of the background static in dB, added to the frequency-dependent base level (lower frequencies are noisier). Above 30 MHz the static stays subtle. The shipped models range from `-33` (`standard`, subtle) over `-24`/`-23` (`airband`, `tactical`, `walkie`, moderate) to `-8` (`cb`, clearly audible on 27 MHz) and `-12` (`hf`, heavy); `-60` is practically silent. Every +6 dB doubles the static. |
 | `txEffect` | yes | Effect applied to a transmission made with this model (microphone + transmitter sound). |
 | `rxEffect` | yes | Effect applied to received audio (receiver + speaker). A gentle `highpass 270` / `lowpass 4500` is typical. |
-| `encryptionEffect` | no | Applied after `txEffect` to encrypted transmissions (only older versions encrypt). Usually `cvsd`. |
+| `encryptionEffect` | no | Applied after `txEffect` to scrambled audio: a transmission whose end-to-end key did not reach the listener in time. Usually `cvsd`. |
 
 Rules of the JSON reader:
 

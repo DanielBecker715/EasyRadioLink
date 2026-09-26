@@ -140,6 +140,15 @@ namespace EasyRadioLink.Server.Properties {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to Server identity.
+        /// </summary>
+        public static string GroupIdentity {
+            get {
+                return ResourceManager.GetString("GroupIdentity", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Logging and export.
         /// </summary>
         public static string GroupLogging {
@@ -202,6 +211,15 @@ namespace EasyRadioLink.Server.Properties {
             }
         }
 
+        /// <summary>
+        ///   Looks up a localized string similar to Clients remember this fingerprint on their first connection and warn their users if it ever changes. Share it with your users so they can compare it in Server Info. Keep server-identity.pfx (next to the settings file) private and include it in backups - a new identity makes every client show a warning..
+        /// </summary>
+        public static string LabelIdentityHint {
+            get {
+                return ResourceManager.GetString("LabelIdentityHint", resourceCulture);
+            }
+        }
+        
         /// <summary>
         ///   Looks up a localized string similar to Port:.
         /// </summary>
@@ -383,6 +401,15 @@ namespace EasyRadioLink.Server.Properties {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to SHA-256 fingerprint of the server's public key (server-identity.pfx).
+        /// </summary>
+        public static string TooltipIdentity {
+            get {
+                return ResourceManager.GetString("TooltipIdentity", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Two stations transmitting at the same time on one frequency interfere with each other..
         /// </summary>
         public static string TooltipRealRx {
@@ -401,14 +428,14 @@ namespace EasyRadioLink.Server.Properties {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to Clients must enter this password to connect. Leave empty for an open server. The password is sent unencrypted..
+        ///   Looks up a localized string similar to Clients must enter this password to connect. Leave empty for an open server. The password travels over the encrypted connection..
         /// </summary>
         public static string TooltipServerPassword {
             get {
                 return ResourceManager.GetString("TooltipServerPassword", resourceCulture);
             }
         }
-
+        
         /// <summary>
         ///   Looks up a localized string similar to Clients see the name of the user who is transmitting..
         /// </summary>
@@ -436,6 +463,15 @@ namespace EasyRadioLink.Server.Properties {
             }
         }
 
+        /// <summary>
+        ///   Looks up a localized string similar to Not loaded - the server is not running.
+        /// </summary>
+        public static string ValueIdentityNotLoaded {
+            get {
+                return ResourceManager.GetString("ValueIdentityNotLoaded", resourceCulture);
+            }
+        }
+        
         /// <summary>
         ///   Looks up a localized string similar to Clients see how many other users are tuned to their frequency..
         /// </summary>

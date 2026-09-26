@@ -16,6 +16,7 @@ using EasyRadioLink.Common.Audio.Recording;
 using EasyRadioLink.Common.Models.EventMessages;
 using EasyRadioLink.Common.Models.Player;
 using EasyRadioLink.Common.Network.Client;
+using EasyRadioLink.Common.Network.Crypto;
 using EasyRadioLink.Common.Network.Singletons;
 using EasyRadioLink.Common.Settings;
 using NAudio.CoreAudioApi;
@@ -229,9 +230,13 @@ public class AudioManager : IHandle<ClientUpdateMessage>
     /// <summary>
     ///     Starts capture, playback and the UDP voice connection. Must be called on the UI thread.
     /// </summary>
+    /// <param name="udpKey">The UDP key of this connection (from the server's SYNC reply).</param>
+    /// <param name="voiceSession">End-to-end encryption of the voice of this connection.</param>
     /// <returns>false if an audio device could not be opened (an error dialog was shown, nothing is left running)</returns>
-    public bool StartEncoding(string guid, IPEndPoint endPoint)
+    public bool StartEncoding(string guid, IPEndPoint endPoint, UdpTransportKey udpKey, E2EVoiceSession voiceSession)
     {
+        ArgumentNullException.ThrowIfNull(voiceSession);
+
         try
         {
             // load the radio models and sound effects now - not on the audio thread with the first transmission
@@ -292,10 +297,10 @@ public class AudioManager : IHandle<ClientUpdateMessage>
 
         //Start UDP handler
         _udpVoiceHandler =
-            new UDPVoiceHandler(guid, endPoint);
-        
+            new UDPVoiceHandler(guid, endPoint, udpKey);
 
-        _udpClientAudioProcessor = new UDPClientAudioProcessor(_udpVoiceHandler, this, guid);
+
+        _udpClientAudioProcessor = new UDPClientAudioProcessor(_udpVoiceHandler, this, guid, voiceSession);
 
         _udpVoiceHandler.Connect();
         _udpClientAudioProcessor.Start();

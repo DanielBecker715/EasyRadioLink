@@ -225,6 +225,9 @@
   <data name="BtnClose" xml:space="preserve">
     <value>Close</value>
   </data>
+  <data name="BtnTrustNewIdentity" xml:space="preserve">
+    <value>Connect anyway and trust the new identity</value>
+  </data>
   <data name="ButtonLabel" xml:space="preserve">
     <value>Button</value>
   </data>
@@ -494,6 +497,51 @@ Details are in the log file in {0}</value>
 
 Check the password and connect again. Leave the password empty for servers without a password.</value>
   </data>
+  <data name="MsgBoxIdentityChanged" xml:space="preserve">
+    <value>Server identity changed</value>
+  </data>
+  <data name="MsgBoxIdentityChangedHeading" xml:space="preserve">
+    <value>The identity of this server has changed</value>
+  </data>
+  <data name="MsgBoxIdentityChangedText" xml:space="preserve">
+    <value>{0} presented a different identity than on your earlier connections. EasyRadioLink did not connect and sent nothing - not even the password.
+
+This is expected when the server was reinstalled or its server-identity.pfx was replaced. It can also mean that someone is intercepting your connection. Only continue if the server admin confirms the new fingerprint.
+
+Known fingerprint:
+{1}
+
+New fingerprint:
+{2}</value>
+  </data>
+  <data name="BtnTrustIdentity" xml:space="preserve">
+    <value>Connect and trust this identity</value>
+  </data>
+  <data name="MsgBoxIdentityUnknown" xml:space="preserve">
+    <value>Server identity unknown</value>
+  </data>
+  <data name="MsgBoxIdentityUnknownHeading" xml:space="preserve">
+    <value>The saved identity of this server is unreadable</value>
+  </data>
+  <data name="MsgBoxIdentityUnknownText" xml:space="preserve">
+    <value>{0} could not be checked: its entry in known-servers.json (the identities of the servers you connected to before) is not a valid fingerprint - the file was edited or damaged. EasyRadioLink did not connect and sent nothing - not even the password.
+
+Only continue if this fingerprint matches the one your server admin gave you:
+{1}</value>
+  </data>
+  <data name="MsgBoxIdentityCheckFailed" xml:space="preserve">
+    <value>Server identity not checked</value>
+  </data>
+  <data name="MsgBoxIdentityCheckFailedHeading" xml:space="preserve">
+    <value>The identity of the server could not be checked</value>
+  </data>
+  <data name="MsgBoxIdentityCheckFailedText" xml:space="preserve">
+    <value>EasyRadioLink could not check the identity of {0} and did not connect - nothing was sent, not even the password.
+
+{1}
+
+The identities of the servers you connected to before are kept in known-servers.json in the settings folder, and it must be readable. Close other EasyRadioLink windows and try again. If the file is damaged, repair it, or rename or delete it - every server then counts as new again and is trusted on its next connection.</value>
+  </data>
   <data name="MsgBoxConfirm" xml:space="preserve">
     <value>Delete profile</value>
   </data>
@@ -543,7 +591,7 @@ Enter the host name or IP address of the server, optionally followed by :port (d
   <data name="MsgBoxInvalidServerText" xml:space="preserve">
     <value>{0} accepted the connection but did not complete the EasyRadioLink handshake.
 
-Check the address and the port (default {1}).</value>
+Check the address and the port (default {1}). Servers older than EasyRadioLink 1.1 can't be used with this client.</value>
   </data>
   <data name="MsgBoxMicPassthru" xml:space="preserve">
     <value>Mic output and speakers are the same device</value>
@@ -816,6 +864,12 @@ This client: protocol {2} (servers with protocol {3} or newer are supported)</va
   <data name="SrvServerVersion" xml:space="preserve">
     <value>Server protocol version</value>
   </data>
+  <data name="SrvServerIdentity" xml:space="preserve">
+    <value>Server identity (fingerprint)</value>
+  </data>
+  <data name="SrvServerIdentityHint" xml:space="preserve">
+    <value>The connection is encrypted. EasyRadioLink remembers this fingerprint for the server and warns you before connecting if it ever changes. Compare it with the fingerprint your server admin shares.</value>
+  </data>
   <data name="SrvShowTransmitterName" xml:space="preserve">
     <value>Show transmitter name</value>
   </data>
@@ -950,7 +1004,7 @@ This client: protocol {2} (servers with protocol {3} or newer are supported)</va
   </data>
   <data name="ToolTipServerPassword" xml:space="preserve">
     <value>Only needed if the server is password protected.
-The password is sent to the server unencrypted.</value>
+The password is sent over the encrypted connection, after the server's identity was checked.</value>
   </data>
   <data name="ToolTipServerStatus" xml:space="preserve">
     <value>Connection to the server</value>

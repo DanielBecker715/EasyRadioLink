@@ -385,6 +385,78 @@ namespace EasyRadioLink.Client.Properties {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to Connect and trust this identity.
+        /// </summary>
+        public static string BtnTrustIdentity {
+            get {
+                return ResourceManager.GetString("BtnTrustIdentity", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Server identity unknown.
+        /// </summary>
+        public static string MsgBoxIdentityUnknown {
+            get {
+                return ResourceManager.GetString("MsgBoxIdentityUnknown", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to The saved identity of this server is unreadable.
+        /// </summary>
+        public static string MsgBoxIdentityUnknownHeading {
+            get {
+                return ResourceManager.GetString("MsgBoxIdentityUnknownHeading", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to {0} could not be checked: its entry in known-servers.json (the identities of the servers you connect .....
+        /// </summary>
+        public static string MsgBoxIdentityUnknownText {
+            get {
+                return ResourceManager.GetString("MsgBoxIdentityUnknownText", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Server identity not checked.
+        /// </summary>
+        public static string MsgBoxIdentityCheckFailed {
+            get {
+                return ResourceManager.GetString("MsgBoxIdentityCheckFailed", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to The identity of the server could not be checked.
+        /// </summary>
+        public static string MsgBoxIdentityCheckFailedHeading {
+            get {
+                return ResourceManager.GetString("MsgBoxIdentityCheckFailedHeading", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to EasyRadioLink could not check the identity of {0} and did not connect - nothing was sent, not even t .....
+        /// </summary>
+        public static string MsgBoxIdentityCheckFailedText {
+            get {
+                return ResourceManager.GetString("MsgBoxIdentityCheckFailedText", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Connect anyway and trust the new identity.
+        /// </summary>
+        public static string BtnTrustNewIdentity {
+            get {
+                return ResourceManager.GetString("BtnTrustNewIdentity", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Button.
         /// </summary>
         public static string ButtonLabel {
@@ -1168,6 +1240,33 @@ namespace EasyRadioLink.Client.Properties {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to Server identity changed.
+        /// </summary>
+        public static string MsgBoxIdentityChanged {
+            get {
+                return ResourceManager.GetString("MsgBoxIdentityChanged", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The identity of this server has changed.
+        /// </summary>
+        public static string MsgBoxIdentityChangedHeading {
+            get {
+                return ResourceManager.GetString("MsgBoxIdentityChangedHeading", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to {0} presented a different identity than on your earlier connections. EasyRadioLink did not connect and sent nothing - not even the password. ....
+        /// </summary>
+        public static string MsgBoxIdentityChangedText {
+            get {
+                return ResourceManager.GetString("MsgBoxIdentityChangedText", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Delete profile.
         /// </summary>
         public static string MsgBoxConfirm {
@@ -1301,7 +1400,7 @@ namespace EasyRadioLink.Client.Properties {
                 return ResourceManager.GetString("MsgBoxInvalidServerText", resourceCulture);
             }
         }
-
+        
         /// <summary>
         ///   Looks up a localized string similar to Mic output and speakers are the same device.
         /// </summary>
@@ -2098,6 +2197,24 @@ namespace EasyRadioLink.Client.Properties {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to Server identity (fingerprint).
+        /// </summary>
+        public static string SrvServerIdentity {
+            get {
+                return ResourceManager.GetString("SrvServerIdentity", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The connection is encrypted. EasyRadioLink remembers this fingerprint for the server and warns you before connecting if it ever changes. Compare it with the fingerprint your server admin shares..
+        /// </summary>
+        public static string SrvServerIdentityHint {
+            get {
+                return ResourceManager.GetString("SrvServerIdentityHint", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Show transmitter name.
         /// </summary>
         public static string SrvShowTransmitterName {
@@ -2501,7 +2618,7 @@ namespace EasyRadioLink.Client.Properties {
                 return ResourceManager.GetString("ToolTipServerPassword", resourceCulture);
             }
         }
-
+        
         /// <summary>
         ///   Looks up a localized string similar to Connection to the server.
         /// </summary>

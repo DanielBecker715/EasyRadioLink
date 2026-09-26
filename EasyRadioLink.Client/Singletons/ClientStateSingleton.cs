@@ -9,6 +9,7 @@ using EasyRadioLink.Common.Helpers;
 using EasyRadioLink.Common.Models;
 using EasyRadioLink.Common.Models.EventMessages;
 using EasyRadioLink.Common.Models.Player;
+using EasyRadioLink.Common.Network.Crypto;
 using EasyRadioLink.Common.Network.Singletons;
 using EasyRadioLink.Common.Settings;
 using EasyRadioLink.Common.Settings.Setting;
@@ -42,6 +43,10 @@ public sealed class ClientStateSingleton : PropertyChangedBaseClass, IHandle<TCP
         RadioReceivingState = new RadioReceivingState[Constants.MAX_RADIOS];
 
         ShortGUID = ShortGuid.NewGuid();
+
+        // end-to-end voice keys: new on every start, in memory only
+        E2EKeys = E2EKeyPair.Create();
+
         PlayerRadioInfo = new PlayerRadioInfo();
 
         LastSent = 0;
@@ -79,6 +84,12 @@ public sealed class ClientStateSingleton : PropertyChangedBaseClass, IHandle<TCP
     }
 
     public string ShortGUID { get; }
+
+    /// <summary>
+    ///     The end-to-end voice key pair of this app run (ECDH P-256, created at start, never stored). Its public key is
+    ///     sent to the server with the handshake; the private key never leaves this process.
+    /// </summary>
+    public E2EKeyPair E2EKeys { get; }
 
     public bool IsConnectionErrored
     {

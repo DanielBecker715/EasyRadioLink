@@ -94,6 +94,23 @@
                        Style="{StaticResource InfoValue}" />
         </Grid>
 
+        <!-- the pinned (and verified) server identity - selectable so users can copy and compare it -->
+        <TextBlock Margin="4,10,12,2"
+                   Style="{StaticResource SettingText}"
+                   Text="{x:Static p:Resources.SrvServerIdentity}" />
+        <TextBox x:Name="ServerIdentityFingerprint"
+                 Margin="4,0,4,2"
+                 Padding="0"
+                 Background="Transparent"
+                 BorderThickness="0"
+                 FontFamily="Consolas"
+                 FontWeight="SemiBold"
+                 IsReadOnly="True"
+                 IsTabStop="False"
+                 TextWrapping="Wrap"
+                 Text="{x:Static p:Resources.ValueUnknown}" />
+        <TextBlock Style="{StaticResource HintText}" Text="{x:Static p:Resources.SrvServerIdentityHint}" />
+
         <Button Width="100"
                 Margin="0,12,0,0"
                 HorizontalAlignment="Right"

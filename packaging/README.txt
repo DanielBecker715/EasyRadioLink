@@ -69,6 +69,11 @@ REQUIREMENTS
   4. The radio opens. Tune it to the same frequency as the people you want
      to talk to, hold your PTT button and talk.
 
+  On the first connection EasyRadioLink remembers the identity of the
+  server (its fingerprint is shown under "Server Info"). If the identity
+  ever changes, EasyRadioLink warns you before it sends anything - see
+  "Privacy and security".
+
 
 3. USING THE RADIO
 ------------------
@@ -132,8 +137,14 @@ REQUIREMENTS
   - Users connect to <public IP address of the server>:5010. Users in the
     same network use the local address, for example 192.168.1.20:5010.
   - Password: type a server password in the server window. Users must enter
-    the same password to connect. Leave it empty for an open server.
-    Note: the password keeps strangers out, but it is sent unencrypted.
+    the same password to connect. Leave it empty for an open server. The
+    password travels over the encrypted connection. It keeps strangers out:
+    anybody who can connect can tune to any frequency and listen.
+  - Server identity: on the first start the server creates the file
+    server-identity.pfx and shows its fingerprint (box "Server identity";
+    the server without a window prints it and writes it to serverlog.txt).
+    Share the fingerprint with your users. Keep server-identity.pfx private
+    and in your backups.
   - The server window also sets: radio check (echo) frequencies, clean
     frequencies (played without radio effects), half-duplex radios,
     interference of simultaneous transmissions, whether users see the
@@ -161,13 +172,16 @@ REQUIREMENTS
   file.
 
   Server files: server.cfg (all settings) is kept next to the server
-  program; Server\ and CommandLine\ each have their own. banned.txt and
-  the log files are kept in the same folder as server.cfg. Start the
-  server with --cfg=<path to a server.cfg> to keep all of them in another
-  folder.
+  program; Server\ and CommandLine\ each have their own. The server
+  identity server-identity.pfx, banned.txt and the log files are kept in
+  the same folder as server.cfg. Start the server with
+  --cfg=<path to a server.cfg> to keep all of them in another folder.
 
-  Update a server: extract the new version, then copy server.cfg (and
-  banned.txt if you use it) from the old server folder into the new one.
+  Update a server: extract the new version, then copy server.cfg and
+  server-identity.pfx (and banned.txt if you use it) from the old server
+  folder into the new one. Without the old server-identity.pfx the server
+  creates a new identity and every user is warned once that the identity
+  of the server changed.
   Settings in server.cfg that the new version does not know any more are
   ignored; you may delete them.
 
@@ -175,21 +189,47 @@ REQUIREMENTS
 5. FILES AND FOLDERS
 --------------------
   %AppData%\EasyRadioLink             Settings folder: settings, profiles,
-                                      favourite servers, saved radio state
+                                      favourite servers, saved radio state,
+                                      known server identities
+                                      (known-servers.json)
   %AppData%\EasyRadioLink\RadioModels Your own radio models (*.json)
   %AppData%\EasyRadioLink\Logs        Log files (clientlog.txt)
   Documents\EasyRadioLink\Recordings  Recordings
   EasyRadioLink folder                Program, built-in radio models and
                                       sounds
   Server folder                       Server program, server.cfg,
-                                      banned.txt, log files
+                                      server-identity.pfx, banned.txt,
+                                      log files
 
   Tip: type %AppData%\EasyRadioLink into the address bar of the File
   Explorer to open your settings folder. The About tab has a link to the
   log folder.
 
 
-6. TROUBLESHOOTING
+6. PRIVACY AND SECURITY
+-----------------------
+  - The connection to the server is encrypted (TLS): the password, names,
+    frequencies and the user list can't be read on the way.
+  - The voice is end-to-end encrypted: every transmission has its own key,
+    and only the stations whose radio is tuned to the frequency receive it.
+    The server passes the voice on but can't listen. If you tune in (or
+    reconnect) during a transmission you get the key too and hear the rest
+    of it.
+  - The server still sees who is connected, who is tuned to which
+    frequency and who transmits when. Anybody who can connect to the server
+    can tune to your frequency, and can even take over your connection
+    (yours is then closed) - use a server password to keep strangers out.
+  - EasyRadioLink remembers the identity (fingerprint) of every server on
+    the first connection, like SSH. If a server presents another identity
+    later, EasyRadioLink stops before sending anything - not even the
+    password - and shows both fingerprints. Only choose "Connect anyway and
+    trust the new identity" if the server admin confirms the new
+    fingerprint. If known-servers.json in your settings folder is damaged,
+    EasyRadioLink connects to no server until you repair, rename or delete
+    that file (it never overwrites it).
+
+
+7. TROUBLESHOOTING
 ------------------
   - "You must install .NET" when starting: install the .NET 10 Desktop
     Runtime (x64), see REQUIREMENTS.
@@ -199,17 +239,22 @@ REQUIREMENTS
   - Cannot connect: check the address and the port, the password, the
     firewall and the port forwarding (TCP and UDP 5010) on the server PC.
   - "Incompatible server": the client and the server must be compatible
-    EasyRadioLink versions. Update both.
+    EasyRadioLink versions. Version 1.1 and 1.0 can't connect to each
+    other - update both.
+  - "Server identity changed": see "Privacy and security". Ask the server
+    admin before you connect anyway.
   - Nobody hears you: exactly the same frequency? PTT assigned? Correct
     microphone selected (watch the level meter)?
-  - You only hear scrambled noise: the other station uses an older
-    EasyRadioLink version with encryption switched on.
+  - You hear scrambled noise instead of a voice: the key of that
+    transmission did not reach you in time, for example because you tuned
+    in just as it started or the connection is very slow. The next
+    transmission normally plays clearly.
   - Anything else: the log files usually tell what went wrong - clientlog.txt
     in %AppData%\EasyRadioLink\Logs (link on the About tab) and serverlog.txt
     in the server folder. Please include them when you report a problem.
 
 
-7. LICENSE AND CREDITS
+8. LICENSE AND CREDITS
 ----------------------
   EasyRadioLink is free software: you can redistribute it and/or modify it
   under the terms of the GNU General Public License version 3 (see

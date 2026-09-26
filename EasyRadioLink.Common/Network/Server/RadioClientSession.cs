@@ -1,9 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.Net;
-using System.Net.Sockets;
+using System.Security.Authentication;
 using System.Text;
-using System.Text.Json;
+using System.Threading;
+using System.Threading.Tasks;
 using EasyRadioLink.Common.Models;
 using EasyRadioLink.Common.Models.EventMessages;
 using EasyRadioLink.Common.NetCoreServer;
@@ -12,16 +13,38 @@ using NLog;
 
 namespace EasyRadioLink.Common.Network.Server;
 
-public class RadioClientSession : TcpSession
+/// <summary>
+///     One client connection of the <see cref="ServerSync" /> (TLS, see <see cref="SslSession" />): splits the decrypted
+///     stream into JSON lines and hands them to the server. A 1.0 client (plain JSON, first byte '{') gets one plain
+///     text VERSION_MISMATCH line and is closed.
+/// </summary>
+public class RadioClientSession : SslSession
 {
     // A single JSON line is a few KB; anything bigger without a line break is garbage or an attack
     private const int MaxReceiveBufferLength = 512 * 1024;
+
+    // Disconnect a client that does not read: more than 50 MB waiting to be sent
+    private const long MaxPendingSendBytes = 50_000_000;
 
     // Flood protection. A normal client sends a few lines per second (radio updates at most every 200 ms).
     private const int MaxLinesPerWindow = 100;
     private static readonly TimeSpan LineRateWindow = TimeSpan.FromSeconds(5);
     private const int MaxInvalidLinesBeforeHandshake = 3;
     private const int MaxInvalidLines = 20;
+
+    /// <summary>
+    ///     VOICE_KEY messages accepted per second on average (a client sends one per PTT press plus one for listeners
+    ///     who tune in, at most 8 per second): the refill rate of a token bucket of <see cref="VoiceKeyBurst" />.
+    /// </summary>
+    public const int MaxVoiceKeysPerSecond = 10;
+
+    /// <summary>
+    ///     VOICE_KEY messages accepted at once: messages that queued up during a TCP stall arrive together and must not
+    ///     be dropped.
+    /// </summary>
+    public const int VoiceKeyBurst = 20;
+
+    private static readonly TimeSpan VoiceKeyDropLogInterval = TimeSpan.FromMinutes(1);
 
     private static readonly Logger Logger = LogManager.GetCurrentClassLogger();
     private readonly HashSet<IPAddress> _bannedIps;
@@ -35,6 +58,12 @@ public class RadioClientSession : TcpSession
     private int _linesInWindow;
     private DateTime _lineWindowStartUtc = DateTime.UtcNow;
 
+    // VOICE_KEY rate limit (messages of one session are handled one after the other - no lock needed)
+    private readonly TokenBucket _voiceKeys = new(VoiceKeyBurst, MaxVoiceKeysPerSecond);
+    private DateTime _lastVoiceKeyDropLogUtc = DateTime.MinValue;
+
+    // the connection was announced (ClientConnectionMessage) - only connections that passed the checks are
+    private bool _announced;
     private string _ip;
     private long _lastFullRadioSent;
     private int _port;
@@ -44,6 +73,7 @@ public class RadioClientSession : TcpSession
         HashSet<IPAddress> bannedIps) : base(server)
     {
         _bannedIps = bannedIps;
+        OptionSendBufferLimit = MaxPendingSendBytes;
     }
 
     public long LastMetaDataSent { get; set; }
@@ -64,7 +94,7 @@ public class RadioClientSession : TcpSession
     /// <summary>Client id of this connection - null until the SYNC handshake succeeded.</summary>
     public string ClientGuid { get; set; }
 
-    /// <summary>When the TCP connection was accepted (UTC) - used for the handshake timeout.</summary>
+    /// <summary>When the TCP connection was accepted (UTC) - used for the handshake timeout (TLS + SYNC).</summary>
     public DateTime ConnectedAtUtc { get; private set; } = DateTime.UtcNow;
 
     /// <summary>"ip:port" of the remote end (for logs).</summary>
@@ -83,64 +113,110 @@ public class RadioClientSession : TcpSession
         set => _rejected = value;
     }
 
+    private ServerSync SyncServer => (ServerSync)Server;
+
     protected override void OnConnected()
     {
         ConnectedAtUtc = DateTime.UtcNow;
 
         var clientIp = (IPEndPoint)Socket.RemoteEndPoint;
 
-        EventBus.Instance.PublishOnBackgroundThreadAsync(new ClientConnectionMessage
-        {
-            Connected = true,
-            ClientIP = clientIp.ToString(),
-            ClientGuid = ClientGuid
-        });
-
         _ip = clientIp.Address.ToString();
         _port = clientIp.Port;
         RemoteIp = clientIp.Address;
 
+        // Every check here runs before the TLS handshake - a refused connection costs no crypto. Refusals are logged at
+        // debug level each and summarised once a minute (ServerSync.RecordRefusedConnection): a connection flood must
+        // not flood the log.
         if (_bannedIps.Contains(clientIp.Address))
         {
-            Logger.Warn("Disconnecting Banned Client -  " + clientIp.Address + " " + clientIp.Port);
+            Logger.Debug($"Disconnecting {RemoteAddress} - banned address");
+            SyncServer.RecordRefusedConnection(RefusedConnectionReason.Banned);
 
             Disconnect();
         }
-        else if (((ServerSync)Server).IsLockedOut(clientIp.Address))
+        else if (SyncServer.IsLockedOut(clientIp.Address))
         {
-            Logger.Info($"Disconnecting {RemoteAddress} - too many wrong passwords, try again later");
+            Logger.Debug($"Disconnecting {RemoteAddress} - too many wrong passwords, try again later");
+            SyncServer.RecordRefusedConnection(RefusedConnectionReason.LockedOut);
 
             Disconnect();
         }
-        else if (((ServerSync)Server).ExceedsConnectionLimits(this, out var reason))
+        else if (!SyncServer.AllowNewConnection(clientIp.Address, out var logRefusal))
         {
-            Logger.Warn($"Disconnecting {RemoteAddress} - {reason}");
+            if (logRefusal)
+                Logger.Warn($"Disconnecting {RemoteAddress} - too many new connections from this address " +
+                            "(further refusals in the next minute are not logged)");
 
             Disconnect();
+        }
+        else if (SyncServer.ExceedsConnectionLimits(this, out var reason, out var category))
+        {
+            Logger.Debug($"Disconnecting {RemoteAddress} - {reason}");
+            SyncServer.RecordRefusedConnection(category);
+
+            Disconnect();
+        }
+        else
+        {
+            // refused connections are not announced (the command line server prints every announced one)
+            _announced = true;
+            EventBus.Instance.PublishOnBackgroundThreadAsync(new ClientConnectionMessage
+            {
+                Connected = true,
+                ClientIP = clientIp.ToString(),
+                ClientGuid = ClientGuid
+            });
         }
     }
 
-    protected override void OnSent(long sent, long pending)
+    protected override Task OnNonTlsDataAsync(byte firstByte, CancellationToken token)
     {
-        // Disconnect slow client with 50MB send buffer
-        if (pending > 5e+7)
+        // debug level each, summarised once a minute (scanners would flood the log)
+        if (firstByte != (byte)'{')
         {
-            Logger.Error("Disconnecting - pending is too large");
-            Disconnect();
+            Logger.Debug($"Disconnecting {RemoteAddress} - not an EasyRadioLink 1.1 client (no TLS)");
+            SyncServer.RecordRefusedConnection(RefusedConnectionReason.NotTls);
+            return Task.CompletedTask;
         }
+
+        // an EasyRadioLink 1.0 client (plain JSON): tell it why, so it shows "incompatible server" instead of a timeout
+        Logger.Debug($"Disconnecting {RemoteAddress} - unencrypted EasyRadioLink 1.0 client, answered VERSION_MISMATCH");
+        SyncServer.RecordRefusedConnection(RefusedConnectionReason.Version10Client);
+
+        var reply = Encoding.UTF8.GetBytes(new NetworkMessage
+            { MsgType = NetworkMessage.MessageType.VERSION_MISMATCH }.Encode());
+        return ReplyInPlainTextAsync(reply, token);
+    }
+
+    protected override void OnHandshakeFailed(AuthenticationException exception)
+    {
+        // scanners and broken clients - not worth more than a debug line each
+        Logger.Debug($"TLS handshake with {RemoteAddress} failed: {exception.Message}");
+    }
+
+    protected override void OnSendBufferOverflow(long queued)
+    {
+        Logger.Error($"Disconnecting {RemoteAddress} - it does not read ({queued} bytes waiting to be sent)");
+    }
+
+    protected override void OnSessionException(Exception exception)
+    {
+        Logger.Error(exception, $"Error on the connection of {RemoteAddress}");
     }
 
     protected override void OnDisconnected()
     {
-        EventBus.Instance.PublishOnBackgroundThreadAsync(new ClientConnectionMessage
-        {
-            Connected = false,
-            ClientGuid = ClientGuid,
-            ClientIP = RemoteAddress
-        });
+        if (_announced)
+            EventBus.Instance.PublishOnBackgroundThreadAsync(new ClientConnectionMessage
+            {
+                Connected = false,
+                ClientGuid = ClientGuid,
+                ClientIP = RemoteAddress
+            });
 
         _receiveBuffer.Clear();
-        ((ServerSync)Server).HandleDisconnect(this);
+        SyncServer.HandleDisconnect(this);
     }
 
     /// <summary>
@@ -187,6 +263,26 @@ public class RadioClientSession : TcpSession
         return messages;
     }
 
+    /// <summary>
+    ///     Takes a token for one VOICE_KEY from a bucket of <see cref="VoiceKeyBurst" /> that refills with
+    ///     <see cref="MaxVoiceKeysPerSecond" /> per second; false (drop the message) if it is empty.
+    ///     <paramref name="logDrop" /> is true for at most one drop per minute.
+    /// </summary>
+    public bool AllowVoiceKey(DateTime nowUtc, out bool logDrop)
+    {
+        logDrop = false;
+
+        if (_voiceKeys.TryTake(nowUtc)) return true;
+
+        if (nowUtc - _lastVoiceKeyDropLogUtc >= VoiceKeyDropLogInterval)
+        {
+            _lastVoiceKeyDropLogUtc = nowUtc;
+            logDrop = true;
+        }
+
+        return false;
+    }
+
     /// <summary>Counts one received line; false if the connection sends more than it ever needs to.</summary>
     private bool CountLine()
     {
@@ -211,8 +307,10 @@ public class RadioClientSession : TcpSession
         }
         catch (Exception ex)
         {
-            // Can be extremely noisy, use only for debugging!
-            if (Logger.IsTraceEnabled) Logger.Trace(ex, $"Unable to process JSON: \n {line}");
+            // Can be extremely noisy, use only for debugging! The line itself is never logged: it may be a SYNC hello
+            // with the server password.
+            if (Logger.IsTraceEnabled)
+                Logger.Trace($"Unable to process a JSON line of {line.Length} characters: {ex.GetType().Name}");
 
             return null;
         }
@@ -246,18 +344,8 @@ public class RadioClientSession : TcpSession
         foreach (var s in messages)
         {
             if (!IsConnected) break;
-            ((ServerSync)Server).HandleMessage(this, s);
+            SyncServer.HandleMessage(this, s);
         }
-    }
-
-    protected override void OnTrySendException(Exception ex)
-    {
-        Logger.Error(ex, "Caught Client Session Exception");
-    }
-
-    protected override void OnError(SocketError error)
-    {
-        Logger.Error($"Caught Socket Error: {error}");
     }
 
     /**

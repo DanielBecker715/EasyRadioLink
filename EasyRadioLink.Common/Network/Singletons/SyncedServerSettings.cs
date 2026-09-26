@@ -40,6 +40,9 @@ public class SyncedServerSettings
     /// <summary>Protocol version reported by the server in its SYNC reply.</summary>
     public string ServerVersion { get; set; }
 
+    /// <summary>Fingerprint of the connected server's identity ("AB:CD:..."), verified against the pin.</summary>
+    public string ServerIdentityFingerprint { get; set; }
+
     public static SyncedServerSettings Instance
     {
         get
@@ -111,6 +114,7 @@ public class SyncedServerSettings
         _settings.Clear();
         _settingsBool.Clear();
         ServerVersion = null;
+        ServerIdentityFingerprint = null;
         UpdateFrequencyLists();
     }
 

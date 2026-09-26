@@ -299,4 +299,100 @@ public class VoiceRoutingTests
         Assert.IsTrue(VoiceRouting.AllowVoicePacket(sender, start + TimeSpan.TicksPerSecond), "next second starts fresh");
         Assert.IsTrue(VoiceRouting.AllowVoicePacket(new ClientInfo { ClientGuid = "other" }, start), "limit is per sender");
     }
+
+    [TestMethod]
+    public void FailedAuthenticationBudgetIsPerSourceEndpointNotPerClient()
+    {
+        var budget = new UdpAuthFailureBudget();
+        var forger = new IPEndPoint(IPAddress.Parse("203.0.113.7"), 40000);
+        var victimNewPort = new IPEndPoint(IPAddress.Parse("203.0.113.7"), 40001); // same NAT, other port
+        var start = DateTime.UtcNow.Ticks;
+
+        for (var i = 0; i < UdpAuthFailureBudget.MaxFailuresPerEndpoint; i++)
+        {
+            Assert.IsTrue(budget.AllowAttempt(forger, start + i), $"attempt {i + 1}");
+            budget.RecordFailure(forger, start + i);
+        }
+
+        // the forger's endpoint costs no more crypto this second - every other endpoint still has its own budget
+        Assert.IsFalse(budget.AllowAttempt(forger, start + 1000));
+        Assert.IsFalse(budget.AllowAttempt(new IPEndPoint(IPAddress.Parse("203.0.113.7"), 40000), start + 1000),
+            "equal endpoints share the budget");
+        Assert.IsTrue(budget.AllowAttempt(victimNewPort, start + 1000), "another port of the same address");
+        Assert.IsTrue(budget.AllowAttempt(new IPEndPoint(IPAddress.Parse("198.51.100.1"), 40000), start + 1000));
+        Assert.IsTrue(budget.AllowAttempt(forger, start + TimeSpan.TicksPerSecond), "next second starts fresh");
+        Assert.AreEqual(0, budget.FailuresInWindow);
+        Assert.IsFalse(budget.AllowAttempt(null, start));
+    }
+
+    [TestMethod]
+    public void FailedAuthenticationBudgetIsCappedPerAddressAndInTotal()
+    {
+        var budget = new UdpAuthFailureBudget();
+        var start = DateTime.UtcNow.Ticks;
+        var attacker = IPAddress.Parse("203.0.113.7");
+
+        // many ports of one address: the address as a whole is capped
+        var failures = 0;
+        for (var port = 1000; failures < UdpAuthFailureBudget.MaxFailuresPerAddress; port++)
+        for (var i = 0; i < UdpAuthFailureBudget.MaxFailuresPerEndpoint &&
+                        failures < UdpAuthFailureBudget.MaxFailuresPerAddress; i++, failures++)
+        {
+            var source = new IPEndPoint(attacker, port);
+            Assert.IsTrue(budget.AllowAttempt(source, start));
+            budget.RecordFailure(source, start);
+        }
+
+        Assert.IsFalse(budget.AllowAttempt(new IPEndPoint(attacker, 60000), start), "a fresh port of the same address");
+        Assert.IsTrue(budget.AllowAttempt(new IPEndPoint(IPAddress.Parse("198.51.100.1"), 1000), start));
+
+        // many addresses: the total is capped (CPU protection)
+        for (var host = 1; budget.FailuresInWindow < UdpAuthFailureBudget.MaxFailuresTotal; host++)
+        {
+            var source = new IPEndPoint(new IPAddress(new byte[] { 10, 0, (byte)(host / 250), (byte)(host % 250) }), 5000);
+            for (var i = 0; i < 20 && budget.FailuresInWindow < UdpAuthFailureBudget.MaxFailuresTotal; i++)
+            {
+                Assert.IsTrue(budget.AllowAttempt(source, start));
+                budget.RecordFailure(source, start);
+            }
+        }
+
+        Assert.IsFalse(budget.AllowAttempt(new IPEndPoint(IPAddress.Parse("192.0.2.1"), 1), start));
+        Assert.IsTrue(budget.AllowAttempt(new IPEndPoint(IPAddress.Parse("192.0.2.1"), 1), start + TimeSpan.TicksPerSecond));
+    }
+
+    [TestMethod]
+    public void OnlyTheLastAuthenticatedEndpointBypassesTheBudget()
+    {
+        var client = Client("victim_______________1", 40001, Radio(Cb19, Modulation.AM));
+
+        Assert.IsTrue(VoiceRouting.IsFromAuthenticatedEndpoint(client, new IPEndPoint(IPAddress.Loopback, 40001)));
+        Assert.IsTrue(VoiceRouting.IsFromAuthenticatedEndpoint(client,
+            new IPEndPoint(IPAddress.Loopback.MapToIPv6(), 40001)), "IPv4-mapped IPv6 is the same endpoint");
+        Assert.IsFalse(VoiceRouting.IsFromAuthenticatedEndpoint(client, new IPEndPoint(IPAddress.Loopback, 40000)),
+            "same address, other port (e.g. another host behind the same NAT)");
+        Assert.IsFalse(VoiceRouting.IsFromAuthenticatedEndpoint(client, null));
+
+        client.VoipPort = null; // no authenticated datagram yet
+        Assert.IsFalse(VoiceRouting.IsFromAuthenticatedEndpoint(client, new IPEndPoint(IPAddress.Loopback, 40001)));
+    }
+
+    [TestMethod]
+    public void RecipientClientsMatchTheRecipientEndpoints()
+    {
+        var sender = Client("sender_______________1", 1000, Radio(Cb19, Modulation.AM));
+        var receiver = Client("receiver_____________1", 1001, Radio(Cb19, Modulation.AM));
+        var other = Client("receiver_____________2", 1002, Radio(Pmr1, Modulation.FM));
+        var noEndpoint = Client("receiver_____________3", 1003, Radio(Cb19, Modulation.AM));
+        noEndpoint.VoipPort = null;
+
+        var all = new List<ClientInfo> { sender, receiver, other, noEndpoint };
+        var clients = VoiceRouting.SelectRecipientClients(all, sender, Packet(Cb19, Modulation.AM), TestFrequencies);
+
+        // the server encrypts once per recipient client, with that client's key
+        Assert.HasCount(1, clients);
+        Assert.AreSame(receiver, clients[0]);
+        CollectionAssert.AreEquivalent(new[] { receiver.VoipPort },
+            new List<IPEndPoint>(VoiceRouting.SelectRecipients(all, sender, Packet(Cb19, Modulation.AM), TestFrequencies)));
+    }
 }

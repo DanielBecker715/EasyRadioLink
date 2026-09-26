@@ -144,6 +144,9 @@
   <data name="GroupFrequencies" xml:space="preserve">
     <value>Frequencies</value>
   </data>
+  <data name="GroupIdentity" xml:space="preserve">
+    <value>Server identity</value>
+  </data>
   <data name="GroupLogging" xml:space="preserve">
     <value>Logging and export</value>
   </data>
@@ -164,6 +167,9 @@
   </data>
   <data name="LabelExportList" xml:space="preserve">
     <value>Export client list (clients-list.json)</value>
+  </data>
+  <data name="LabelIdentityHint" xml:space="preserve">
+    <value>Clients remember this fingerprint on their first connection and warn their users if it ever changes. Share it with your users so they can compare it in Server Info. Keep server-identity.pfx (next to the settings file) private and include it in backups - a new identity makes every client show a warning.</value>
   </data>
   <data name="LabelPort" xml:space="preserve">
     <value>Port:</value>
@@ -231,6 +237,9 @@ and click "Start Server".</value>
   <data name="TooltipExportList" xml:space="preserve">
     <value>Writes the connected clients to clients-list.json next to server.cfg every 5 seconds (path: CLIENT_EXPORT_FILE_PATH in server.cfg).</value>
   </data>
+  <data name="TooltipIdentity" xml:space="preserve">
+    <value>SHA-256 fingerprint of the server's public key (server-identity.pfx)</value>
+  </data>
   <data name="TooltipRealRx" xml:space="preserve">
     <value>Two stations transmitting at the same time on one frequency interfere with each other.</value>
   </data>
@@ -238,7 +247,7 @@ and click "Start Server".</value>
     <value>A radio cannot receive while it is transmitting.</value>
   </data>
   <data name="TooltipServerPassword" xml:space="preserve">
-    <value>Clients must enter this password to connect. Leave empty for an open server. The password is sent unencrypted.</value>
+    <value>Clients must enter this password to connect. Leave empty for an open server. The password travels over the encrypted connection.</value>
   </data>
   <data name="TooltipShowTransmitterName" xml:space="preserve">
     <value>Clients see the name of the user who is transmitting.</value>
@@ -248,6 +257,9 @@ and click "Start Server".</value>
   </data>
   <data name="TooltipTransmissionLog" xml:space="preserve">
     <value>Writes one CSV line per transmission to a daily &lt;date&gt;-transmissionlog.csv file next to server.cfg.</value>
+  </data>
+  <data name="ValueIdentityNotLoaded" xml:space="preserve">
+    <value>Not loaded - the server is not running</value>
   </data>
   <data name="TooltipTunedCount" xml:space="preserve">
     <value>Clients see how many other users are tuned to their frequency.</value>

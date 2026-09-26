@@ -134,6 +134,19 @@ public class ServerSettingsStore
         CFG_FILE_NAME = ResolveConfigFilePath(configFilePath);
     }
 
+    /// <summary>
+    ///     Test hook: the next <see cref="Instance" /> access loads <paramref name="configFilePath" /> (null = the
+    ///     default file) - lets an in-process server test run on its own configuration folder.
+    /// </summary>
+    internal static void ResetInstanceForTests(string configFilePath)
+    {
+        lock (_instanceLock)
+        {
+            SetConfigFile(configFilePath);
+            instance = null;
+        }
+    }
+
     /// <summary>TCP/UDP ports must be 1..65535.</summary>
     public static bool IsValidPort(int port)
     {

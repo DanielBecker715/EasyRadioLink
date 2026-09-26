@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text;
 using System.Threading;
 using EasyRadioLink.Client.Network.Models;
 using EasyRadioLink.Client.Radios;
@@ -11,6 +10,7 @@ using EasyRadioLink.Common.Audio.Utility;
 using EasyRadioLink.Common.Models;
 using EasyRadioLink.Common.Models.Player;
 using EasyRadioLink.Common.Network.Client;
+using EasyRadioLink.Common.Network.Crypto;
 using EasyRadioLink.Common.Network.Singletons;
 using EasyRadioLink.Common.Settings;
 using EasyRadioLink.Common.Settings.Input;
@@ -27,11 +27,14 @@ namespace EasyRadioLink.Client.Audio.Managers;
 ///     <list type="bullet">
 ///         <item>
 ///             TX (<see cref="Send" />, capture thread): keyed by the PTT hotkey or VOX; transmits on the radio's
-///             frequency and modulation, never encrypted.
+///             frequency and modulation. Every frame is end-to-end encrypted (<see cref="E2EVoiceSession" />): each
+///             PTT press is a new transmission whose key only the listeners on the frequency receive.
 ///         </item>
 ///         <item>
 ///             RX (<see cref="UdpAudioDecode" />, own thread): checks whether the radio hears a packet (frequency,
-///             modulation, half-duplex) and hands the audio to the <see cref="AudioManager" />.
+///             modulation, half-duplex), decrypts it with the transmission key (a packet whose key has not arrived yet
+///             waits up to <see cref="E2EVoiceReceiver.HoldTime" />; without a key it is played scrambled) and hands the
+///             audio to the <see cref="AudioManager" />.
 ///         </item>
 ///         <item>PTT state machine (<see cref="PTTHandler" />, input thread every 40 ms).</item>
 ///     </list>
@@ -40,17 +43,21 @@ public class UDPClientAudioProcessor : IDisposable
 {
     private static readonly Logger Logger = LogManager.GetCurrentClassLogger();
 
+    // the decode thread wakes up at least this often to release packets that waited for their key
+    private const int ReceivePollIntervalMs = 20;
+
     private readonly AudioInputSingleton _audioInputSingleton = AudioInputSingleton.Instance;
     private readonly AudioManager _audioManager;
     private readonly ConnectedClientsSingleton _clients = ConnectedClientsSingleton.Instance;
     private readonly ClientStateSingleton _clientStateSingleton = ClientStateSingleton.Instance;
     private readonly GlobalSettingsStore _globalSettings = GlobalSettingsStore.Instance;
     private readonly string _guid;
-    private readonly byte[] _guidAsciiBytes;
     private readonly RadioReceivingState[] _radioReceivingState;
     private readonly SyncedServerSettings _serverSettings = SyncedServerSettings.Instance;
     private readonly UDPVoiceHandler _udpClient;
+    private readonly E2EVoiceSession _voiceSession;
     private readonly object lockObj = new();
+    private bool _encryptionFailureLogged;
     private long _firstPTTPress; // to delay start PTT time
     private long _lastPTTPress; // to handle dodgy PTT - release time
 
@@ -65,12 +72,13 @@ public class UDPClientAudioProcessor : IDisposable
     // true while VOX keys the radios (read by CurrentlyBlockedRadios for half-duplex)
     private volatile bool _voxActive;
 
-    public UDPClientAudioProcessor(UDPVoiceHandler udpClient, AudioManager audioManager, string guid)
+    public UDPClientAudioProcessor(UDPVoiceHandler udpClient, AudioManager audioManager, string guid,
+        E2EVoiceSession voiceSession)
     {
         _udpClient = udpClient;
         _audioManager = audioManager;
         _guid = guid;
-        _guidAsciiBytes = Encoding.ASCII.GetBytes(guid);
+        _voiceSession = voiceSession ?? throw new ArgumentNullException(nameof(voiceSession));
 
         _radioReceivingState = _clientStateSingleton.RadioReceivingState;
     }
@@ -182,20 +190,19 @@ public class UDPClientAudioProcessor : IDisposable
                 var frequency = sendingRadio.freq;
                 var modulation = (byte)sendingRadio.modulation;
 
-                //generate packet - UnitId and RetransmissionCount are reserved (always 0), never encrypted
-                var udpVoicePacket = new UDPVoicePacket
+                // end-to-end encrypted with the key of this transmission (UnitId, hop count and the legacy encryption
+                // byte are 0); only listeners on the frequency receive the key
+                var udpVoicePacket = _voiceSession.CreateVoicePacket(bytes, _packetNumber++, frequency,
+                    sendingRadio.modulation);
+
+                if (udpVoicePacket == null)
                 {
-                    GuidBytes = _guidAsciiBytes,
-                    AudioPart1Bytes = bytes,
-                    AudioPart1Length = (ushort)bytes.Length,
-                    Frequencies = new[] { frequency },
-                    UnitId = 0,
-                    Encryptions = new byte[] { 0 },
-                    Modulations = new[] { modulation },
-                    PacketNumber = _packetNumber++,
-                    OriginalClientGuidBytes = _guidAsciiBytes,
-                    RetransmissionCount = 0
-                };
+                    // fail closed: never send a frame that is not encrypted
+                    if (!_encryptionFailureLogged)
+                        Logger.Warn("Voice frame not sent: the voice encryption of this connection is closed");
+                    _encryptionFailureLogged = true;
+                    return null;
+                }
 
                 _udpClient.Send(udpVoicePacket);
 
@@ -234,6 +241,9 @@ public class UDPClientAudioProcessor : IDisposable
         }
         else
         {
+            // the next PTT press is a new transmission with a new key
+            _voiceSession.EndTransmission();
+
             if (_clientStateSingleton.RadioSendingState.IsSending)
             {
                 _clientStateSingleton.RadioSendingState.IsSending = false;
@@ -248,29 +258,22 @@ public class UDPClientAudioProcessor : IDisposable
 
     private void UdpAudioDecode(CancellationToken token)
     {
+        var frames = new List<ReceivedVoiceFrame>();
+
         while (true)
         {
             try
             {
                 token.ThrowIfCancellationRequested();
-                var encodedOpusAudio = _udpClient.EncodedAudio.Take(token);
 
-                if (encodedOpusAudio != null
-                    && encodedOpusAudio.Length >=
-                    UDPVoicePacket.PacketHeaderLength + UDPVoicePacket.FixedPacketLength +
-                    UDPVoicePacket.FrequencySegmentLength)
-                {
-                    // only play audio once this client is registered and the radios are loaded
-                    var myClient = IsClientMetaDataValid(_guid);
+                // wait for the next packet, but wake up regularly: packets that wait for their key are released by
+                // the clock (decrypted once the key arrived, scrambled after E2EVoiceReceiver.HoldTime)
+                if (_udpClient.EncodedAudio.TryTake(out var encodedOpusAudio, ReceivePollIntervalMs, token))
+                    ReceivePacket(encodedOpusAudio, frames);
 
-                    if (myClient != null && RadioHelper.RadiosAvailable())
-                    {
-                        //Decode bytes
-                        var udpVoicePacket = UDPVoicePacket.DecodeVoicePacket(encodedOpusAudio);
+                _voiceSession.Receiver.Poll(DateTime.UtcNow, frames);
 
-                        if (udpVoicePacket != null) ProcessVoicePacket(udpVoicePacket);
-                    }
-                }
+                foreach (var frame in frames) ProcessVoicePacket(frame.Packet, frame.Opus);
             }
             catch (OperationCanceledException)
             {
@@ -282,60 +285,89 @@ public class UDPClientAudioProcessor : IDisposable
                 if (!token.IsCancellationRequested)
                     Logger.Error(ex, "Failed to decode audio from Packet");
             }
+            finally
+            {
+                frames.Clear();
+            }
         }
     }
 
-    private void ProcessVoicePacket(UDPVoicePacket udpVoicePacket)
+    /// <summary>A decrypted (hop layer) datagram body: decoded, checked and handed to the end-to-end decryption.</summary>
+    private void ReceivePacket(byte[] encodedOpusAudio, List<ReceivedVoiceFrame> frames)
+    {
+        if (encodedOpusAudio == null
+            || encodedOpusAudio.Length <
+            UDPVoicePacket.PacketHeaderLength + UDPVoicePacket.FixedPacketLength +
+            UDPVoicePacket.FrequencySegmentLength)
+            return;
+
+        // only play audio once this client is registered and the radios are loaded
+        if (IsClientMetaDataValid(_guid) == null || !RadioHelper.RadiosAvailable()) return;
+
+        // strict checks (the body was authenticated by the UDPVoiceHandler)
+        if (!UDPVoicePacket.TryDecode(encodedOpusAudio, true, out var udpVoicePacket)) return;
+
+        // nothing is decrypted or held for a frequency this radio does not hear
+        if (FindReceivingRadio(udpVoicePacket, out _, out _, out _) == null) return;
+
+        _voiceSession.Receiver.Receive(udpVoicePacket, DateTime.UtcNow, frames);
+    }
+
+    /// <summary>The radio that hears the packet: its first frequency the radio is tuned to.</summary>
+    private Radio FindReceivingRadio(UDPVoicePacket udpVoicePacket, out RadioReceivingState receivingState,
+        out double receivedFrequency, out byte receivedModulation)
     {
         var radioInfo = _clientStateSingleton.PlayerRadioInfo;
         var blockedRadios = CurrentlyBlockedRadios();
 
-        // the first frequency of the packet the radio hears - an unencrypted one wins
-        Radio receivingRadio = null;
-        RadioReceivingState receivingState = null;
-        var receivedFrequency = 0d;
-        byte receivedModulation = 0;
-        byte receivedEncryption = 0;
-        var decryptable = false;
+        receivingState = null;
+        receivedFrequency = 0d;
+        receivedModulation = 0;
 
         for (var i = 0; i < udpVoicePacket.Frequencies.Length; i++)
         {
+            // the legacy encryption byte is always 0 (the end-to-end receiver drops anything else)
             var radio = radioInfo.CanHearTransmission(
                 udpVoicePacket.Frequencies[i],
                 (Modulation)udpVoicePacket.Modulations[i],
-                udpVoicePacket.Encryptions[i],
+                0,
                 blockedRadios,
                 out var state,
-                out var canDecrypt);
+                out _);
 
             if (radio == null || state == null) continue;
 
-            if (receivingRadio == null || (canDecrypt && !decryptable))
-            {
-                receivingRadio = radio;
-                receivingState = state;
-                receivedFrequency = udpVoicePacket.Frequencies[i];
-                receivedModulation = udpVoicePacket.Modulations[i];
-                receivedEncryption = udpVoicePacket.Encryptions[i];
-                decryptable = canDecrypt;
-            }
-
-            if (decryptable) break;
+            receivingState = state;
+            receivedFrequency = udpVoicePacket.Frequencies[i];
+            receivedModulation = udpVoicePacket.Modulations[i];
+            return radio;
         }
 
+        return null;
+    }
+
+    /// <param name="opus">The decrypted Opus frame; null = its key never arrived: play one frame of scrambled audio.</param>
+    private void ProcessVoicePacket(UDPVoicePacket udpVoicePacket, byte[] opus)
+    {
+        var receivingRadio = FindReceivingRadio(udpVoicePacket, out var receivingState, out var receivedFrequency,
+            out var receivedModulation);
+
         if (receivingRadio == null) return;
+
+        var scrambled = opus == null;
 
         var audio = new ClientAudio
         {
             ClientGuid = udpVoicePacket.Guid,
-            EncodedAudio = udpVoicePacket.AudioPart1Bytes,
+            // scrambled: no audio - ClientAudioProvider plays one frame of the scrambled radio effect instead
+            EncodedAudio = opus,
             ReceiveTime = DateTime.Now.Ticks,
             Frequency = receivedFrequency,
             Modulation = receivedModulation,
             Volume = VolumeConversionHelper.ConvertRadioVolumeSlider(receivingRadio.volume),
             ReceivedRadio = receivingState.ReceivedOn,
-            Encryption = receivedEncryption,
-            Decryptable = decryptable,
+            Encryption = scrambled ? (short)1 : (short)0,
+            Decryptable = !scrambled,
             PacketNumber = udpVoicePacket.PacketNumber,
             OriginalClientGuid = udpVoicePacket.OriginalClientGuid
             // NoAudioEffects: the server's clean frequencies are applied by ClientAudioProvider
@@ -438,6 +470,7 @@ public class UDPClientAudioProcessor : IDisposable
             _stopFlag?.Cancel();
             _ptt = false;
             _voxActive = false;
+            _voiceSession.EndTransmission();
             _clientStateSingleton.RadioSendingState.IsSending = false;
             InputDeviceManager.Instance.StopListening();
         }

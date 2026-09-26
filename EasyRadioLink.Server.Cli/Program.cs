@@ -18,7 +18,8 @@ using LogManager = NLog.LogManager;
 
 namespace EasyRadioLink.Server;
 
-internal class Program : IHandle<ClientConnectionMessage>, IHandle<ServerStartFailedMessage>
+internal class Program : IHandle<ClientConnectionMessage>, IHandle<ServerStartFailedMessage>,
+    IHandle<ServerIdentityMessage>
 {
     // exit codes: 0 = normal shutdown, 1 = the server could not be started, 2 = invalid command line options
     private const int ExitCodeStartFailed = 1;
@@ -48,6 +49,18 @@ internal class Program : IHandle<ClientConnectionMessage>, IHandle<ServerStartFa
             else
                 Console.WriteLine($"Client disconnected: {message.ClientIP} - {message.ClientGuid}");
         }
+
+        return Task.CompletedTask;
+    }
+
+    public Task HandleAsync(ServerIdentityMessage message, CancellationToken cancellationToken)
+    {
+        // always printed (also with --console-logs=false): admins share this with their users
+        if (message.Created) Console.WriteLine($"Created a new server identity: {message.FilePath}");
+        Console.WriteLine($"Server identity fingerprint (SHA-256): {message.Fingerprint}");
+        Console.WriteLine("Clients remember it on their first connection and warn if it changes. Keep " +
+                          $"{Path.GetFileName(message.FilePath)} private and include it in backups.");
+        if (message.PermissionWarning != null) Console.WriteLine("WARNING: " + message.PermissionWarning);
 
         return Task.CompletedTask;
     }
@@ -282,7 +295,7 @@ public class Options
 
     [Option("password",
         HelpText =
-            "Server password clients must enter to connect. Empty (--password \"\") = open server. Sent unencrypted - don't reuse an important password.",
+            "Server password clients must enter to connect. Empty (--password \"\") = open server. Sent over the encrypted (TLS) connection.",
         Required = false)]
     public string ServerPassword { get; set; }
 

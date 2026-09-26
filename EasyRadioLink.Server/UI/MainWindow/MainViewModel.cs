@@ -19,7 +19,8 @@ using LogManager = NLog.LogManager;
 
 namespace EasyRadioLink.Server.UI.MainWindow;
 
-public sealed class MainViewModel : Screen, IHandle<ServerStateMessage>, IHandle<ServerStartFailedMessage>
+public sealed class MainViewModel : Screen, IHandle<ServerStateMessage>, IHandle<ServerStartFailedMessage>,
+    IHandle<ServerIdentityMessage>
 {
     private static readonly TimeSpan DebounceInterval = TimeSpan.FromMilliseconds(500);
 
@@ -64,6 +65,11 @@ public sealed class MainViewModel : Screen, IHandle<ServerStateMessage>, IHandle
 
     /// <summary>Full path of server.cfg - every other server file lives in the same folder.</summary>
     public string ConfigFilePath => Store.ConfigFilePath;
+
+    /// <summary>
+    ///     Fingerprint of the server identity (SHA-256 of its public key) - shown selectable so the admin can share it.
+    /// </summary>
+    public string IdentityFingerprint { get; private set; } = Resources.ValueIdentityNotLoaded;
 
     public bool ClientExportEnabled
     {
@@ -155,6 +161,18 @@ public sealed class MainViewModel : Screen, IHandle<ServerStateMessage>, IHandle
     {
         IsServerRunning = message.IsRunning;
         ClientsCount = message.Count;
+        return Task.CompletedTask;
+    }
+
+    public Task HandleAsync(ServerIdentityMessage message, CancellationToken token)
+    {
+        IdentityFingerprint = message.Fingerprint;
+
+        // other accounts can read the private key (e.g. an inherited folder ACL): the admin should fix that
+        if (message.PermissionWarning != null)
+            MessageBox.Show(message.PermissionWarning, Resources.GroupIdentity, MessageBoxButton.OK,
+                MessageBoxImage.Warning);
+
         return Task.CompletedTask;
     }
 

@@ -15,6 +15,9 @@ namespace EasyRadioLink.Common.Network.Server;
 ///     </list>
 ///     Clients without a known UDP endpoint are skipped. The encryption byte of the packet (always 0 since 1.1, set by
 ///     older clients) does not stop delivery: a listener on the right frequency still gets the packet.
+///     The rate limits (<see cref="AllowVoicePacket" />, <see cref="UdpAuthFailureBudget" /> for datagrams that are not
+///     from the client's authenticated endpoint, <see cref="IsFromAuthenticatedEndpoint" />) are applied by the
+///     <c>UDPVoiceRouter</c> before routing.
 /// </summary>
 public static class VoiceRouting
 {
@@ -42,6 +45,18 @@ public static class VoiceRouting
         }
 
         return false;
+    }
+
+    /// <summary>
+    ///     True if one of <paramref name="receiver" />'s radios hears <paramref name="frequency" /> with
+    ///     <paramref name="modulation" /> - the same rule as for a voice packet. Used for the end-to-end voice keys: the
+    ///     sender wraps its key for these clients and the server forwards a key only to them.
+    /// </summary>
+    public static bool CanReceive(PlayerRadioInfoBase receiver, double frequency, Modulation modulation)
+    {
+        if (receiver == null || !double.IsFinite(frequency)) return false;
+
+        return receiver.CanHearTransmission(frequency, modulation, 0, NoBlockedRadios, out _, out _) != null;
     }
 
     /// <summary>True if one of the packet's frequencies is a radio check (echo) frequency.</summary>
@@ -83,23 +98,38 @@ public static class VoiceRouting
         IReadOnlyList<double> testFrequencies)
     {
         var recipients = new HashSet<IPEndPoint>();
+        foreach (var client in SelectRecipientClients(clients, sender, packet, testFrequencies))
+            recipients.Add(client.VoipPort);
+
+        return recipients;
+    }
+
+    /// <summary>
+    ///     Clients (with a known UDP endpoint) that must receive <paramref name="packet" /> sent by
+    ///     <paramref name="sender" /> - the server encrypts the packet for each of them with its own key.
+    /// </summary>
+    public static List<ClientInfo> SelectRecipientClients(IEnumerable<ClientInfo> clients,
+        ClientInfo sender,
+        UDPVoicePacket packet,
+        IReadOnlyList<double> testFrequencies)
+    {
+        var recipients = new List<ClientInfo>();
 
         if (clients == null || sender == null || packet == null || sender.Muted) return recipients;
 
         foreach (var client in clients)
         {
-            var endpoint = client?.VoipPort;
-            if (endpoint == null) continue;
+            if (client?.VoipPort == null) continue;
 
             if (ReferenceEquals(client, sender) || client.ClientGuid == sender.ClientGuid)
             {
                 // echo back to the sender on a test frequency ("radio check")
-                if (IsOnTestFrequency(packet, testFrequencies)) recipients.Add(endpoint);
+                if (IsOnTestFrequency(packet, testFrequencies)) recipients.Add(client);
 
                 continue;
             }
 
-            if (CanReceive(client.RadioInfo, packet)) recipients.Add(endpoint);
+            if (CanReceive(client.RadioInfo, packet)) recipients.Add(client);
         }
 
         return recipients;
@@ -121,5 +151,18 @@ public static class VoiceRouting
         }
 
         return ++sender.VoicePacketsInWindow <= MaxVoicePacketsPerSecond;
+    }
+
+    /// <summary>
+    ///     True if <paramref name="source" /> is the endpoint <paramref name="client" /> last sent an authenticated
+    ///     datagram from (<see cref="ClientInfo.VoipPort" />). Datagrams from there are always decrypted: the budget of
+    ///     failed authentications (<see cref="UdpAuthFailureBudget" />) only applies to other endpoints, so forged
+    ///     datagrams in a client's name from another port can't mute it.
+    /// </summary>
+    public static bool IsFromAuthenticatedEndpoint(ClientInfo client, IPEndPoint source)
+    {
+        var known = client?.VoipPort;
+        return known != null && source != null && known.Port == source.Port &&
+               Normalise(known.Address).Equals(Normalise(source.Address));
     }
 }

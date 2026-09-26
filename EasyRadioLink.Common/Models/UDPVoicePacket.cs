@@ -25,7 +25,17 @@ namespace EasyRadioLink.Common.Models;
  * Bytes / ASCII String TRANSMISSION GUID - 22 bytes (original sender, always equal to the client GUID)
  * Bytes / ASCII String CLIENT GUID - 22 bytes
  *
- * A datagram of exactly 22 bytes is a ping (the ASCII client GUID only).
+ * Since protocol 1.1 this packet is the BODY of an encrypted datagram (Network.Crypto.UdpDatagram): it never travels
+ * in clear, and a ping is the encrypted body "PING". The server only reads the frequency/modulation segment and the
+ * GUIDs (both must be the authenticated sender); the audio segment is opaque to it.
+ *
+ * AUDIO SEGMENT since 1.1 (end-to-end encrypted, Network.Crypto.E2EVoiceCrypto):
+ * Bytes TxId - 8 bytes (transmission id, selects the transmission key K)
+ * Bytes AES-256-GCM(K) of the Opus frame - Opus length bytes
+ *   nonce = 4 zero bytes + PacketId (u64 big-endian)
+ *   AAD = CLIENT GUID (22 bytes) + per frequency: Frequency (8 bytes, little-endian as above) + Modulation (1 byte)
+ * Bytes GCM tag - 16 bytes
+ * so AudioPart1 Length = Opus length + 24. Encryption bytes stay 0.
  */
 public class UDPVoicePacket
 {
@@ -187,6 +197,83 @@ public class UDPVoicePacket
         Buffer.BlockCopy(GuidBytes, 0, combinedBytes, totalPacketLength - GuidLength, GuidLength);
 
         return combinedBytes;
+    }
+
+    /// <summary>
+    ///     Strict decoder for bytes from the network (the body of a decrypted datagram): every length field must match
+    ///     the data exactly, 1..<see cref="Constants.MAX_RADIOS" /> finite frequencies, printable ASCII client ids.
+    ///     Never throws, never logs.
+    /// </summary>
+    /// <param name="copyAudio">false: <see cref="AudioPart1Bytes" /> stays null (the server never needs the audio).</param>
+    public static bool TryDecode(ReadOnlySpan<byte> data, bool copyAudio, out UDPVoicePacket packet)
+    {
+        packet = null;
+
+        if (data.Length < PacketHeaderLength + FrequencySegmentLength + FixedPacketLength ||
+            data.Length > ushort.MaxValue)
+            return false;
+
+        var packetLength = BitConverter.ToUInt16(data);
+        var audioLength = BitConverter.ToUInt16(data[2..]);
+        var frequencyLength = BitConverter.ToUInt16(data[4..]);
+
+        if (packetLength != data.Length) return false;
+        if (frequencyLength == 0 || frequencyLength % FrequencySegmentLength != 0) return false;
+        if (PacketHeaderLength + audioLength + frequencyLength + FixedPacketLength != data.Length) return false;
+
+        var frequencyCount = frequencyLength / FrequencySegmentLength;
+        if (frequencyCount > Constants.MAX_RADIOS) return false;
+
+        var frequencies = new double[frequencyCount];
+        var modulations = new byte[frequencyCount];
+        var encryptions = new byte[frequencyCount];
+
+        var offset = PacketHeaderLength + audioLength;
+        for (var i = 0; i < frequencyCount; i++)
+        {
+            frequencies[i] = BitConverter.ToDouble(data[offset..]);
+            if (!double.IsFinite(frequencies[i])) return false;
+
+            modulations[i] = data[offset + 8];
+            encryptions[i] = data[offset + 9];
+            offset += FrequencySegmentLength;
+        }
+
+        var unitId = BitConverter.ToUInt32(data[offset..]);
+        var packetNumber = BitConverter.ToUInt64(data[(offset + 4)..]);
+        var retransmissionCount = data[offset + 12];
+
+        var originalGuidBytes = data.Slice(data.Length - 2 * GuidLength, GuidLength);
+        var guidBytes = data.Slice(data.Length - GuidLength, GuidLength);
+        if (!IsPrintableAscii(originalGuidBytes) || !IsPrintableAscii(guidBytes)) return false;
+
+        packet = new UDPVoicePacket
+        {
+            PacketLength = packetLength,
+            AudioPart1Length = audioLength,
+            AudioPart1Bytes = copyAudio ? data.Slice(PacketHeaderLength, audioLength).ToArray() : null,
+            Frequencies = frequencies,
+            Modulations = modulations,
+            Encryptions = encryptions,
+            UnitId = unitId,
+            PacketNumber = packetNumber,
+            RetransmissionCount = retransmissionCount,
+            OriginalClientGuidBytes = originalGuidBytes.ToArray(),
+            OriginalClientGuid = Encoding.ASCII.GetString(originalGuidBytes),
+            GuidBytes = guidBytes.ToArray(),
+            Guid = Encoding.ASCII.GetString(guidBytes)
+        };
+
+        return true;
+    }
+
+    private static bool IsPrintableAscii(ReadOnlySpan<byte> bytes)
+    {
+        foreach (var b in bytes)
+            if (b is < (byte)'!' or > (byte)'~')
+                return false;
+
+        return true;
     }
 
     public static UDPVoicePacket DecodeVoicePacket(byte[] encodedOpusAudio, bool decode = true)

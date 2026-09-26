@@ -73,27 +73,40 @@ public class ClientAudioProvider : AudioProvider
 
         using var pcmFloats = new PooledArray<float>(MaxSamples);
         var decodedLength = 0;
-        // Target buffer contains at least one frame.
-        try
+
+        if (audio.EncodedAudio == null)
         {
-            decodedLength = _decoder.DecodeFloat(audio.EncodedAudio, new Memory<float>(pcmFloats.Array, 0, pcmFloats.Length), newTransmission);
-            if (decodedLength <= 0)
+            // scrambled: an end-to-end encrypted frame whose key never arrived. There is nothing to decode - one frame
+            // of silence that Read() turns into the scrambled radio effect (noise + the model's encryption effect).
+            if (audio.Decryptable) return 0;
+
+            decodedLength = Constants.OUTPUT_SEGMENT_FRAMES;
+            pcmFloats.Array.AsSpan(0, decodedLength).Clear();
+        }
+        else
+        {
+            // Target buffer contains at least one frame.
+            try
             {
-                Logger.Info("Failed to decode audio from Packet for client");
+                decodedLength = _decoder.DecodeFloat(audio.EncodedAudio, new Memory<float>(pcmFloats.Array, 0, pcmFloats.Length), newTransmission);
+                if (decodedLength <= 0)
+                {
+                    Logger.Info("Failed to decode audio from Packet for client");
+                    return 0;
+                }
+            }
+            catch (Exception e)
+            {
+                Logger.Warn(e, "Error decoding audio packet.");
                 return 0;
             }
-        }
-        catch (Exception e)
-        {
-            Logger.Warn(e, "Error decoding audio packet.");
-            return 0;
         }
 
         //convert the byte buffer to a wave buffer
         //   var waveBuffer = new WaveBuffer(tmp);
 
         // waveWriter.WriteSamples(tmp,0,tmp.Length);
-        // unencrypted transmissions (every transmission since 1.1) are always decryptable - the callers checked the key
+        // decryptable = decrypted with its end-to-end transmission key; false = scrambled (the key never arrived)
         var decrytable = audio.Decryptable;
 
         // Clean frequencies of the server are always played without radio effects.

@@ -3,6 +3,8 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
+using System.Security.Cryptography;
+using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -12,6 +14,7 @@ using EasyRadioLink.Common.Models;
 using EasyRadioLink.Common.Models.EventMessages;
 using EasyRadioLink.Common.Models.Player;
 using EasyRadioLink.Common.NetCoreServer;
+using EasyRadioLink.Common.Network.Crypto;
 using EasyRadioLink.Common.Settings;
 using EasyRadioLink.Common.Settings.Setting;
 using NLog;
@@ -20,15 +23,22 @@ using LogManager = NLog.LogManager;
 namespace EasyRadioLink.Common.Network.Server;
 
 /// <summary>
-///     TCP side of the server. Handshake: the first message of a connection must be a SYNC hello
-///     (product + protocol version check -> VERSION_MISMATCH, password check -> AUTH_FAILED); only then the client is
-///     registered, receives the client list + settings and is announced to everybody else. Messages are only sent to
-///     registered sessions.
+///     TCP side of the server, TLS encrypted (<see cref="SslServer" />; the server identity is a self-signed
+///     certificate that clients pin, see <see cref="ServerIdentity" />). Handshake: the first message of a connection
+///     must be a SYNC hello (product + protocol version check -> VERSION_MISMATCH, password check -> AUTH_FAILED); only
+///     then the client is registered, receives the client list + settings + its own UDP key
+///     (<see cref="NetworkMessage.UdpKey" />) and is announced to everybody else (with its end-to-end voice public key,
+///     <see cref="ClientInfo.E2EPublicKey" />). Messages are only sent to registered sessions. A plain JSON 1.0 client gets
+///     a plain VERSION_MISMATCH (<see cref="RadioClientSession" />).
+///     <para>
+///         VOICE_KEY (end-to-end voice, <see cref="HandleVoiceKey" />): the server forwards each listed recipient only
+///         its own wrapped key - it never sees a transmission key and never sends the whole list.
+///     </para>
 /// </summary>
-public class ServerSync : TcpServer, IHandle<ServerSettingsChangedMessage>
+public class ServerSync : SslServer, IHandle<ServerSettingsChangedMessage>
 {
     // Unregistered connections are closed after this time
-    private static readonly TimeSpan HandshakeTimeout = TimeSpan.FromSeconds(15);
+    internal static readonly TimeSpan HandshakeTimeout = TimeSpan.FromSeconds(15);
 
     // AUTH_FAILED is only sent after this delay - slows down password guessing
     private static readonly TimeSpan AuthFailedDelay = TimeSpan.FromSeconds(1);
@@ -49,15 +59,22 @@ public class ServerSync : TcpServer, IHandle<ServerSettingsChangedMessage>
 
     private readonly AuthFailureThrottle _authFailures = new();
 
+    private readonly ConnectionRateLimiter _connectionRate = new();
+
+    // refused and unfinished connections: a debug line each, a summary once a minute
+    private readonly ConnectionLogSummary _connectionLog = new(DateTime.UtcNow);
+
     // guards Start()/RequestStop() so a stop during start-up can't leave a listening server behind
     private readonly object _lifecycleLock = new();
     private volatile bool _stopRequested;
 
     private Timer _handshakeTimer;
 
+    /// <param name="identity">The server certificate with its private key (<see cref="ServerIdentity.LoadOrCreate" />).</param>
     public ServerSync(ConcurrentDictionary<string, ClientInfo> connectedClients, HashSet<IPAddress> _bannedIps,
-        IEventAggregator eventAggregator) : base(ServerSettingsStore.Instance.GetServerIP(),
-        ServerSettingsStore.Instance.GetServerPort())
+        IEventAggregator eventAggregator, X509Certificate2 identity) : base(
+        new IPEndPoint(ServerSettingsStore.Instance.GetServerIP(), ServerSettingsStore.Instance.GetServerPort()),
+        identity)
     {
         _clients = connectedClients;
         this._bannedIps = _bannedIps;
@@ -87,7 +104,7 @@ public class ServerSync : TcpServer, IHandle<ServerSettingsChangedMessage>
         });
     }
 
-    protected override TcpSession CreateSession()
+    protected override SslSession CreateSession()
     {
         return new RadioClientSession(this, _bannedIps);
     }
@@ -106,7 +123,9 @@ public class ServerSync : TcpServer, IHandle<ServerSettingsChangedMessage>
     ///     True if accepting <paramref name="newSession" /> would exceed the connection limits (per address, pending
     ///     handshakes per address, total).
     /// </summary>
-    public bool ExceedsConnectionLimits(RadioClientSession newSession, out string reason)
+    /// <param name="category">For the log summary: server full or a per address limit.</param>
+    public bool ExceedsConnectionLimits(RadioClientSession newSession, out string reason,
+        out RefusedConnectionReason category)
     {
         int total = 0, fromAddress = 0, pendingFromAddress = 0;
         foreach (var session in Sessions.Values)
@@ -124,8 +143,36 @@ public class ServerSync : TcpServer, IHandle<ServerSettingsChangedMessage>
             : fromAddress >= MaxConnectionsPerAddress ? $"too many connections from this address ({MaxConnectionsPerAddress})"
             : pendingFromAddress >= MaxPendingHandshakesPerAddress ? "too many unfinished handshakes from this address"
             : null;
+        category = total > MaxConnections ? RefusedConnectionReason.ServerFull : RefusedConnectionReason.ConnectionLimit;
 
         return reason != null;
+    }
+
+    /// <summary>
+    ///     Counts a refused or unfinished connection for the once-a-minute log summary (the caller logs it at debug
+    ///     level) - a connection flood must not flood the log.
+    /// </summary>
+    public void RecordRefusedConnection(RefusedConnectionReason reason)
+    {
+        _connectionLog.Record(reason);
+    }
+
+    private void LogConnectionSummary(bool force = false)
+    {
+        var summary = _connectionLog.TakeSummary(DateTime.UtcNow, out var important, force);
+        if (summary == null) return;
+
+        if (important) Logger.Warn(summary);
+        else Logger.Info(summary);
+    }
+
+    /// <summary>
+    ///     Counts a new connection from <paramref name="address" />; false if the address opens connections too fast
+    ///     (<see cref="ConnectionRateLimiter" />). Checked before the TLS handshake.
+    /// </summary>
+    public bool AllowNewConnection(IPAddress address, out bool logRefusal)
+    {
+        return _connectionRate.TryAcquire(address, DateTime.UtcNow, out logRefusal);
     }
 
     /// <summary>True while connections from <paramref name="address" /> are refused after too many wrong passwords.</summary>
@@ -183,15 +230,14 @@ public class ServerSync : TcpServer, IHandle<ServerSettingsChangedMessage>
 
     public void HandleDisconnect(RadioClientSession state)
     {
-        Logger.Info("Disconnecting Client");
-
         string guid;
         lock (_registrationLock)
         {
             guid = state?.ClientGuid;
             if (guid == null)
             {
-                Logger.Info("Removed Disconnected Unknown Client");
+                // refused, failed or unfinished handshakes - one line each would flood the log during an attack
+                Logger.Debug($"Closed unregistered connection {state?.RemoteAddress}");
                 return;
             }
 
@@ -201,6 +247,9 @@ public class ServerSync : TcpServer, IHandle<ServerSettingsChangedMessage>
             if (!_clients.TryGetValue(guid, out var registered) || registered.ClientSession != state.Id) return;
 
             _clients.TryRemove(guid, out _);
+
+            // the UDP key dies with the connection
+            registered.UdpTransport?.Dispose();
         }
 
         Logger.Info("Removed Disconnected Client " + guid);
@@ -263,6 +312,9 @@ public class ServerSync : TcpServer, IHandle<ServerSettingsChangedMessage>
                 case NetworkMessage.MessageType.SERVER_SETTINGS:
                     SendServerSettings(state);
                     break;
+                case NetworkMessage.MessageType.VOICE_KEY:
+                    HandleVoiceKey(state, message.VoiceKey);
+                    break;
                 default:
                     Logger.Warn($"Received unknown message type {message.MsgType}");
                     break;
@@ -297,17 +349,25 @@ public class ServerSync : TcpServer, IHandle<ServerSettingsChangedMessage>
         {
             Logger.Warn(
                 $"Disconnecting {remote} - unsupported client (product '{message.Product}', protocol version '{message.Version}')");
+            state.Rejected = true;
             HandleVersionMismatch(state);
-            state.Disconnect();
             return;
         }
 
         var srClient = message.Client;
-        if (srClient?.ClientGuid == null || srClient.ClientGuid.Length != UDPVoicePacket.GuidLength ||
-            Encoding.UTF8.GetByteCount(srClient.ClientGuid) != UDPVoicePacket.GuidLength)
+        if (!IsValidClientGuid(srClient?.ClientGuid))
         {
             Logger.Warn($"Disconnecting {remote} - invalid client id");
             state.Disconnect();
+            return;
+        }
+
+        // every 1.1 client has an end-to-end voice key pair; without its public key nobody could talk to it
+        if (!E2EKeyPair.IsValidPublicKey(srClient.E2EPublicKey))
+        {
+            Logger.Warn($"Disconnecting {remote} - no valid end-to-end voice public key (incompatible client)");
+            state.Rejected = true;
+            HandleVersionMismatch(state);
             return;
         }
 
@@ -336,12 +396,37 @@ public class ServerSync : TcpServer, IHandle<ServerSettingsChangedMessage>
         srClient.SessionAddress = state.RemoteIp;
         srClient.ClientSession = state.Id;
 
+        // a fresh UDP key for this client: every datagram to and from it is encrypted and authenticated with it. It is
+        // attached before the client is registered, so the voice router never sees a client without one.
+        var udpKey = UdpTransportSession.GenerateKey();
+        var udpKeyId = UdpTransportSession.GenerateKeyId();
+        string udpKeyBase64;
+        try
+        {
+            srClient.UdpTransport = new UdpTransportSession(srClient.ClientGuid, udpKey, udpKeyId, true);
+            udpKeyBase64 = Convert.ToBase64String(udpKey);
+        }
+        finally
+        {
+            CryptographicOperations.ZeroMemory(udpKey);
+        }
+
         RadioClientSession previousSession = null;
+        ClientInfo replaced = null;
         lock (_registrationLock)
         {
+            // closed in the meantime (HandleDisconnect already ran): don't register a client without a connection.
+            // A disconnect after this check waits for the lock and removes the client again.
+            if (!state.IsConnected)
+            {
+                srClient.UdpTransport.Dispose();
+                return;
+            }
+
             // Same client id reconnecting while its old connection is still open: the new connection takes over
             if (_clients.TryGetValue(srClient.ClientGuid, out var existing) && existing.ClientSession != state.Id)
             {
+                replaced = existing;
                 previousSession = FindSession(existing.ClientSession) as RadioClientSession;
                 if (previousSession != null) previousSession.ClientGuid = null;
             }
@@ -350,10 +435,21 @@ public class ServerSync : TcpServer, IHandle<ServerSettingsChangedMessage>
             state.ClientGuid = srClient.ClientGuid;
         }
 
+        // the old connection's UDP key is no longer valid
+        replaced?.UdpTransport?.Dispose();
+
         if (previousSession != null)
         {
             Logger.Info($"Client {srClient} reconnected from {remote} (previously {previousSession.RemoteAddress}) - closing its previous connection");
             previousSession.Disconnect();
+        }
+
+        if (replaced != null)
+        {
+            // Everybody else sees the old connection leave before the new one is announced: the transmission keys of
+            // the old connection are forgotten, and a sender whose transmission is running wraps its key again for the
+            // new connection (VoiceTransmission.TakeNewRecipients). The new connection itself gets its SYNC reply.
+            HandleClientDisconnect(null, srClient.ClientGuid, state.Id);
         }
 
         Logger.Info($"Client {srClient} connected from {remote}");
@@ -361,7 +457,8 @@ public class ServerSync : TcpServer, IHandle<ServerSettingsChangedMessage>
         _eventAggregator.PublishOnUIThreadAsync(new ServerStateMessage(true,
             new List<ClientInfo>(_clients.Values)));
 
-        SendSyncReply(state);
+        Logger.Info($"Issued UDP key #{udpKeyId:x8} to {srClient.ClientGuid}");
+        SendSyncReply(state, udpKeyBase64, udpKeyId);
 
         //send update to everyone
         var update = new NetworkMessage
@@ -372,7 +469,8 @@ public class ServerSync : TcpServer, IHandle<ServerSettingsChangedMessage>
                 ClientGuid = srClient.ClientGuid,
                 RadioInfo = srClient.RadioInfo,
                 Name = srClient.Name,
-                AllowRecord = srClient.AllowRecord
+                AllowRecord = srClient.AllowRecord,
+                E2EPublicKey = srClient.E2EPublicKey
             }
         };
 
@@ -398,8 +496,8 @@ public class ServerSync : TcpServer, IHandle<ServerSettingsChangedMessage>
         {
             try
             {
-                state.Send(new NetworkMessage { MsgType = NetworkMessage.MessageType.AUTH_FAILED }.Encode());
-                state.Disconnect();
+                state.DisconnectAfterSend(Encoding.UTF8.GetBytes(
+                    new NetworkMessage { MsgType = NetworkMessage.MessageType.AUTH_FAILED }.Encode()));
             }
             catch (Exception ex)
             {
@@ -408,16 +506,27 @@ public class ServerSync : TcpServer, IHandle<ServerSettingsChangedMessage>
         });
     }
 
-    private void SendSyncReply(RadioClientSession session)
+    /// <param name="udpKey">
+    ///     The client's UDP key (base64) - only in the first SYNC reply of a connection, never in any other message.
+    /// </param>
+    private void SendSyncReply(RadioClientSession session, string udpKey = null, uint? udpKeyId = null)
     {
         var replyMessage = new NetworkMessage
         {
             MsgType = NetworkMessage.MessageType.SYNC,
             Clients = new List<ClientInfo>(_clients.Values),
-            ServerSettings = _serverSettings.ToDictionary()
+            ServerSettings = _serverSettings.ToDictionary(),
+            UdpKey = udpKey,
+            UdpKeyId = udpKeyId
         };
 
-        session.Send(replyMessage.Encode());
+        session.SendAsync(replyMessage.Encode());
+    }
+
+    /// <summary>A client id is a 22 character ShortGuid (URL-safe base64: A-Z a-z 0-9 - _).</summary>
+    internal static bool IsValidClientGuid(string clientGuid)
+    {
+        return ShortGuid.IsWellFormed(clientGuid);
     }
 
     private static string SanitiseName(string name)
@@ -455,16 +564,17 @@ public class ServerSync : TcpServer, IHandle<ServerSettingsChangedMessage>
             ServerSettings = _serverSettings.ToDictionary()
         };
 
-        session.Send(replyMessage.Encode());
+        session.SendAsync(replyMessage.Encode());
     }
 
-    private void HandleVersionMismatch(RadioClientSession session)
+    /// <summary>Answers VERSION_MISMATCH and closes the connection once it is sent.</summary>
+    private static void HandleVersionMismatch(RadioClientSession session)
     {
         var replyMessage = new NetworkMessage
         {
             MsgType = NetworkMessage.MessageType.VERSION_MISMATCH
         };
-        session.Send(replyMessage.Encode());
+        session.DisconnectAfterSend(Encoding.UTF8.GetBytes(replyMessage.Encode()));
     }
 
     private bool HandleClientMetaDataUpdate(RadioClientSession session, NetworkMessage message, bool send,
@@ -499,7 +609,8 @@ public class ServerSync : TcpServer, IHandle<ServerSettingsChangedMessage>
                             ClientGuid = client.ClientGuid,
                             Name = client.Name,
                             AllowRecord = client.AllowRecord,
-                            RadioInfo = null
+                            RadioInfo = null,
+                            E2EPublicKey = client.E2EPublicKey
                         }
                     };
 
@@ -515,7 +626,11 @@ public class ServerSync : TcpServer, IHandle<ServerSettingsChangedMessage>
         return changed;
     }
 
-    private void HandleClientDisconnect(RadioClientSession srsSession, string clientGuid)
+    /// <summary>
+    ///     Announces CLIENT_DISCONNECT of <paramref name="clientGuid" /> to every registered session except
+    ///     <paramref name="except" /> (default: the closed session) and disposes <paramref name="srsSession" /> (if any).
+    /// </summary>
+    private void HandleClientDisconnect(RadioClientSession srsSession, string clientGuid, Guid? except = null)
     {
         var message = new NetworkMessage
         {
@@ -523,7 +638,9 @@ public class ServerSync : TcpServer, IHandle<ServerSettingsChangedMessage>
             MsgType = NetworkMessage.MessageType.CLIENT_DISCONNECT
         };
 
-        MulticastToRegistered(message.Encode(), srsSession.Id);
+        MulticastToRegistered(message.Encode(), except ?? srsSession?.Id);
+
+        if (srsSession == null) return;
 
         try
         {
@@ -533,6 +650,80 @@ public class ServerSync : TcpServer, IHandle<ServerSettingsChangedMessage>
         {
             // ignored
         }
+    }
+
+    /// <summary>
+    ///     VOICE_KEY from a registered client: the key of one of its transmissions, wrapped for each listener. The
+    ///     message must name the session's own client as sender and be well-formed (<see cref="VoiceKeyMessage.IsValid" />)
+    ///     - otherwise the connection is closed; beyond a burst of <see cref="RadioClientSession.VoiceKeyBurst" />, more
+    ///     than <see cref="RadioClientSession.MaxVoiceKeysPerSecond" /> per second are dropped. Each listed recipient that
+    ///     is connected and can hear the frequency (the rule the voice packets are routed by) gets a VOICE_KEY with only
+    ///     its own entry; the others are dropped (the sender wraps the key again when it sees the listener's next radio
+    ///     update, see <see cref="VoiceTransmission.TakeNewRecipients" />). The wrapped keys are opaque to the server and
+    ///     never logged.
+    /// </summary>
+    private void HandleVoiceKey(RadioClientSession session, VoiceKeyMessage voiceKey)
+    {
+        var senderGuid = session.ClientGuid;
+
+        string reason = null;
+        if (voiceKey == null || !voiceKey.IsValid(out _, out reason) || voiceKey.SenderGuid != senderGuid)
+        {
+            reason = voiceKey == null ? "no content" : reason ?? "the sender is not this connection's client";
+            Logger.Warn($"Disconnecting {session.RemoteAddress} ({senderGuid}) - invalid VOICE_KEY: {reason}");
+            session.Disconnect();
+            return;
+        }
+
+        if (!session.AllowVoiceKey(DateTime.UtcNow, out var logDrop))
+        {
+            if (logDrop)
+                Logger.Warn($"Dropping VOICE_KEY messages of {session.RemoteAddress} ({senderGuid}) - more than " +
+                            $"{RadioClientSession.MaxVoiceKeysPerSecond} per second after a burst of " +
+                            $"{RadioClientSession.VoiceKeyBurst} (further drops in the next minute are not logged)");
+            return;
+        }
+
+        if (!_clients.TryGetValue(senderGuid, out var sender) || sender.ClientSession != session.Id || sender.Muted)
+            return;
+
+        var forwarded = 0;
+        var notListening = 0;
+        foreach (var (recipientGuid, wrappedKey) in voiceKey.Keys)
+        {
+            if (recipientGuid == senderGuid) continue;
+            if (!_clients.TryGetValue(recipientGuid, out var recipient)) continue;
+            if (!VoiceRouting.CanReceive(recipient.RadioInfo, voiceKey.Frequency, voiceKey.Modulation))
+            {
+                notListening++;
+                continue;
+            }
+
+            if (FindSession(recipient.ClientSession) is not RadioClientSession recipientSession ||
+                recipientSession.ClientGuid != recipientGuid)
+                continue;
+
+            var forward = new NetworkMessage
+            {
+                MsgType = NetworkMessage.MessageType.VOICE_KEY,
+                VoiceKey = new VoiceKeyMessage
+                {
+                    SenderGuid = senderGuid,
+                    TxId = voiceKey.TxId,
+                    Frequency = voiceKey.Frequency,
+                    Modulation = voiceKey.Modulation,
+                    // never the whole map: each recipient only learns its own wrapped key
+                    Keys = new Dictionary<string, string> { [recipientGuid] = wrappedKey }
+                }
+            };
+
+            recipientSession.SendAsync(forward.Encode());
+            forwarded++;
+        }
+
+        if (Logger.IsDebugEnabled)
+            Logger.Debug($"VOICE_KEY from {senderGuid}: {voiceKey.Keys.Count} listed, forwarded to {forwarded}, " +
+                         $"{notListening} not (or no longer) on the frequency");
     }
 
     private void HandleClientRadioUpdate(RadioClientSession session, NetworkMessage message, bool send)
@@ -565,7 +756,8 @@ public class ServerSync : TcpServer, IHandle<ServerSettingsChangedMessage>
                 ClientGuid = client.ClientGuid,
                 Name = client.Name,
                 RadioInfo = client.RadioInfo, //send radio info
-                AllowRecord = client.AllowRecord
+                AllowRecord = client.AllowRecord,
+                E2EPublicKey = client.E2EPublicKey
             }
         };
         MulticastToRegistered(replyMessage.Encode());
@@ -592,6 +784,7 @@ public class ServerSync : TcpServer, IHandle<ServerSettingsChangedMessage>
         }
     }
 
+    /// <summary>Housekeeping timer (every 5 s): closes unfinished handshakes, writes the connection log summary.</summary>
     private void DisconnectStaleHandshakes()
     {
         try
@@ -601,9 +794,13 @@ public class ServerSync : TcpServer, IHandle<ServerSettingsChangedMessage>
                 if (session is RadioClientSession clientSession && clientSession.ClientGuid == null &&
                     clientSession.IsConnected && now - clientSession.ConnectedAtUtc > HandshakeTimeout)
                 {
-                    Logger.Info($"Disconnecting {clientSession.RemoteAddress} - no handshake within {HandshakeTimeout.TotalSeconds} s");
+                    // one line each would flood the log during a slow-handshake attack - counted and summarised
+                    Logger.Debug($"Disconnecting {clientSession.RemoteAddress} - no handshake within {HandshakeTimeout.TotalSeconds} s");
+                    RecordRefusedConnection(RefusedConnectionReason.HandshakeTimeout);
                     clientSession.Disconnect();
                 }
+
+            LogConnectionSummary();
         }
         catch (Exception ex)
         {
@@ -629,6 +826,7 @@ public class ServerSync : TcpServer, IHandle<ServerSettingsChangedMessage>
             {
                 _handshakeTimer?.Dispose();
                 _handshakeTimer = null;
+                LogConnectionSummary(true);
             }
             catch
             {
@@ -650,6 +848,7 @@ public class ServerSync : TcpServer, IHandle<ServerSettingsChangedMessage>
                     Stop();
                 }
 
+                foreach (var client in _clients.Values) client.UdpTransport?.Dispose();
                 _clients.Clear();
             }
             catch (Exception)

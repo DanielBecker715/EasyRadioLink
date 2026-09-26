@@ -13,8 +13,8 @@ using NLog;
 namespace EasyRadioLink.Client.UI.ClientWindow.ServerSettingsWindow;
 
 /// <summary>
-///     "Server Info": the settings of the connected server that matter for the user (read only, refreshed every
-///     second from <see cref="SyncedServerSettings" />).
+///     "Server Info": the settings of the connected server that matter for the user and the fingerprint of its
+///     (pinned) identity (read only, refreshed every second from <see cref="SyncedServerSettings" />).
 /// </summary>
 public partial class ServerSettingsWindow : MetroWindow
 {
@@ -64,6 +64,12 @@ public partial class ServerSettingsWindow : MetroWindow
             ServerVersion.Text = string.IsNullOrWhiteSpace(settings.ServerVersion)
                 ? Properties.Resources.ValueUnknown
                 : settings.ServerVersion;
+
+            // only on a change - resetting the text every second would clear the user's selection
+            var fingerprint = string.IsNullOrWhiteSpace(settings.ServerIdentityFingerprint)
+                ? Properties.Resources.ValueUnknown
+                : settings.ServerIdentityFingerprint;
+            if (ServerIdentityFingerprint.Text != fingerprint) ServerIdentityFingerprint.Text = fingerprint;
         }
         catch (Exception ex)
         {

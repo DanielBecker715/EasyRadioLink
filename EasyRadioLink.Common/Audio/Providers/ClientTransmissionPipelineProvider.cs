@@ -231,8 +231,8 @@ namespace EasyRadioLink.Common.Audio.Providers
         private ISampleProvider BuildRadioPipeline(ISampleProvider voiceProvider, TxRadioModel radioModel, DeJitteredTransmission details)
         {
             radioModel.TxSource.Source = voiceProvider;
-            // Radios of this version never encrypt; an encrypted transmission (older clients) can't be decrypted and
-            // gets the model's encryption effect on top of the garbling done by ClientAudioProvider.
+            // Scrambled audio (an end-to-end encrypted frame whose transmission key never arrived, Encryption = 1) gets
+            // the model's encryption effect on top of the garbling done by ClientAudioProvider.
             var encryptionEffects = details.Encryption > 0;
             if (encryptionEffects && radioModel.EncryptionProvider != null)
             {
