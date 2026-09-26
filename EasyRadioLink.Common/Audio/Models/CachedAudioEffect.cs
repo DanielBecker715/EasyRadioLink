@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -142,9 +142,15 @@ public class CachedAudioEffect
     /// </summary>
     internal static readonly (string FileName, string Name)[] SharedToneNames =
     {
-        ("FancyRelease.wav", "Fancy Release"),
-        ("AlmostFancy.wav", "Almost Fancy")
+        (FancyReleaseFile, "Fancy Release"),
+        (AlmostFancyFile, "Almost Fancy")
     };
+
+    /// <summary>Default start sound (push-to-talk pressed, someone starts talking).</summary>
+    public const string FancyReleaseFile = "FancyRelease.wav";
+
+    /// <summary>Default end sound (push-to-talk released, someone stops talking).</summary>
+    public const string AlmostFancyFile = "AlmostFancy.wav";
 
     /// <summary>True for a file of <see cref="SharedToneNames" /> (start and end sound).</summary>
     internal static bool IsSharedTone(string fileName)

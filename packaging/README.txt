@@ -122,7 +122,8 @@ REQUIREMENTS
   Settings tab: at the top you choose the radio sounds - the sound when you
   press and when you release push-to-talk, and when someone starts and stops
   talking: Click, Soft click, Chirp, Key-up beep, Roger beep, Double beep,
-  Three-tone beep, Fancy Release, Almost Fancy or Off. The play button next
+  Three-tone beep, Fancy Release, Almost Fancy or Off (default: Fancy
+  Release at the start, Almost Fancy at the end). The play button next
   to each lets you listen, also without a connection. Only you hear your
   push-to-talk sounds; the others hear the sounds they chose. Below that:
   squelch tail, radio static, FM tone, your background sound, the radio

@@ -89,11 +89,11 @@ public class ProfileSettingsStore
 
         {
             ProfileSettingsKeys.RadioTransmissionStartSelection.ToString(),
-            CachedAudioEffect.AudioEffectTypes.RADIO_TRANS_START + ".wav"
+            CachedAudioEffect.FancyReleaseFile
         },
         {
             ProfileSettingsKeys.RadioTransmissionEndSelection.ToString(),
-            CachedAudioEffect.AudioEffectTypes.RADIO_TRANS_END + ".wav"
+            CachedAudioEffect.AlmostFancyFile
         },
 
         { ProfileSettingsKeys.RadioTxEffects_Start.ToString(), "true" },
@@ -123,11 +123,11 @@ public class ProfileSettingsStore
 
         {
             ProfileSettingsKeys.RadioRxStartSelection.ToString(),
-            CachedAudioEffect.AudioEffectTypes.RADIO_TRANS_START + ".wav"
+            CachedAudioEffect.FancyReleaseFile
         },
         {
             ProfileSettingsKeys.RadioRxEndSelection.ToString(),
-            CachedAudioEffect.AudioEffectTypes.RADIO_TRANS_END + ".wav"
+            CachedAudioEffect.AlmostFancyFile
         }
     };
 

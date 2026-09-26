@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.IO;
 using System.Linq;
 using EasyRadioLink.Common.Audio.Models;
@@ -331,10 +331,11 @@ public class AudioAssetTests
         Assert.AreEqual("true", defaults[nameof(ProfileSettingsKeys.RadioRxSquelchTail)]);
         Assert.AreEqual("", defaults[nameof(ProfileSettingsKeys.BackgroundSound)], "no background sound by default");
         Assert.AreEqual("true", defaults[nameof(ProfileSettingsKeys.BackgroundSoundEffect)]);
-        Assert.AreEqual("RADIO_TRANS_START.wav", defaults[nameof(ProfileSettingsKeys.RadioTransmissionStartSelection)]);
-        Assert.AreEqual("RADIO_TRANS_END.wav", defaults[nameof(ProfileSettingsKeys.RadioTransmissionEndSelection)]);
-        Assert.AreEqual("RADIO_TRANS_START.wav", defaults[nameof(ProfileSettingsKeys.RadioRxStartSelection)]);
-        Assert.AreEqual("RADIO_TRANS_END.wav", defaults[nameof(ProfileSettingsKeys.RadioRxEndSelection)]);
+        // owner's choice: Fancy Release when a transmission starts, Almost Fancy when it ends (sending and receiving)
+        Assert.AreEqual("FancyRelease.wav", defaults[nameof(ProfileSettingsKeys.RadioTransmissionStartSelection)]);
+        Assert.AreEqual("AlmostFancy.wav", defaults[nameof(ProfileSettingsKeys.RadioTransmissionEndSelection)]);
+        Assert.AreEqual("FancyRelease.wav", defaults[nameof(ProfileSettingsKeys.RadioRxStartSelection)]);
+        Assert.AreEqual("AlmostFancy.wav", defaults[nameof(ProfileSettingsKeys.RadioRxEndSelection)]);
         foreach (var key in new[]
                  {
                      ProfileSettingsKeys.RadioTransmissionStartSelection, ProfileSettingsKeys.RadioTransmissionEndSelection,
@@ -365,15 +366,15 @@ public class AudioAssetTests
         Assert.AreEqual("RADIO_TRANS_END_ALTERNATE.wav",
             ProfileSettingsStore.GetDefaultValue(older, nameof(ProfileSettingsKeys.RadioRxEndSelection)));
 
-        // a new profile: the default click
+        // a new profile: the default sounds
         var empty = new Section("Client Settings");
-        Assert.AreEqual("RADIO_TRANS_START.wav",
+        Assert.AreEqual("FancyRelease.wav",
             ProfileSettingsStore.GetDefaultValue(empty, nameof(ProfileSettingsKeys.RadioRxStartSelection)));
-        Assert.AreEqual("RADIO_TRANS_END.wav",
+        Assert.AreEqual("AlmostFancy.wav",
             ProfileSettingsStore.GetDefaultValue(empty, nameof(ProfileSettingsKeys.RadioRxEndSelection)));
 
         // other settings keep their plain defaults
-        Assert.AreEqual("RADIO_TRANS_START.wav",
+        Assert.AreEqual("FancyRelease.wav",
             ProfileSettingsStore.GetDefaultValue(older, nameof(ProfileSettingsKeys.RadioTransmissionStartSelection)));
         Assert.AreEqual("true", ProfileSettingsStore.GetDefaultValue(older, nameof(ProfileSettingsKeys.RadioRxSquelchTail)));
         Assert.IsNull(ProfileSettingsStore.GetDefaultValue(older, "NoSuchSetting"));

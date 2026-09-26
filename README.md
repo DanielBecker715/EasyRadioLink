@@ -323,7 +323,8 @@ The **Settings** tab shows the everyday settings first:
 - **Radio Sounds**: the sound *When I press push-to-talk*, *When I release push-to-talk*, *When someone starts
   talking* and *When someone stops talking* - *Click*, *Soft click*, *Chirp* and *Key-up beep* (start sounds),
   *Roger beep*, *Double beep* and *Three-tone beep* (end sounds), *Fancy Release* and *Almost Fancy* (both), or
-  *Off*. The ▶ button next to each plays the chosen sound on your speakers, also without a connection. Only you hear
+  *Off* (default: *Fancy Release* when a transmission starts, *Almost Fancy* when it ends). The ▶ button next to
+  each plays the chosen sound on your speakers, also without a connection. Only you hear
   your push-to-talk sounds; the others hear what they chose for someone starting / stopping to talk. A start sound
   is played before the received voice, so a long one delays the voice by its length. Below: squelch tail, radio
   static, FM tone, your background sound and its volume, and the radio effect strength.
