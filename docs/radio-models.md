@@ -1,11 +1,11 @@
 # Radio models
 
 A *radio model* describes how a radio sounds: the band-pass of the microphone and transmitter, distortion,
-compression, the amount of static and the effect of encryption. Every radio has a model (the **Sound** selector in
-the Radio Panel, the `model` field in `radios.json`). When you transmit, your model is sent along with your voice
-and the receivers render your transmission through it, so a CB radio sounds like a CB radio on every PC.
-(Listeners can turn this off with the *Use the sender's radio sound* setting; transmissions are then played with
-`standard`, or with `digital` on digital (DIG) radios.)
+compression and the amount of static. The band plan picks the model from the frequency (CB -> `cb`, PMR and FM ->
+`walkie`, AIR -> `airband`, ... - see *Band plan* in the [README](../README.md#band-plan)). When you transmit, the
+model is sent along with your voice and the receivers render your transmission through it, so a CB transmission
+sounds like a CB radio on every PC. (Listeners can turn this off with the *Radio sound of the band* setting;
+transmissions are then played with `standard`, or with `digital` on the DIG band.)
 
 ## Built-in models
 
@@ -30,7 +30,8 @@ Put your own model files into **`%AppData%\EasyRadioLink\RadioModels`** and rest
 
 - The file name (without `.json`) is the model key, e.g. `mycb.json` → `mycb`. Keys are lower case; use only
   `a-z` and `0-9`.
-- A file with the same name as a built-in model (e.g. `cb.json`) replaces the built-in model.
+- A file with the same name as a built-in model (e.g. `cb.json`) replaces the built-in model - this is how you
+  change the sound of a band. A model with a new key can be tried with *Preview sound* on the Radio tab.
 - Other users only hear your model if **they** have a model with the same key. Unknown keys are played with
   `standard`. Share your JSON file with your group.
 - Invalid files are skipped and reported in the client log.
@@ -54,13 +55,13 @@ Put your own model files into **`%AppData%\EasyRadioLink\RadioModels`** and rest
 | Field | Required | Meaning |
 |---|---|---|
 | `version` | yes | Format version, always `1`. |
-| `displayName` | no | Name shown in the Sound selector (default: the key). |
+| `displayName` | no | Name shown in the *Preview sound* list on the Radio tab (default: the key). |
 | `description` | no | Short description shown as tool tip. |
-| `sortOrder` | no | Position in the Sound selector (lower first, default 1000; `standard` is always first). |
+| `sortOrder` | no | Position in the *Preview sound* list (lower first, default 1000; `standard` is always first). |
 | `noiseGain` | yes | Level of the background static in dB, added to the frequency-dependent base level (lower frequencies are noisier). Above 30 MHz the static stays subtle. The shipped models range from `-33` (`standard`, subtle) over `-24`/`-23` (`airband`, `tactical`, `walkie`, moderate) to `-8` (`cb`, clearly audible on 27 MHz) and `-12` (`hf`, heavy); `-60` is practically silent. Every +6 dB doubles the static. |
 | `txEffect` | yes | Effect applied to a transmission made with this model (microphone + transmitter sound). |
 | `rxEffect` | yes | Effect applied to received audio (receiver + speaker). A gentle `highpass 270` / `lowpass 4500` is typical. |
-| `encryptionEffect` | no | Applied after `txEffect` when the transmission is encrypted. Usually `cvsd`. |
+| `encryptionEffect` | no | Applied after `txEffect` to encrypted transmissions (only older versions encrypt). Usually `cvsd`. |
 
 Rules of the JSON reader:
 
@@ -228,7 +229,8 @@ A filter object has only these properties:
 }
 ```
 
-Then select *My CB* in the Sound selector of a radio (or set `"model": "mycb"` in `radios-custom.json`).
+Then pick *My CB* as *Preview sound* on the Radio tab and click **Audio Preview** to hear it. To use it on the CB
+band, save it as `cb.json` instead (everybody who should hear it needs the same file).
 
 ## Tips
 

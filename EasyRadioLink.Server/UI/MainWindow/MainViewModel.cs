@@ -83,18 +83,6 @@ public sealed class MainViewModel : Screen, IHandle<ServerStateMessage>, IHandle
         set => SetSetting(ServerSettingsKeys.IRL_RADIO_RX_INTERFERENCE, value);
     }
 
-    public bool AllowRadioEncryption
-    {
-        get => GetSetting(ServerSettingsKeys.ALLOW_RADIO_ENCRYPTION);
-        set => SetSetting(ServerSettingsKeys.ALLOW_RADIO_ENCRYPTION, value);
-    }
-
-    public bool StrictRadioEncryption
-    {
-        get => GetSetting(ServerSettingsKeys.STRICT_RADIO_ENCRYPTION);
-        set => SetSetting(ServerSettingsKeys.STRICT_RADIO_ENCRYPTION, value);
-    }
-
     public bool ShowTunedCount
     {
         get => GetSetting(ServerSettingsKeys.SHOW_TUNED_COUNT);
@@ -111,18 +99,6 @@ public sealed class MainViewModel : Screen, IHandle<ServerStateMessage>, IHandle
     {
         get => GetSetting(ServerSettingsKeys.TRANSMISSION_LOG_ENABLED);
         set => SetSetting(ServerSettingsKeys.TRANSMISSION_LOG_ENABLED, value);
-    }
-
-    public bool ServerPresetsEnabled
-    {
-        get => GetSetting(ServerSettingsKeys.SERVER_PRESETS_ENABLED);
-        set => SetSetting(ServerSettingsKeys.SERVER_PRESETS_ENABLED, value);
-    }
-
-    public bool ServerRadioPresetEnabled
-    {
-        get => GetSetting(ServerSettingsKeys.SERVER_RADIO_PRESET_ENABLED);
-        set => SetSetting(ServerSettingsKeys.SERVER_RADIO_PRESET_ENABLED, value);
     }
 
     /// <summary>Server password ("" = open server). Saved to [Server Settings] shortly after typing stops.</summary>

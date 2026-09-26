@@ -23,15 +23,15 @@ using RadioReceivingState = EasyRadioLink.Common.Models.RadioReceivingState;
 namespace EasyRadioLink.Client.Audio.Managers;
 
 /// <summary>
-///     Voice transmit and receive decisions of the client.
+///     Voice transmit and receive decisions of the client (one radio, slot <see cref="PlayerRadioInfo.RadioId" />).
 ///     <list type="bullet">
 ///         <item>
-///             TX (<see cref="Send" />, capture thread): keyed by PTT (hotkey or radio switch as PTT) or VOX; transmits
-///             on the selected radio plus every <c>simul</c> radio when simultaneous transmission is on.
+///             TX (<see cref="Send" />, capture thread): keyed by the PTT hotkey or VOX; transmits on the radio's
+///             frequency and modulation, never encrypted.
 ///         </item>
 ///         <item>
-///             RX (<see cref="UdpAudioDecode" />, own thread): finds the local radio that hears a packet (frequency,
-///             modulation, guard, encryption, half-duplex) and hands the audio to the <see cref="AudioManager" />.
+///             RX (<see cref="UdpAudioDecode" />, own thread): checks whether the radio hears a packet (frequency,
+///             modulation, half-duplex) and hands the audio to the <see cref="AudioManager" />.
 ///         </item>
 ///         <item>PTT state machine (<see cref="PTTHandler" />, input thread every 40 ms).</item>
 ///     </list>
@@ -75,7 +75,7 @@ public class UDPClientAudioProcessor : IDisposable
         _radioReceivingState = _clientStateSingleton.RadioReceivingState;
     }
 
-    // PTT key/radio switch or VOX is keying the radios
+    // PTT key or VOX is keying the radio
     private bool IsTransmitKeyed => _ptt || _voxActive;
 
     public void Dispose()
@@ -108,7 +108,7 @@ public class UDPClientAudioProcessor : IDisposable
     }
 
     /// <summary>
-    ///     Half-duplex (server IRL_RADIO_TX): radios that are transmitting right now cannot receive.
+    ///     Half-duplex (server IRL_RADIO_TX): the radio cannot receive while it is transmitting.
     /// </summary>
     private List<int> CurrentlyBlockedRadios()
     {
@@ -117,67 +117,22 @@ public class UDPClientAudioProcessor : IDisposable
 
         if (!IsTransmitKeyed) return transmitting;
 
-        //Currently transmitting - figure out which radios can't hear
-        var radioInfo = _clientStateSingleton.PlayerRadioInfo;
-        var selected = radioInfo.selected;
-
-        if (selected >= PlayerRadioInfo.FirstUserRadio && selected < radioInfo.radios.Length)
-        {
-            var currentRadio = radioInfo.radios[selected];
-
-            // every modulation is half-duplex (AM, FM and DIGITAL)
-            if (currentRadio != null && currentRadio.IsEnabled && !currentRadio.rxOnly) transmitting.Add(selected);
-        }
-
-        if (radioInfo.simultaneousTransmission)
-            for (var i = PlayerRadioInfo.FirstUserRadio; i < radioInfo.radios.Length; i++)
-            {
-                var radio = radioInfo.radios[i];
-                if (radio != null && radio.IsEnabled && radio.simul && !radio.rxOnly && i != selected)
-                    transmitting.Add(i);
-            }
+        // every modulation is half-duplex (AM, FM and DIGITAL)
+        if (CanTransmit(_clientStateSingleton.PlayerRadioInfo.Radio)) transmitting.Add(PlayerRadioInfo.RadioId);
 
         return transmitting;
     }
 
-    private int SortRadioReceivingPriorities(RadioReceivingPriority x, RadioReceivingPriority y)
-    {
-        var xScore = 0;
-        var yScore = 0;
-
-        if (x.ReceivingRadio == null || x.ReceivingState == null) return 1;
-
-        if (y.ReceivingRadio == null || y.ReceivingState == null) return -1;
-
-        if (x.Decryptable) xScore += 16;
-
-        if (y.Decryptable) yScore += 16;
-
-        var selected = _clientStateSingleton.PlayerRadioInfo.selected;
-
-        if (selected == x.ReceivingState.ReceivedOn) xScore += 8;
-
-        if (selected == y.ReceivingState.ReceivedOn) yScore += 8;
-
-        if (x.ReceivingRadio.volume > 0) xScore += 4;
-
-        if (y.ReceivingRadio.volume > 0) yScore += 4;
-
-        return yScore - xScore;
-    }
-
     /// <summary>
-    ///     Decides which radios transmit this mic frame.
+    ///     Decides whether this mic frame is transmitted.
     /// </summary>
-    /// <param name="sendingOn">the radio shown as transmitting (selected radio, or the first simul radio)</param>
     /// <param name="voice">
     ///     VOX result of the frame. Always true when VOX is disabled - the VOX setting is checked here.
     /// </param>
-    private List<Radio> PTTPressed(out int sendingOn, bool voice)
+    /// <returns>The transmitting radio, or null.</returns>
+    private Radio PTTPressed(bool voice)
     {
-        sendingOn = -1;
-
-        // VOX keys the selected radio (plus simul radios) while speech is detected and for VOXMinimumTime after it
+        // VOX keys the radio while speech is detected and for VOXMinimumTime after it
         var voxActive = false;
         if (_globalSettings.GetClientSettingBool(GlobalSettingsKeys.VOX))
         {
@@ -195,43 +150,15 @@ public class UDPClientAudioProcessor : IDisposable
 
         _voxActive = voxActive;
 
-        var transmittingRadios = new List<Radio>();
-        if (!_ptt && !voxActive) return transmittingRadios;
+        if (!_ptt && !voxActive) return null;
 
-        var radioInfo = _clientStateSingleton.PlayerRadioInfo;
-
-        // Always add currently selected radio (if valid)
-        var currentSelected = radioInfo.selected;
-        if (currentSelected >= PlayerRadioInfo.FirstUserRadio && currentSelected < radioInfo.radios.Length)
-        {
-            var currentlySelectedRadio = radioInfo.radios[currentSelected];
-
-            if (CanTransmit(currentlySelectedRadio))
-            {
-                sendingOn = currentSelected;
-                transmittingRadios.Add(currentlySelectedRadio);
-            }
-        }
-
-        // Add all radios toggled for simultaneous transmission if the global flag has been set
-        if (radioInfo.simultaneousTransmission)
-            for (var i = PlayerRadioInfo.FirstUserRadio; i < radioInfo.radios.Length; i++)
-            {
-                var radio = radioInfo.radios[i];
-                if (radio != null && radio.simul && CanTransmit(radio)
-                    && !transmittingRadios.Contains(radio)) // Make sure we don't add the selected radio twice
-                {
-                    if (sendingOn == -1) sendingOn = i;
-                    transmittingRadios.Add(radio);
-                }
-            }
-
-        return transmittingRadios;
+        var radio = _clientStateSingleton.PlayerRadioInfo.Radio;
+        return CanTransmit(radio) ? radio : null;
     }
 
     private static bool CanTransmit(Radio radio)
     {
-        return radio != null && radio.IsEnabled && radio.freq > 100 && !radio.rxOnly;
+        return radio != null && radio.IsEnabled && radio.freq > 100;
     }
 
     public ClientAudio Send(byte[] bytes, int len, bool voice)
@@ -242,53 +169,29 @@ public class UDPClientAudioProcessor : IDisposable
                     && _audioInputSingleton.MicrophoneAvailable
                     && bytes != null;
 
-        // List of radios the transmission is sent to (can me multiple if simultaneous transmission is enabled)
-        var sendingOn = -1;
-        var transmittingRadios = ready ? PTTPressed(out sendingOn, voice) : null;
+        var sendingRadio = ready ? PTTPressed(voice) : null;
 
         if (!ready) _voxActive = false;
 
-        if (transmittingRadios != null && transmittingRadios.Count > 0)
+        const int sendingOn = PlayerRadioInfo.RadioId;
+
+        if (sendingRadio != null)
         {
             try
             {
-                var frequencies = new List<double>(transmittingRadios.Count);
-                var encryptions = new List<byte>(transmittingRadios.Count);
-                var modulations = new List<byte>(transmittingRadios.Count);
+                var frequency = sendingRadio.freq;
+                var modulation = (byte)sendingRadio.modulation;
 
-                for (var i = 0; i < transmittingRadios.Count; i++)
-                {
-                    var radio = transmittingRadios[i];
-                    var encryption = radio.enc ? radio.encKey : (byte)0;
-
-                    // Further deduplicate transmitted frequencies if they have the same freq./modulation/encryption (caused by differently named radios)
-                    var alreadyIncluded = false;
-                    for (var j = 0; j < frequencies.Count; j++)
-                        if (frequencies[j] == radio.freq
-                            && modulations[j] == (byte)radio.modulation
-                            && encryptions[j] == encryption)
-                        {
-                            alreadyIncluded = true;
-                            break;
-                        }
-
-                    if (alreadyIncluded) continue;
-
-                    frequencies.Add(radio.freq);
-                    encryptions.Add(encryption);
-                    modulations.Add((byte)radio.modulation);
-                }
-
-                //generate packet - UnitId and RetransmissionCount are reserved (always 0)
+                //generate packet - UnitId and RetransmissionCount are reserved (always 0), never encrypted
                 var udpVoicePacket = new UDPVoicePacket
                 {
                     GuidBytes = _guidAsciiBytes,
                     AudioPart1Bytes = bytes,
                     AudioPart1Length = (ushort)bytes.Length,
-                    Frequencies = frequencies.ToArray(),
+                    Frequencies = new[] { frequency },
                     UnitId = 0,
-                    Encryptions = encryptions.ToArray(),
-                    Modulations = modulations.ToArray(),
+                    Encryptions = new byte[] { 0 },
+                    Modulations = new[] { modulation },
                     PacketNumber = _packetNumber++,
                     OriginalClientGuidBytes = _guidAsciiBytes,
                     RetransmissionCount = 0
@@ -296,16 +199,11 @@ public class UDPClientAudioProcessor : IDisposable
 
                 _udpClient.Send(udpVoicePacket);
 
-                var sendingRadio = _clientStateSingleton.PlayerRadioInfo.radios[sendingOn];
+                //not sending yet
+                if (!_clientStateSingleton.RadioSendingState.IsSending)
+                    _audioManager.PlaySoundEffectStartTransmit(sendingOn);
 
-                //not sending or really quickly switched sending
-                if (sendingRadio != null &&
-                    (!_clientStateSingleton.RadioSendingState.IsSending ||
-                     _clientStateSingleton.RadioSendingState.SendingOn != sendingOn))
-                    _audioManager.PlaySoundEffectStartTransmit(sendingOn,
-                        sendingRadio.enc && sendingRadio.encKey > 0);
-
-                // radio panel: transmitting indicator
+                // radio window: transmitting indicator
                 _clientStateSingleton.RadioSendingState = new RadioSendingState
                 {
                     IsSending = true,
@@ -316,10 +214,10 @@ public class UDPClientAudioProcessor : IDisposable
                 // local passthrough (mic output device / recording) through the own radio model
                 return new ClientAudio
                 {
-                    Frequency = frequencies[0],
-                    Modulation = modulations[0],
+                    Frequency = frequency,
+                    Modulation = modulation,
                     EncodedAudio = bytes,
-                    Encryption = encryptions[0],
+                    Encryption = 0,
                     Volume = 1,
                     Decryptable = true,
                     ReceivedRadio = sendingOn,
@@ -340,10 +238,7 @@ public class UDPClientAudioProcessor : IDisposable
             {
                 _clientStateSingleton.RadioSendingState.IsSending = false;
 
-                var sentOn = _clientStateSingleton.RadioSendingState.SendingOn;
-                if (sentOn >= PlayerRadioInfo.FirstUserRadio &&
-                    sentOn < _clientStateSingleton.PlayerRadioInfo.radios.Length)
-                    _audioManager.PlaySoundEffectEndTransmit(sentOn);
+                _audioManager.PlaySoundEffectEndTransmit(sendingOn);
             }
         }
 
@@ -393,147 +288,93 @@ public class UDPClientAudioProcessor : IDisposable
     private void ProcessVoicePacket(UDPVoicePacket udpVoicePacket)
     {
         var radioInfo = _clientStateSingleton.PlayerRadioInfo;
-        var frequencyCount = udpVoicePacket.Frequencies.Length;
-
-        var radioReceivingPriorities = new List<RadioReceivingPriority>(frequencyCount);
         var blockedRadios = CurrentlyBlockedRadios();
 
-        var strictEncryption = _serverSettings.GetSettingAsBool(ServerSettingsKeys.STRICT_RADIO_ENCRYPTION);
+        // the first frequency of the packet the radio hears - an unencrypted one wins
+        Radio receivingRadio = null;
+        RadioReceivingState receivingState = null;
+        var receivedFrequency = 0d;
+        byte receivedModulation = 0;
+        byte receivedEncryption = 0;
+        var decryptable = false;
 
-        // Parse frequencies into receiving radio priority for selection below
-        for (var i = 0; i < frequencyCount; i++)
+        for (var i = 0; i < udpVoicePacket.Frequencies.Length; i++)
         {
             var radio = radioInfo.CanHearTransmission(
                 udpVoicePacket.Frequencies[i],
                 (Modulation)udpVoicePacket.Modulations[i],
                 udpVoicePacket.Encryptions[i],
-                strictEncryption,
                 blockedRadios,
                 out var state,
-                out var decryptable);
+                out var canDecrypt);
 
-            // CanHearTransmission may return a blocked radio as a non-decryptable "best match" - drop it
-            if (radio != null && state != null && !blockedRadios.Contains(state.ReceivedOn))
-                radioReceivingPriorities.Add(new RadioReceivingPriority
-                {
-                    Decryptable = decryptable,
-                    Encryption = udpVoicePacket.Encryptions[i],
-                    Frequency = udpVoicePacket.Frequencies[i],
-                    Modulation = udpVoicePacket.Modulations[i],
-                    ReceivingRadio = radio,
-                    ReceivingState = state
-                });
-        }
+            if (radio == null || state == null) continue;
 
-        if (radioReceivingPriorities.Count == 0) return;
-
-        // Sort receiving radios to play audio on correct one
-        radioReceivingPriorities.Sort(SortRadioReceivingPriorities);
-
-        var interference = _serverSettings.GetSettingAsBool(ServerSettingsKeys.IRL_RADIO_RX_INTERFERENCE);
-
-        for (var i = 0; i < radioReceivingPriorities.Count; i++)
-        {
-            var destinationRadio = radioReceivingPriorities[i];
-            var isSimultaneousTransmission = radioReceivingPriorities.Count > 1 && i > 0;
-
-            var audio = new ClientAudio
+            if (receivingRadio == null || (canDecrypt && !decryptable))
             {
-                ClientGuid = udpVoicePacket.Guid,
-                EncodedAudio = udpVoicePacket.AudioPart1Bytes,
-                ReceiveTime = DateTime.Now.Ticks,
-                Frequency = destinationRadio.Frequency,
-                Modulation = destinationRadio.Modulation,
-                Volume = VolumeConversionHelper.ConvertRadioVolumeSlider(destinationRadio.ReceivingRadio.volume),
-                ReceivedRadio = destinationRadio.ReceivingState.ReceivedOn,
-                Encryption = destinationRadio.Encryption,
-                Decryptable = destinationRadio.Decryptable, // mark if we can decrypt it
-                PacketNumber = udpVoicePacket.PacketNumber,
-                OriginalClientGuid = udpVoicePacket.OriginalClientGuid
-                // NoAudioEffects: the server's clean frequencies are applied by ClientAudioProvider
-            };
-
-            var transmitterName = "";
-            if (_clients.TryGetValue(udpVoicePacket.Guid, out var transmittingClient))
-            {
-                //skip receiving this audio
-                if (transmittingClient.Muted) continue;
-
-                if (_serverSettings.GetSettingAsBool(ServerSettingsKeys.SHOW_TRANSMITTER_NAME)
-                    && _globalSettings.GetClientSettingBool(GlobalSettingsKeys.ShowTransmitterName))
-                    transmitterName = transmittingClient.Name;
-
-                // background sound of the sender (may be null)
-                audio.Ambient = transmittingClient.RadioInfo?.ambient;
+                receivingRadio = radio;
+                receivingState = state;
+                receivedFrequency = udpVoicePacket.Frequencies[i];
+                receivedModulation = udpVoicePacket.Modulations[i];
+                receivedEncryption = udpVoicePacket.Encryptions[i];
+                decryptable = canDecrypt;
             }
 
-            _radioReceivingState[audio.ReceivedRadio] = new RadioReceivingState
-            {
-                IsSecondary = destinationRadio.ReceivingState.IsSecondary,
-                IsSimultaneous = isSimultaneousTransmission,
-                LastReceivedAt = DateTime.Now.Ticks,
-                ReceivedOn = destinationRadio.ReceivingState.ReceivedOn,
-                SentBy = transmitterName ?? ""
-            };
-
-            //we now WANT to duplicate through multiple pipelines ONLY if radio interference is on
-            //this is a nice optimisation to save duplicated audio on servers without that setting
-            if (i == 0 || interference) _audioManager.AddClientAudio(audio);
+            if (decryptable) break;
         }
+
+        if (receivingRadio == null) return;
+
+        var audio = new ClientAudio
+        {
+            ClientGuid = udpVoicePacket.Guid,
+            EncodedAudio = udpVoicePacket.AudioPart1Bytes,
+            ReceiveTime = DateTime.Now.Ticks,
+            Frequency = receivedFrequency,
+            Modulation = receivedModulation,
+            Volume = VolumeConversionHelper.ConvertRadioVolumeSlider(receivingRadio.volume),
+            ReceivedRadio = receivingState.ReceivedOn,
+            Encryption = receivedEncryption,
+            Decryptable = decryptable,
+            PacketNumber = udpVoicePacket.PacketNumber,
+            OriginalClientGuid = udpVoicePacket.OriginalClientGuid
+            // NoAudioEffects: the server's clean frequencies are applied by ClientAudioProvider
+        };
+
+        var transmitterName = "";
+        if (_clients.TryGetValue(udpVoicePacket.Guid, out var transmittingClient))
+        {
+            //skip receiving this audio
+            if (transmittingClient.Muted) return;
+
+            if (_serverSettings.GetSettingAsBool(ServerSettingsKeys.SHOW_TRANSMITTER_NAME)
+                && _globalSettings.GetClientSettingBool(GlobalSettingsKeys.ShowTransmitterName))
+                transmitterName = transmittingClient.Name;
+
+            // background sound of the sender (may be null)
+            audio.Ambient = transmittingClient.RadioInfo?.ambient;
+        }
+
+        _radioReceivingState[audio.ReceivedRadio] = new RadioReceivingState
+        {
+            IsSecondary = false,
+            IsSimultaneous = false,
+            LastReceivedAt = DateTime.Now.Ticks,
+            ReceivedOn = receivingState.ReceivedOn,
+            SentBy = transmitterName ?? ""
+        };
+
+        _audioManager.AddClientAudio(audio);
     }
 
     private void PTTHandler(List<InputBindState> pressed)
     {
-        var radios = _clientStateSingleton.PlayerRadioInfo;
-
-        var radioSwitchPtt =
-            _globalSettings.ProfileSettingsStore.GetClientSettingBool(ProfileSettingsKeys.RadioSwitchIsPTT);
-        var radioSwitchPttWhenValid =
-            _globalSettings.ProfileSettingsStore.GetClientSettingBool(ProfileSettingsKeys
-                .RadioSwitchIsPTTOnlyWhenValid);
-
-        //store the current PTT state and radios
-        var currentRadioId = radios.selected;
-
         var ptt = false;
         foreach (var inputBindState in pressed)
-            if (inputBindState.IsActive)
+            if (inputBindState.IsActive && inputBindState.MainDevice.InputBind == InputBinding.Ptt)
             {
-                //radio switch? (SwitchN = 100 + radio index)
-                if ((int)inputBindState.MainDevice.InputBind >= (int)InputBinding.Switch1 &&
-                    (int)inputBindState.MainDevice.InputBind <= (int)InputBinding.Switch10)
-                {
-                    //gives you radio id if you minus 100
-                    var radioId = (int)inputBindState.MainDevice.InputBind - 100;
-
-                    if (radioId < radios.radios.Length)
-                    {
-                        if (RadioHelper.SelectRadio(radioId))
-                        {
-                            //turn on PTT
-                            if (radioSwitchPttWhenValid || radioSwitchPtt)
-                            {
-                                _lastPTTPress = DateTime.Now.Ticks;
-                                ptt = true;
-                                //Store last release time
-                            }
-                        }
-                        else
-                        {
-                            //turn on PTT even if not valid radio switch
-                            if (radioSwitchPtt)
-                            {
-                                _lastPTTPress = DateTime.Now.Ticks;
-                                ptt = true;
-                            }
-                        }
-                    }
-                }
-                else if (inputBindState.MainDevice.InputBind == InputBinding.Ptt)
-                {
-                    _lastPTTPress = DateTime.Now.Ticks;
-                    ptt = true;
-                }
+                _lastPTTPress = DateTime.Now.Ticks;
+                ptt = true;
             }
 
         /**
@@ -574,15 +415,13 @@ public class UDPClientAudioProcessor : IDisposable
         //if length is zero - no keybinds or no PTT pressed set to false
         var diff = new TimeSpan(DateTime.Now.Ticks - _lastPTTPress);
 
-        //Release the PTT ONLY if X ms have passed and we didnt switch radios to handle
-        //shitty buttons
+        //Release the PTT ONLY if X ms have passed, to handle bouncing buttons
         var releaseTime = _globalSettings.ProfileSettingsStore
             .GetClientSettingFloat(ProfileSettingsKeys.PTTReleaseDelay);
 
         if (!ptt
             && releaseTime > 0
-            && diff.TotalMilliseconds <= releaseTime
-            && currentRadioId == radios.selected)
+            && diff.TotalMilliseconds <= releaseTime)
             ptt = true;
 
         /**

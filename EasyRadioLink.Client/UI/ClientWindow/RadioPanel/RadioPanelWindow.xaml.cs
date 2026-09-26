@@ -1,100 +1,146 @@
 using System;
 using System.ComponentModel;
+using System.Globalization;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
+using System.Windows.Media.Effects;
 using System.Windows.Threading;
 using Caliburn.Micro;
+using EasyRadioLink.Client.Radios;
 using EasyRadioLink.Client.Singletons;
 using EasyRadioLink.Client.Utils;
+using EasyRadioLink.Common.Helpers;
+using EasyRadioLink.Common.Models.Player;
 using EasyRadioLink.Common.Network.Singletons;
 using EasyRadioLink.Common.Settings;
 
 namespace EasyRadioLink.Client.UI.ClientWindow.RadioPanel;
 
 /// <summary>
-///     The radio panel: an always-on-top window with the user's radios 1..10.
+///     The radio: an always-on-top, borderless window with ONE radio.
 ///     <list type="bullet">
-///         <item>Only switched-on radios are shown (disabled slots are hidden) and the window fits them: up to five in a row,
-///             more in two rows. Without radios a short hint is shown instead: not connected, radios loading (just
-///             connected), or connected but the radio layout has no switched-on radio.</item>
-///         <item>The content has a fixed natural size and is scaled uniformly with the window (resize grip, the aspect
-///             ratio is kept). Position, size and opacity are saved in global.cfg (RadioX/RadioY/RadioWidth/RadioHeight/RadioOpacity).</item>
-///         <item><see cref="ResetRadioPanelMessage" /> closes the panel without saving (settings reset / off-screen check).</item>
+///         <item>
+///             Display: frequency on a seven-segment LCD (<c>000.000</c> MHz, two small digits for the part below
+///             1 kHz), band and modulation (from the <see cref="BandPlan" />), users on the frequency and the name of
+///             the speaker (if the server allows it), TX / RX, the tuning step. The digit the step changes is underlined.
+///         </item>
+///         <item>
+///             Tuning: the knob (drag in a circle, mouse wheel), the mouse wheel over the display, the ▲ / ▼ keys and the
+///             arrow keys Up / Down; STEP (or Left / Right) chooses the step, 1 kHz .. 100 MHz. Double-click on the
+///             display (or Enter) to type a frequency: Enter applies, Esc cancels. When the frequency is changed
+///             elsewhere (hotkeys) the knob turns a notch with it.
+///         </item>
+///         <item>Offline (not connected): dashes on the display, NO LINK, all controls disabled.</item>
+///         <item>
+///             The content has a fixed natural size and is scaled uniformly with the window (grip in the corner).
+///             Position and scale are saved in global.cfg (RadioX / RadioY / RadioScale), the tuning step in
+///             radio-state.json. The size keys of 1.0 (RadioWidth / RadioHeight - the size of the six-radio panel) are
+///             not read.
+///         </item>
+///         <item><see cref="ResetRadioPanelMessage" /> closes the window without saving (settings reset / off-screen check).</item>
 ///     </list>
+///     All changes go through <see cref="RadioHelper" />; the window repaints every 80 ms.
 /// </summary>
 public partial class RadioPanelWindow : Window, IHandle<ResetRadioPanelMessage>
 {
-    /// <summary>Default position of the panel (global.cfg RadioX / RadioY).</summary>
+    /// <summary>Default position of the window (global.cfg RadioX / RadioY).</summary>
     public const double DefaultLeft = 300;
 
     public const double DefaultTop = 300;
 
-    // radios per row
-    private const int MaxColumns = 5;
+    /// <summary>Size of the window at scale 1 (including the transparent shadow margin).</summary>
+    public const double NaturalWidth = 500;
 
-    // largest scale restored from a saved size
-    private const double MaxRestoredScale = 4.0;
+    public const double NaturalHeight = 238;
+
+    private const double MinScale = 0.7;
+    private const double MaxScale = 4.0;
+
+    private const string OfflineFrequency = "---.---";
 
     private static readonly NLog.Logger Logger = NLog.LogManager.GetCurrentClassLogger();
 
-    private static readonly SolidColorBrush WhiteBrush = Freeze(new SolidColorBrush(Colors.White));
-    private static readonly SolidColorBrush OrangeBrush = Freeze(new SolidColorBrush(Colors.Orange));
-    private static readonly SolidColorBrush ConnectedBrush = Freeze(new SolidColorBrush(Color.FromRgb(0x3C, 0xC8, 0x3C)));
-    private static readonly SolidColorBrush DisconnectedBrush = Freeze(new SolidColorBrush(Colors.Red));
+    // link LED while not connected: an unlit red
+    private static readonly Brush OfflineLedBrush = FrozenBrush(Color.FromRgb(0x5A, 0x23, 0x20));
 
-    private readonly ClientStateSingleton _clientStateSingleton = ClientStateSingleton.Instance;
-
+    private readonly ClientStateSingleton _clientState = ClientStateSingleton.Instance;
     private readonly GlobalSettingsStore _globalSettings = GlobalSettingsStore.Instance;
 
-    private readonly RadioChannelControl[] _radioControls;
+    private readonly Brush _litBrush;
+    private readonly Brush _dimBrush;
+    private readonly Brush _txBrush;
+    private readonly Brush _rxBrush;
+
+    private readonly Effect _txGlow;
+    private readonly Effect _rxGlow;
 
     private readonly DispatcherTimer _updateTimer;
+    private readonly DispatcherTimer _entryErrorTimer;
 
-    // width / height of the content at scale 1
-    private double _aspectRatio = 1;
-
-    // the window size is being changed by the code, not by the user
-    private bool _adjustingSize;
-
-    // bit n = radio n shown, -1 = not computed yet, 0 = no radios (hint shown)
-    private int _layoutSignature = -1;
-
-    private Size _naturalSize = Size.Empty;
-
-    // set when the window is closed because of a settings reset - don't save the position then
+    // set when the window is closed because of a settings reset - don't save the placement then
     private bool _resetting;
 
-    // the saved size was applied (to a layout with radios) - only then the size is saved again
-    private bool _sizeRestored;
+    // resize grip: pointer position (window coordinates) and window size when the drag started
+    private bool _resizing;
+    private Point _resizeStart;
+    private Size _resizeStartSize;
+
+    // current scale of the window (1 = natural size), saved as RadioScale
+    private double _scale = 1.0;
+
+    // tuning step in Hz (STEP)
+    private int _step;
+
+    // frequency shown by the last refresh (NaN while offline) - a different frequency on the next refresh was tuned
+    // outside the window (hotkeys)
+    private double _shownFrequency = double.NaN;
+
+    // volume shown in the tooltip of the volume knob
+    private int _volumeTooltipPercent = -1;
 
     public RadioPanelWindow()
     {
-        //load opacity before the intialising as the slider changed
-        //method fires after initialisation
-        var opacity = _globalSettings.GetPositionSetting(GlobalSettingsKeys.RadioOpacity).DoubleValue;
-
         InitializeComponent();
+
+        _litBrush = (Brush)FindResource("LcdLitBrush");
+        _dimBrush = (Brush)FindResource("LcdDimBrush");
+        _txBrush = (Brush)FindResource("LcdTxBrush");
+        _rxBrush = (Brush)FindResource("LcdRxBrush");
+
+        _txGlow = Glow(((SolidColorBrush)_txBrush).Color);
+        _rxGlow = Glow(((SolidColorBrush)_rxBrush).Color);
 
         WindowStartupLocation = WindowStartupLocation.Manual;
         Left = _globalSettings.GetPositionSetting(GlobalSettingsKeys.RadioX).DoubleValue;
         Top = _globalSettings.GetPositionSetting(GlobalSettingsKeys.RadioY).DoubleValue;
+        ApplyScale(SavedScale());
 
-        Opacity = double.IsFinite(opacity) ? Math.Clamp(opacity, WindowOpacitySlider.Minimum, 1.0) : 1.0;
-        WindowOpacitySlider.Value = Opacity;
+        _step = RadioStatePersistence.Load().Step;
 
-        _radioControls = [radio1, radio2, radio3, radio4, radio5, radio6, radio7, radio8, radio9, radio10];
-
-        //allows click and drag anywhere on the window
+        //allows click and drag anywhere on the housing
         ContainerPanel.MouseLeftButtonDown += ContainerPanel_MouseLeftButtonDown;
+        PreviewKeyDown += Window_PreviewKeyDown;
 
-        RadioRefresh(null, null);
+        // no control takes the keyboard focus: the window itself gets it, so the arrow keys tune
+        Activated += (_, _) =>
+        {
+            if (!IsKeyboardFocusWithin) Focus();
+        };
 
-        //init radio refresh
+        _entryErrorTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(700) };
+        _entryErrorTimer.Tick += (_, _) =>
+        {
+            _entryErrorTimer.Stop();
+            EntryPanel.BorderBrush = _litBrush;
+        };
+
+        Refresh(null, null);
+
         _updateTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(80) };
-        _updateTimer.Tick += RadioRefresh;
+        _updateTimer.Tick += Refresh;
         _updateTimer.Start();
 
         EventBus.Instance.SubscribeOnUIThread(this);
@@ -113,218 +159,498 @@ public partial class RadioPanelWindow : Window, IHandle<ResetRadioPanelMessage>
     }
 
     /// <summary>
-    ///     Writes the default placement of the panel (position, natural size, full opacity). An open panel must be
-    ///     closed with <see cref="ResetRadioPanelMessage" /> so it does not save its own placement afterwards.
+    ///     Writes the default placement of the window (position, natural size). An open window must be closed with
+    ///     <see cref="ResetRadioPanelMessage" /> so it does not save its own placement afterwards.
     /// </summary>
     public static void ResetSavedPlacement(GlobalSettingsStore settings)
     {
         settings.SetPositionSetting(GlobalSettingsKeys.RadioX, DefaultLeft);
         settings.SetPositionSetting(GlobalSettingsKeys.RadioY, DefaultTop);
-        // 0 = natural size (scale 1)
-        settings.SetPositionSetting(GlobalSettingsKeys.RadioWidth, 0);
-        settings.SetPositionSetting(GlobalSettingsKeys.RadioHeight, 0);
-        settings.SetPositionSetting(GlobalSettingsKeys.RadioOpacity, 1.0);
+        settings.SetPositionSetting(GlobalSettingsKeys.RadioScale, 1);
     }
 
-    private static SolidColorBrush Freeze(SolidColorBrush brush)
+    /// <summary>
+    ///     The saved scale of the window (global.cfg RadioScale, 1 = natural size); 1 if it is missing or invalid. Not
+    ///     yet limited to <see cref="MinScale" /> .. <see cref="MaxScale" /> and the monitor.
+    /// </summary>
+    public static double ReadSavedScale(GlobalSettingsStore settings)
     {
+        var scale = settings.GetPositionSetting(GlobalSettingsKeys.RadioScale).DoubleValue;
+
+        return double.IsFinite(scale) && scale > 0 ? scale : 1.0;
+    }
+
+    private static Brush FrozenBrush(Color color)
+    {
+        var brush = new SolidColorBrush(color);
         brush.Freeze();
         return brush;
     }
 
-    private void RadioRefresh(object sender, EventArgs eventArgs)
+    private static Effect Glow(Color color)
     {
-        UpdateRadioLayout();
-
-        foreach (var radio in _radioControls)
-        {
-            if (radio.Visibility != Visibility.Visible) continue;
-
-            radio.RepaintRadioStatus();
-            radio.RepaintRadioReceive();
-        }
-
-        ConnectionIndicator.Fill = _clientStateSingleton.IsConnected ? ConnectedBrush : DisconnectedBrush;
-
-        HandleGlobalSimultaneousTransmissionButton();
+        var glow = new DropShadowEffect { Color = color, BlurRadius = 8, ShadowDepth = 0, Opacity = 0.9 };
+        glow.Freeze();
+        return glow;
     }
 
-    #region Layout and size
+    #region Display
 
-    /// <summary>Shows the switched-on radios (or the hint) and fits the window when that set changes.</summary>
-    private void UpdateRadioLayout()
+    private void Refresh(object sender, EventArgs e)
     {
-        var signature = 0;
+        var connected = _clientState.IsConnected;
+        LinkLed.Fill = connected ? _rxBrush : OfflineLedBrush;
+        LinkLedGlow.Opacity = connected ? 0.8 : 0;
 
-        if (RadioHelper.RadiosAvailable())
+        var radio = RadioHelper.GetRadio();
+
+        if (radio == null)
+            ShowOffline(connected);
+        else
+            ShowRadio(radio);
+
+        StepText.Text = string.Format(CultureInfo.InvariantCulture, Properties.Resources.RadioStepFormat,
+            TuningSteps.Label(_step));
+    }
+
+    private void ShowOffline(bool connected)
+    {
+        if (EntryPanel.Visibility == Visibility.Visible) CloseEntry();
+
+        _shownFrequency = double.NaN;
+
+        // the backlight is dimmed while the radio is off
+        Backlight.Opacity = 0.35;
+
+        FrequencyDisplay.Text = OfflineFrequency;
+        FrequencyDisplay.LitBrush = _dimBrush;
+        FrequencyDisplay.GlowRadius = 0;
+        FrequencyDisplay.MarkedDigit = -1;
+        SubKiloHertzDisplay.Text = "";
+
+        BandChip.Visibility = Visibility.Hidden;
+        ModulationText.Visibility = Visibility.Hidden;
+        UsersPanel.Visibility = Visibility.Collapsed;
+        UnitText.Foreground = _dimBrush;
+        StepText.Visibility = Visibility.Hidden;
+
+        SetIndicator(TxText, false, _txBrush, _txGlow);
+        SetIndicator(RxText, false, _rxBrush, _rxGlow);
+
+        StatusText.Foreground = _dimBrush;
+        StatusText.Text = connected ? Properties.Resources.RadioStatusLoading : Properties.Resources.RadioStatusNoLink;
+
+        SetControlsEnabled(false);
+    }
+
+    private void ShowRadio(Radio radio)
+    {
+        var frequency = radio.freq;
+        var band = BandPlan.GetBand(frequency);
+
+        // tuned outside the window (hotkeys): turn the knob a notch with it (the window's own tuning has updated
+        // _shownFrequency already, see RefreshAfterTuning)
+        if (!double.IsNaN(_shownFrequency) && Math.Abs(frequency - _shownFrequency) >= 0.5)
+            TuningKnob.Nudge(Math.Sign(frequency - _shownFrequency));
+
+        _shownFrequency = frequency;
+
+        Backlight.Opacity = 1;
+
+        FrequencyDisplay.Text = FormatFrequency(frequency, out var subKiloHertz);
+        FrequencyDisplay.LitBrush = _litBrush;
+        FrequencyDisplay.GlowRadius = 12;
+        FrequencyDisplay.MarkedDigit = TuningSteps.DigitIndex(_step);
+
+        // 446.19375 MHz: "75" after the kHz digits; blank (unlit segments only) on the kHz grid
+        SubKiloHertzDisplay.Text = subKiloHertz > 0
+            ? (subKiloHertz / 10).ToString("00", CultureInfo.InvariantCulture)
+            : "";
+
+        BandText.Text = band.Label;
+        BandChip.Visibility = Visibility.Visible;
+        ModulationText.Text = radio.modulation switch
         {
-            var radios = _clientStateSingleton.PlayerRadioInfo.radios;
+            Modulation.AM => Properties.Resources.OverlayAM,
+            Modulation.FM => Properties.Resources.OverlayFM,
+            Modulation.DIGITAL => Properties.Resources.OverlayDIG,
+            _ => ""
+        };
+        ModulationText.Visibility = Visibility.Visible;
+        UnitText.Foreground = _litBrush;
+        StepText.Visibility = Visibility.Visible;
 
-            for (var i = 0; i < _radioControls.Length; i++)
-            {
-                var radioId = _radioControls[i].RadioId;
-                if (radioId > 0 && radioId < radios.Length && radios[radioId] != null && radios[radioId].IsEnabled)
-                    signature |= 1 << radioId;
-            }
-        }
-
-        // the signature is 0 both while not connected and while connected without radios - update the hint first
-        UpdateHintText();
-
-        if (signature == _layoutSignature) return;
-
-        var previousScale = CurrentScale();
-        _layoutSignature = signature;
-
-        var visibleCount = 0;
-        foreach (var control in _radioControls)
+        // users on the frequency - only if the server allows it
+        if (ClientStateSingleton.ShowTunedCount)
         {
-            var visible = (signature & (1 << control.RadioId)) != 0;
-            control.Visibility = visible ? Visibility.Visible : Visibility.Collapsed;
-            if (visible) visibleCount++;
-        }
-
-        if (visibleCount == 0)
-        {
-            RadioGrid.Visibility = Visibility.Collapsed;
-            NoRadiosPanel.Visibility = Visibility.Visible;
+            UsersText.Text = _clientState.ClientsOnFreq(frequency, radio.modulation)
+                .ToString(CultureInfo.InvariantCulture);
+            UsersPanel.Visibility = Visibility.Visible;
         }
         else
         {
-            // up to five radios in one row, more in two rows
-            var rows = visibleCount <= MaxColumns ? 1 : 2;
-            var columns = (int)Math.Ceiling(visibleCount / (double)rows);
-
-            RadioGrid.Rows = rows;
-            RadioGrid.Columns = columns;
-            RadioGrid.Visibility = Visibility.Visible;
-            NoRadiosPanel.Visibility = Visibility.Collapsed;
+            UsersPanel.Visibility = Visibility.Collapsed;
         }
 
-        // natural size of the content - the parents cache their measure, so invalidate the chain first
-        for (var element = (UIElement)RadioGrid; element != null; element = VisualTreeHelper.GetParent(element) as UIElement)
+        var sending = _clientState.RadioSendingState;
+        var transmitting = sending.IsSending && sending.SendingOn == PlayerRadioInfo.RadioId;
+
+        var receiveState = _clientState.RadioReceivingState[PlayerRadioInfo.RadioId];
+        var receiving = receiveState != null && receiveState.IsReceiving;
+
+        SetIndicator(TxText, transmitting, _txBrush, _txGlow);
+        SetIndicator(RxText, receiving, _rxBrush, _rxGlow);
+
+        // the name of the speaker (empty unless the server and the user allow it)
+        StatusText.Foreground = _litBrush;
+        StatusText.Text = receiving && !string.IsNullOrWhiteSpace(receiveState.SentBy) ? receiveState.SentBy : "";
+
+        if (!VolumeKnob.IsMouseCaptured && Math.Abs(VolumeKnob.Value - radio.volume) > 0.001)
+            VolumeKnob.Value = radio.volume;
+
+        var percent = (int)Math.Round(radio.volume * 100);
+        if (percent != _volumeTooltipPercent)
         {
-            element.InvalidateMeasure();
-            if (ReferenceEquals(element, ContainerPanel)) break;
+            _volumeTooltipPercent = percent;
+            VolumeKnob.ToolTip = string.Format(CultureInfo.InvariantCulture, Properties.Resources.ToolTipRadioVolume,
+                percent);
         }
 
-        ContainerPanel.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
-        var natural = ContainerPanel.DesiredSize;
-
-        if (natural.Width < 1 || natural.Height < 1) return;
-
-        double scale;
-        if (!_sizeRestored && visibleCount > 0)
-        {
-            // first real layout: use the size saved last time
-            scale = SavedScale(natural);
-            _sizeRestored = true;
-        }
-        else
-        {
-            scale = previousScale;
-        }
-
-        ApplyNaturalSize(natural, scale);
+        SetControlsEnabled(true);
     }
 
-    /// <summary>Hint shown instead of the radios: not connected, radios still loading, or no radio switched on.</summary>
-    private void UpdateHintText()
+    /// <summary>"027.185" (MHz with three decimals) plus the rest below 1 kHz in Hz (0..999).</summary>
+    internal static string FormatFrequency(double frequencyHz, out int subKiloHertz)
     {
-        var hint = !_clientStateSingleton.IsConnected
-            ? Properties.Resources.RadioPanelNotConnected
-            : !_clientStateSingleton.PlayerRadioInfo.IsActive
-                ? Properties.Resources.RadioPanelLoading
-                : Properties.Resources.RadioPanelNoRadiosEnabled;
+        var hertz = (long)Math.Round(Math.Max(0, frequencyHz));
+        var kiloHertz = hertz / 1000;
+        subKiloHertz = (int)(hertz % 1000);
 
-        if (!string.Equals(NoRadiosText.Text, hint, StringComparison.Ordinal)) NoRadiosText.Text = hint;
+        return string.Format(CultureInfo.InvariantCulture, "{0:000}.{1:000}", kiloHertz / 1000, kiloHertz % 1000);
     }
 
-    /// <summary>Current scale of the content (1 = natural size).</summary>
-    private double CurrentScale()
+    private static void SetIndicator(System.Windows.Controls.TextBlock indicator, bool on, Brush onBrush,
+        Effect glow)
     {
-        if (_naturalSize.IsEmpty || _naturalSize.Width < 1) return 1.0;
+        var brush = on ? onBrush : null;
+        if (brush == null)
+        {
+            indicator.ClearValue(System.Windows.Controls.TextBlock.ForegroundProperty);
+            indicator.Effect = null;
+        }
+        else if (!ReferenceEquals(indicator.Foreground, brush))
+        {
+            indicator.Foreground = brush;
+            indicator.Effect = glow;
+        }
+    }
 
-        var width = double.IsFinite(Width) ? Width : ActualWidth;
-        if (!double.IsFinite(width) || width <= 0) return 1.0;
+    private void SetControlsEnabled(bool enabled)
+    {
+        if (StepUpButton.IsEnabled == enabled && TuningKnob.IsEnabled == enabled) return;
 
-        return Math.Max(1.0, width / _naturalSize.Width);
+        StepUpButton.IsEnabled = enabled;
+        StepDownButton.IsEnabled = enabled;
+        StepButton.IsEnabled = enabled;
+        TuningKnob.IsEnabled = enabled;
+        VolumeKnob.IsEnabled = enabled;
+    }
+
+    #endregion
+
+    #region Tuning
+
+    /// <summary>Tunes by <paramref name="steps" /> tuning steps (negative = down).</summary>
+    private void Tune(int steps)
+    {
+        if (steps == 0 || RadioHelper.GetRadio() == null) return;
+
+        // one step at a time: with rotary style steps every step rolls its digit over on its own
+        var direction = Math.Sign(steps);
+        for (var i = 0; i < Math.Abs(steps); i++) RadioHelper.StepFrequency(direction * (double)_step);
+
+        RefreshAfterTuning();
     }
 
     /// <summary>
-    ///     Scale that fits the saved panel size (RadioWidth / RadioHeight) to <paramref name="natural" />. The smaller
-    ///     of both ratios is used, so a layout with a different number of radios is never scaled up beyond the saved
-    ///     size.
+    ///     Repaints after the window itself changed the frequency: the knob has turned already (or does not turn for a
+    ///     typed frequency), so the change must not count as tuned elsewhere.
     /// </summary>
-    private double SavedScale(Size natural)
+    private void RefreshAfterTuning()
     {
-        var savedWidth = _globalSettings.GetPositionSetting(GlobalSettingsKeys.RadioWidth).DoubleValue;
-        var savedHeight = _globalSettings.GetPositionSetting(GlobalSettingsKeys.RadioHeight).DoubleValue;
+        var radio = RadioHelper.GetRadio();
+        _shownFrequency = radio?.freq ?? double.NaN;
 
-        if (!double.IsFinite(savedWidth) || !double.IsFinite(savedHeight) || savedWidth <= 0 || savedHeight <= 0)
-            return 1.0;
-
-        var scale = Math.Min(savedWidth / natural.Width, savedHeight / natural.Height);
-
-        // not larger than the monitor the panel is on (e.g. saved on a bigger monitor that is gone now)
-        try
-        {
-            var area = ScreenHelper.WorkingAreaAt(Left, Top);
-            if (area.Width > 0 && area.Height > 0)
-                scale = Math.Min(scale, Math.Min(area.Width / natural.Width, area.Height / natural.Height));
-        }
-        catch (Exception ex)
-        {
-            Logger.Warn(ex, "Unable to check the size of the radio panel against the monitor");
-        }
-
-        return double.IsFinite(scale) ? Math.Clamp(scale, 1.0, MaxRestoredScale) : 1.0;
+        Refresh(null, null);
     }
 
-    private void ApplyNaturalSize(Size natural, double scale)
+    private void TuningKnob_Tuned(object sender, int detents)
     {
-        _naturalSize = natural;
-        _aspectRatio = natural.Width / natural.Height;
-
-        _adjustingSize = true;
-        try
-        {
-            // the minimum is the natural size (scale 1)
-            MinWidth = 0;
-            MinHeight = 0;
-            Width = natural.Width * scale;
-            Height = natural.Height * scale;
-            MinWidth = natural.Width;
-            MinHeight = natural.Height;
-        }
-        finally
-        {
-            _adjustingSize = false;
-        }
+        Tune(detents);
     }
 
-    protected override void OnRenderSizeChanged(SizeChangedInfo sizeInfo)
+    private void StepUpButton_Click(object sender, RoutedEventArgs e)
     {
-        base.OnRenderSizeChanged(sizeInfo);
+        TuningKnob.Nudge(1);
+        Tune(1);
+    }
 
-        if (_adjustingSize || _naturalSize.IsEmpty) return;
+    private void StepDownButton_Click(object sender, RoutedEventArgs e)
+    {
+        TuningKnob.Nudge(-1);
+        Tune(-1);
+    }
 
-        // the user resizes with the grip: keep the aspect ratio of the content
-        _adjustingSize = true;
-        try
+    private void StepButton_Click(object sender, RoutedEventArgs e)
+    {
+        SetStep(TuningSteps.Next(_step));
+    }
+
+    /// <summary>Selects the next larger (<paramref name="larger" />) or smaller step, without wrapping.</summary>
+    private void ShiftStep(bool larger)
+    {
+        var index = -1;
+        for (var i = 0; i < TuningSteps.All.Count; i++)
+            if (TuningSteps.All[i] == _step)
+                index = i;
+
+        index = Math.Clamp(index + (larger ? 1 : -1), 0, TuningSteps.All.Count - 1);
+        SetStep(TuningSteps.All[index]);
+    }
+
+    private void SetStep(int step)
+    {
+        if (!TuningSteps.IsValid(step) || step == _step) return;
+
+        _step = step;
+        RadioStatePersistence.SaveStep(step);
+        Refresh(null, null);
+    }
+
+    private void Display_MouseWheel(object sender, MouseWheelEventArgs e)
+    {
+        // typing a frequency, or offline (the knob is disabled and must not turn)
+        if (EntryPanel.Visibility == Visibility.Visible || RadioHelper.GetRadio() == null) return;
+
+        e.Handled = true;
+
+        var detents = Controls.TuningKnob.WheelDetents(e.Delta);
+        TuningKnob.Nudge(detents);
+        Tune(detents);
+    }
+
+    private void VolumeKnob_ValueChangedByUser(object sender, EventArgs e)
+    {
+        RadioHelper.SetRadioVolume((float)VolumeKnob.Value);
+    }
+
+    private void Window_PreviewKeyDown(object sender, KeyEventArgs e)
+    {
+        // the direct entry box handles its own keys
+        if (EntryPanel.Visibility == Visibility.Visible || RadioHelper.GetRadio() == null) return;
+
+        switch (e.Key)
         {
-            if (sizeInfo.WidthChanged)
-                Height = sizeInfo.NewSize.Width / _aspectRatio;
-            else
-                Width = sizeInfo.NewSize.Height * _aspectRatio;
-        }
-        finally
-        {
-            _adjustingSize = false;
+            case Key.Up:
+                TuningKnob.Nudge(1);
+                Tune(1);
+                e.Handled = true;
+                break;
+            case Key.Down:
+                TuningKnob.Nudge(-1);
+                Tune(-1);
+                e.Handled = true;
+                break;
+            case Key.Left:
+                ShiftStep(true);
+                e.Handled = true;
+                break;
+            case Key.Right:
+                ShiftStep(false);
+                e.Handled = true;
+                break;
+            case Key.Enter:
+                OpenEntry();
+                e.Handled = true;
+                break;
         }
     }
 
     #endregion
+
+    #region Direct entry
+
+    private void Display_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+    {
+        // a single click drags the window (ContainerPanel), a double-click types a frequency
+        if (e.ClickCount != 2) return;
+
+        e.Handled = true;
+        OpenEntry();
+    }
+
+    private void OpenEntry()
+    {
+        var radio = RadioHelper.GetRadio();
+        if (radio == null) return;
+
+        EntryBox.Text = RadioCalculator.FormatMHz(radio.freq);
+        EntryPanel.BorderBrush = _litBrush;
+        EntryPanel.Visibility = Visibility.Visible;
+        FrequencyPanel.Visibility = Visibility.Hidden;
+
+        Activate();
+
+        // after the layout pass the box can take the focus
+        Dispatcher.BeginInvoke(DispatcherPriority.Input, new Action(() =>
+        {
+            if (EntryPanel.Visibility != Visibility.Visible) return;
+
+            EntryBox.Focus();
+            Keyboard.Focus(EntryBox);
+            EntryBox.SelectAll();
+        }));
+    }
+
+    private void CloseEntry()
+    {
+        _entryErrorTimer.Stop();
+        EntryPanel.Visibility = Visibility.Collapsed;
+        EntryPanel.BorderBrush = _litBrush;
+        FrequencyPanel.Visibility = Visibility.Visible;
+
+        // keep the keyboard on the window (arrow keys tune)
+        if (IsActive) Focus();
+    }
+
+    private void EntryBox_PreviewKeyDown(object sender, KeyEventArgs e)
+    {
+        switch (e.Key)
+        {
+            case Key.Enter:
+                e.Handled = true;
+                ApplyEntry();
+                break;
+            case Key.Escape:
+                e.Handled = true;
+                CloseEntry();
+                break;
+        }
+    }
+
+    private void EntryBox_LostKeyboardFocus(object sender, KeyboardFocusChangedEventArgs e)
+    {
+        // clicked elsewhere: cancel
+        if (EntryPanel.Visibility == Visibility.Visible) CloseEntry();
+    }
+
+    /// <summary>
+    ///     Applies the typed frequency in MHz. Invariant culture ("446.19375") and the German decimal comma
+    ///     ("446,19375") are accepted; out of range values are clamped to 1.000 - 999.999 MHz and the frequency is
+    ///     normalised (<see cref="BandPlan.Normalise" />, by <see cref="RadioHelper.SetFrequency" />).
+    /// </summary>
+    private void ApplyEntry()
+    {
+        if (!TryParseEntry(EntryBox.Text, out var frequencyHz))
+        {
+            // invalid: flash the frame and let the user correct it
+            EntryPanel.BorderBrush = _txBrush;
+            _entryErrorTimer.Stop();
+            _entryErrorTimer.Start();
+            EntryBox.SelectAll();
+            return;
+        }
+
+        RadioHelper.SetFrequency(frequencyHz);
+        CloseEntry();
+        RefreshAfterTuning();
+    }
+
+    /// <summary>
+    ///     The typed frequency (MHz, see <see cref="RadioCalculator.TryParseMHz" />) in Hz, rounded to 10 Hz - the
+    ///     resolution of the display and of the entry box (<see cref="RadioCalculator.FormatMHz" />, 5 decimals), so
+    ///     Enter on an unchanged entry never moves the radio.
+    /// </summary>
+    internal static bool TryParseEntry(string text, out double frequencyHz)
+    {
+        if (!RadioCalculator.TryParseMHz(text, out frequencyHz)) return false;
+
+        frequencyHz = Math.Round(frequencyHz / 10, MidpointRounding.AwayFromZero) * 10;
+        return true;
+    }
+
+    #endregion
+
+    #region Placement
+
+    /// <summary>The saved scale (RadioScale), limited to the monitor the window is on.</summary>
+    private double SavedScale()
+    {
+        return LimitScale(ReadSavedScale(_globalSettings));
+    }
+
+    /// <summary>Clamps a scale to <see cref="MinScale" />..<see cref="MaxScale" /> and to the monitor's working area.</summary>
+    private double LimitScale(double scale)
+    {
+        if (!double.IsFinite(scale)) return 1.0;
+
+        var max = MaxScale;
+        try
+        {
+            var area = ScreenHelper.WorkingAreaAt(Left, Top);
+            if (area.Width > 0 && area.Height > 0)
+                max = Math.Min(max, Math.Min(area.Width / NaturalWidth, area.Height / NaturalHeight));
+        }
+        catch (Exception ex)
+        {
+            Logger.Warn(ex, "Unable to check the size of the radio window against the monitor");
+        }
+
+        return Math.Clamp(scale, MinScale, Math.Max(MinScale, max));
+    }
+
+    private void ApplyScale(double scale)
+    {
+        _scale = scale;
+        Width = NaturalWidth * scale;
+        Height = NaturalHeight * scale;
+    }
+
+    private void ResizeGrip_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+    {
+        e.Handled = true;
+
+        if (!ResizeGrip.CaptureMouse()) return;
+
+        _resizing = true;
+        _resizeStart = e.GetPosition(this);
+        _resizeStartSize = new Size(ActualWidth, ActualHeight);
+    }
+
+    private void ResizeGrip_MouseMove(object sender, MouseEventArgs e)
+    {
+        if (!_resizing) return;
+
+        // the window grows to the right / bottom, so positions relative to the window stay comparable
+        var position = e.GetPosition(this);
+        var scaleX = (_resizeStartSize.Width + position.X - _resizeStart.X) / NaturalWidth;
+        var scaleY = (_resizeStartSize.Height + position.Y - _resizeStart.Y) / NaturalHeight;
+
+        ApplyScale(LimitScale(Math.Max(scaleX, scaleY)));
+    }
+
+    private void ResizeGrip_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
+    {
+        if (!_resizing) return;
+
+        e.Handled = true;
+        ResizeGrip.ReleaseMouseCapture();
+    }
+
+    private void ResizeGrip_LostMouseCapture(object sender, MouseEventArgs e)
+    {
+        _resizing = false;
+    }
 
     private void ContainerPanel_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
     {
@@ -344,19 +670,13 @@ public partial class RadioPanelWindow : Window, IHandle<ResetRadioPanelMessage>
         {
             _globalSettings.SetPositionSetting(GlobalSettingsKeys.RadioX, Left);
             _globalSettings.SetPositionSetting(GlobalSettingsKeys.RadioY, Top);
-            _globalSettings.SetPositionSetting(GlobalSettingsKeys.RadioOpacity, Opacity);
-
-            // the size of the hint (no radios yet) says nothing about the size the user wants
-            if (_sizeRestored)
-            {
-                _globalSettings.SetPositionSetting(GlobalSettingsKeys.RadioWidth, Width);
-                _globalSettings.SetPositionSetting(GlobalSettingsKeys.RadioHeight, Height);
-            }
+            _globalSettings.SetPositionSetting(GlobalSettingsKeys.RadioScale, Math.Round(_scale, 3));
         }
 
         base.OnClosing(e);
 
         _updateTimer.Stop();
+        _entryErrorTimer.Stop();
 
         EventBus.Instance.Unsubscribe(this);
     }
@@ -364,7 +684,7 @@ public partial class RadioPanelWindow : Window, IHandle<ResetRadioPanelMessage>
     private void Button_Minimise(object sender, RoutedEventArgs e)
     {
         // Minimising a window without a taskbar icon leaves a small part of the window at the bottom of the screen,
-        // so the panel is closed instead (like the toggle).
+        // so the window is closed instead (like the toggle).
         if (_globalSettings.GetClientSettingBool(GlobalSettingsKeys.RadioPanelTaskbarHide))
             Close();
         else
@@ -376,39 +696,5 @@ public partial class RadioPanelWindow : Window, IHandle<ResetRadioPanelMessage>
         Close();
     }
 
-    private void WindowOpacitySlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
-    {
-        Opacity = e.NewValue;
-    }
-
-    private void HandleGlobalSimultaneousTransmissionButton()
-    {
-        var playerRadioInfo = _clientStateSingleton.PlayerRadioInfo;
-
-        if (!RadioHelper.RadiosAvailable())
-        {
-            ToggleGlobalSimultaneousTransmissionButton.IsEnabled = false;
-            ToggleGlobalSimultaneousTransmissionButton.Foreground = WhiteBrush;
-            ToggleGlobalSimultaneousTransmissionButton.Content = Properties.Resources.OverlaySimulTransOFF;
-            return;
-        }
-
-        ToggleGlobalSimultaneousTransmissionButton.IsEnabled = true;
-
-        ToggleGlobalSimultaneousTransmissionButton.Content =
-            playerRadioInfo.simultaneousTransmission
-                ? Properties.Resources.OverlaySimulTransON
-                : Properties.Resources.OverlaySimulTransOFF;
-        ToggleGlobalSimultaneousTransmissionButton.Foreground =
-            playerRadioInfo.simultaneousTransmission ? OrangeBrush : WhiteBrush;
-
-        if (!playerRadioInfo.simultaneousTransmission)
-            foreach (var radio in _radioControls)
-                radio.ToggleSimultaneousTransmissionButton.Foreground = WhiteBrush;
-    }
-
-    private void ToggleGlobalSimultaneousTransmissionButton_Click(object sender, RoutedEventArgs e)
-    {
-        RadioHelper.ToggleGlobalSimultaneousTransmission();
-    }
+    #endregion
 }

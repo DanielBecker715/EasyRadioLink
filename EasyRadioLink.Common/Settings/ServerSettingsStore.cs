@@ -1,4 +1,3 @@
-using EasyRadioLink.Common.Models.Player;
 using EasyRadioLink.Common.Settings.Setting;
 using NLog;
 using SharpConfig;
@@ -9,7 +8,6 @@ using System.IO;
 using System.Net;
 using System.Security.Cryptography;
 using System.Text;
-using System.Text.Json;
 
 namespace EasyRadioLink.Common.Settings;
 
@@ -20,8 +18,8 @@ namespace EasyRadioLink.Common.Settings;
 ///         <item>"[Server Settings]" - server only (port, bind IP, UPnP, HTTP API, client export path, SERVER_PASSWORD).</item>
 ///     </list>
 ///     The configuration file defaults to server.cfg next to the server executable (never the working directory). All
-///     other server files (Presets/*.txt, server-radios.json, banned.txt, logs, transmission logs, client export) live
-///     in the same folder as the configuration file (<see cref="ConfigDirectory" />).
+///     other server files (banned.txt, logs, transmission logs, client export) live in the same folder as the
+///     configuration file (<see cref="ConfigDirectory" />).
 /// </summary>
 public class ServerSettingsStore
 {
@@ -30,9 +28,6 @@ public class ServerSettingsStore
 
     /// <summary>Default name of the configuration file.</summary>
     public const string DEFAULT_CFG_FILE_NAME = "server.cfg";
-
-    /// <summary>Server radio layout file (same schema as the client's radios.json), next to server.cfg.</summary>
-    public const string SERVER_RADIOS_FILE = "server-radios.json";
 
     /// <summary>Replacement for secret values in settings dumps and logs.</summary>
     public const string MASKED_VALUE = "****";
@@ -47,12 +42,6 @@ public class ServerSettingsStore
     private readonly object _lock = new();
     private readonly Configuration _configuration;
     private readonly Logger _logger = LogManager.GetCurrentClassLogger();
-
-    private ServerChannelPresetHelper _serverChannelPresetHelper;
-
-    private string _serverRadioPresetJson;
-    private DateTime _serverRadioPresetTimestamp;
-    private bool _serverRadioPresetProblemLogged;
 
     public ServerSettingsStore() : this(CFG_FILE_NAME)
     {
@@ -113,13 +102,10 @@ public class ServerSettingsStore
     public string ConfigFilePath { get; }
 
     /// <summary>
-    ///     Folder of the configuration file. Holds every other server file too: Presets/, server-radios.json,
-    ///     banned.txt, the logs, the transmission logs and the client export.
+    ///     Folder of the configuration file. Holds every other server file too: banned.txt, the logs, the transmission
+    ///     logs and the client export.
     /// </summary>
     public string ConfigDirectory => Path.GetDirectoryName(ConfigFilePath) ?? AppContext.BaseDirectory;
-
-    /// <summary>Full path of the server radio layout file.</summary>
-    public string ServerRadiosFilePath => GetDataFilePath(SERVER_RADIOS_FILE);
 
     /// <summary>Error message of the last failed save (null if the last save worked).</summary>
     public string LastSaveError { get; private set; }
@@ -411,9 +397,8 @@ public class ServerSettingsStore
     }
 
     /// <summary>
-    ///     The settings sent to clients: every "[General Settings]" entry (defaults filled in) plus the synthetic
-    ///     SERVER_PRESETS and SERVER_RADIO_PRESET JSON values. Private settings (password, API key, ports, ...) are never
-    ///     included.
+    ///     The settings sent to clients: every "[General Settings]" entry (defaults filled in). Private settings
+    ///     (password, API key, ports, ...) are never included.
     /// </summary>
     public Dictionary<string, string> ToDictionary()
     {
@@ -429,97 +414,7 @@ public class ServerSettingsStore
 
         foreach (var privateKey in DefaultServerSettings.PrivateKeys) settings.Remove(privateKey.ToString());
 
-        if (GetGeneralSetting(ServerSettingsKeys.SERVER_PRESETS_ENABLED).BoolValue)
-        {
-            //load presets
-            if (_serverChannelPresetHelper == null)
-            {
-                _serverChannelPresetHelper = new ServerChannelPresetHelper(ConfigDirectory);
-                _serverChannelPresetHelper.LoadPresets();
-            }
-
-            settings[nameof(ServerSettingsKeys.SERVER_PRESETS)] =
-                JsonSerializer.Serialize(_serverChannelPresetHelper.Presets, new JsonSerializerOptions
-                {
-                    AllowTrailingCommas = true,
-                    PropertyNameCaseInsensitive = true,
-                    ReadCommentHandling = JsonCommentHandling.Skip,
-                    IncludeFields = true
-                });
-        }
-        else
-        {
-            settings[nameof(ServerSettingsKeys.SERVER_PRESETS)] =
-                JsonSerializer.Serialize(new Dictionary<string, List<ServerPresetChannel>>());
-        }
-
-        settings[nameof(ServerSettingsKeys.SERVER_RADIO_PRESET)] =
-            GetGeneralSetting(ServerSettingsKeys.SERVER_RADIO_PRESET_ENABLED).BoolValue
-                ? GetServerRadioPresetJson()
-                : "[]";
-
         return settings;
-    }
-
-    /// <summary>
-    ///     Validated server radio layout as JSON ("[]" if the file is missing or invalid). The file is re-read when it
-    ///     changes on disk.
-    /// </summary>
-    private string GetServerRadioPresetJson()
-    {
-        var path = ServerRadiosFilePath;
-
-        lock (_lock)
-        {
-            try
-            {
-                if (!File.Exists(path))
-                {
-                    if (!_serverRadioPresetProblemLogged)
-                        _logger.Error($"Server radio layout is enabled but {Path.GetFullPath(path)} was not found");
-
-                    _serverRadioPresetProblemLogged = true;
-                    _serverRadioPresetJson = null;
-                    return "[]";
-                }
-
-                var timestamp = File.GetLastWriteTimeUtc(path);
-                if (_serverRadioPresetJson != null && timestamp == _serverRadioPresetTimestamp)
-                    return _serverRadioPresetJson;
-
-                var radios = RadioDefinition.ParseList(File.ReadAllText(path));
-
-                string json;
-                if (radios.Count == 0)
-                {
-                    _logger.Error($"Server radio layout {path} does not contain any radios");
-                    json = "[]";
-                }
-                else
-                {
-                    if (radios.Count != Constants.MAX_RADIOS)
-                        _logger.Warn(
-                            $"Server radio layout {path} has {radios.Count} entries, expected {Constants.MAX_RADIOS} (slot 0 reserved) - adjusting");
-
-                    json = JsonSerializer.Serialize(RadioDefinition.Normalise(radios), RadioDefinition.JsonOptions);
-                    _logger.Info($"Loaded server radio layout from {path}");
-                }
-
-                _serverRadioPresetJson = json;
-                _serverRadioPresetTimestamp = timestamp;
-                _serverRadioPresetProblemLogged = false;
-                return json;
-            }
-            catch (Exception ex)
-            {
-                if (!_serverRadioPresetProblemLogged)
-                    _logger.Error(ex, $"Unable to read server radio layout {path}");
-
-                _serverRadioPresetProblemLogged = true;
-                _serverRadioPresetJson = null;
-                return "[]";
-            }
-        }
     }
 
     public IPAddress GetServerIP()

@@ -1,7 +1,7 @@
 using System;
 using System.IO;
 using System.Linq;
-using EasyRadioLink.Common.Models.Player;
+using EasyRadioLink.Common.Network.Singletons;
 using EasyRadioLink.Common.Settings;
 using EasyRadioLink.Common.Settings.Setting;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -130,9 +130,49 @@ public class ServerSettingsStoreTests
 
         Assert.AreEqual("27.405,446.19375", broadcast[ServerSettingsKeys.TEST_FREQUENCIES.ToString()]);
         Assert.AreEqual("", broadcast[ServerSettingsKeys.CLEAN_FREQUENCIES.ToString()]);
-        Assert.AreEqual("[]", broadcast[ServerSettingsKeys.SERVER_RADIO_PRESET.ToString()]);
-        Assert.IsTrue(broadcast.ContainsKey(ServerSettingsKeys.SERVER_PRESETS.ToString()));
         Assert.AreEqual(5010, store.GetServerPort());
+    }
+
+    [TestMethod]
+    public void OnlyTheSettingsOfTheSingleRadioServerExist()
+    {
+        // 1.1: one radio per user - no encryption, server channel preset or server radio layout settings
+        CollectionAssert.AreEquivalent(new[]
+        {
+            "SERVER_PORT", "SERVER_IP", "UPNP_ENABLED", "SERVER_PASSWORD",
+            "IRL_RADIO_TX", "IRL_RADIO_RX_INTERFERENCE", "TEST_FREQUENCIES", "CLEAN_FREQUENCIES",
+            "SHOW_TUNED_COUNT", "SHOW_TRANSMITTER_NAME",
+            "CLIENT_EXPORT_ENABLED", "CLIENT_EXPORT_FILE_PATH", "TRANSMISSION_LOG_ENABLED", "TRANSMISSION_LOG_RETENTION",
+            "HTTP_SERVER_ENABLED", "HTTP_SERVER_PORT", "HTTP_SERVER_API_KEY", "HTTP_SERVER_ADDRESS"
+        }, Enum.GetNames<ServerSettingsKeys>());
+
+        // every setting is either sent to the clients or kept on the server - exactly one of the two
+        CollectionAssert.AreEquivalent(Enum.GetValues<ServerSettingsKeys>(),
+            DefaultServerSettings.BroadcastKeys.Concat(DefaultServerSettings.PrivateKeys).ToArray());
+
+        foreach (var key in Enum.GetValues<ServerSettingsKeys>())
+            Assert.IsTrue(DefaultServerSettings.Defaults.ContainsKey(key.ToString()), $"{key} has no default");
+    }
+
+    [TestMethod]
+    public void SettingsOfOlderVersionsAreIgnored()
+    {
+        // an older server.cfg may contain settings of features that no longer exist
+        File.WriteAllText(ConfigFile,
+            "[General Settings]\nOLD_FEATURE_ENABLED = true\nOLD_FEATURE_LEVEL = maybe\nSHOW_TUNED_COUNT = false\n" +
+            "[Server Settings]\nSERVER_PORT = 6000\n");
+
+        var store = new ServerSettingsStore(ConfigFile);
+
+        Assert.AreEqual(6000, store.GetServerPort());
+        Assert.IsFalse(store.GetGeneralSetting(ServerSettingsKeys.SHOW_TUNED_COUNT).BoolValue);
+        Assert.IsNull(store.LastSaveError);
+
+        // the client only reads the settings it knows
+        var client = new SyncedServerSettings();
+        client.Decode(store.ToDictionary(), false);
+        Assert.IsFalse(client.GetSettingAsBool(ServerSettingsKeys.SHOW_TUNED_COUNT));
+        CollectionAssert.AreEqual(new[] { 27405000d, 446193750d }, client.TestFrequencies.ToArray());
     }
 
     [TestMethod]
@@ -151,34 +191,6 @@ public class ServerSettingsStoreTests
 
         store.SetServerPassword("");
         Assert.Contains("SERVER_PASSWORD = ", store.GetAllSettings());
-    }
-
-    [TestMethod]
-    public void ServerRadioLayoutIsLoadedValidatedAndBroadcast()
-    {
-        File.WriteAllText(Path.Combine(_directory, ServerSettingsStore.SERVER_RADIOS_FILE),
-            """
-            // user radios only - the reserved slot 0 is added automatically
-            [
-              { "name": "CB", "model": "cb", "modulation": 0, "freq": 27185000, "freqMin": 26965000, "freqMax": 27405000 },
-              { "Name": "PMR", "Modulation": 1, "Freq": 446006250, "FreqMin": 446006250, "FreqMax": 446193750, },
-            ]
-            """);
-
-        var store = new ServerSettingsStore(ConfigFile);
-        store.SetGeneralSetting(ServerSettingsKeys.SERVER_RADIO_PRESET_ENABLED, true);
-
-        var json = store.ToDictionary()[ServerSettingsKeys.SERVER_RADIO_PRESET.ToString()];
-        var radios = RadioDefinition.ParseList(json);
-
-        Assert.HasCount(Constants.MAX_RADIOS, radios);
-        Assert.AreEqual(Modulation.DISABLED, radios[0].modulation);
-        Assert.AreEqual("CB", radios[1].name);
-        Assert.AreEqual("PMR", radios[2].name);
-        Assert.AreEqual(Modulation.FM, radios[2].modulation);
-
-        store.SetGeneralSetting(ServerSettingsKeys.SERVER_RADIO_PRESET_ENABLED, false);
-        Assert.AreEqual("[]", store.ToDictionary()[ServerSettingsKeys.SERVER_RADIO_PRESET.ToString()]);
     }
 
     [TestMethod]
@@ -250,26 +262,8 @@ public class ServerSettingsStoreTests
 
         Assert.AreEqual(ConfigFile, store.ConfigFilePath);
         Assert.AreEqual(_directory, store.ConfigDirectory);
-        Assert.AreEqual(Path.Combine(_directory, ServerSettingsStore.SERVER_RADIOS_FILE), store.ServerRadiosFilePath);
         Assert.AreEqual(Path.Combine(_directory, "banned.txt"), store.GetDataFilePath("banned.txt"));
         Assert.IsNull(store.LastSaveError);
-    }
-
-    [TestMethod]
-    public void ServerPresetsAreReadFromTheConfigFolder()
-    {
-        var presets = Path.Combine(_directory, "Presets");
-        Directory.CreateDirectory(presets);
-        File.WriteAllLines(Path.Combine(presets, "CB Radio.txt"), new[] { "Channel 19|27.185", "Channel 9|27,065" });
-
-        var store = new ServerSettingsStore(ConfigFile);
-        store.SetGeneralSetting(ServerSettingsKeys.SERVER_PRESETS_ENABLED, true);
-
-        var json = store.ToDictionary()[ServerSettingsKeys.SERVER_PRESETS.ToString()];
-
-        StringAssert.Contains(json, "cbradio");
-        StringAssert.Contains(json, "Channel 19");
-        StringAssert.Contains(json, "27.065");
     }
 
     [TestMethod]

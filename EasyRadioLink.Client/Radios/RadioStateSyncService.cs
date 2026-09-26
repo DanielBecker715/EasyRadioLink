@@ -1,17 +1,13 @@
 using System;
-using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-using Caliburn.Micro;
 using EasyRadioLink.Client.Singletons;
-using EasyRadioLink.Client.UI.ClientWindow.RadioPanel.PresetChannels;
-using EasyRadioLink.Common;
 using EasyRadioLink.Common.Audio.Providers;
+using EasyRadioLink.Common.Helpers;
 using EasyRadioLink.Common.Models.EventMessages;
 using EasyRadioLink.Common.Models.Player;
 using EasyRadioLink.Common.Network.Singletons;
 using EasyRadioLink.Common.Settings;
-using EasyRadioLink.Common.Settings.Setting;
 using NLog;
 using LogManager = NLog.LogManager;
 
@@ -22,39 +18,36 @@ namespace EasyRadioLink.Client.Radios;
 ///     is established, stopped on disconnect).
 ///     <list type="bullet">
 ///         <item>
-///             Activation: on the first <see cref="ServerSettingsUpdatedMessage" /> (or after
-///             <see cref="ActivationFallbackDelay" /> if none arrives) the radio layout is loaded
-///             (<see cref="RadioDefinitionStore" />), the saved tuning is re-applied (<see cref="RadioStatePersistence" />),
-///             preset channels are initialised and <see cref="PlayerRadioInfo.IsActive" /> is set - radios are usable.
+///             <see cref="Start" /> switches the radio on with the remembered frequency and volume
+///             (<see cref="RadioStatePersistence" />, default 27.185 MHz), modulation and radio model from the
+///             <see cref="BandPlan" />, and sets <see cref="PlayerRadioInfo.IsActive" /> - the radio is usable.
 ///         </item>
 ///         <item>
-///             Every <see cref="LoopInterval" /> the network relevant state (radios, background sound, name, recording
+///             Every <see cref="LoopInterval" /> the network relevant state (radio, background sound, name, recording
 ///             permission) is compared with what was sent last; a change, <c>ClientStateSingleton.LastSent == 0</c> (dirty
 ///             flag) or <see cref="RadioUpdatePingInterval" /> without update publishes a
-///             <see cref="UnitUpdateMessage" /> (FullUpdate) that <c>TCPClientHandler</c> sends as RADIO_UPDATE.
+///             <see cref="UnitUpdateMessage" /> (FullUpdate) that <c>TCPClientHandler</c> sends as RADIO_UPDATE. Tuning
+///             is therefore coalesced to at most one update per interval (5 per second).
 ///         </item>
 ///         <item>
-///             Server rules are enforced continuously: encryption is switched off when the server disallows it or the
-///             radio is not capable; a changed server radio layout is re-loaded.
+///             A changed frequency / volume is remembered <see cref="SaveDelay" /> after the last change;
+///             <see cref="Stop" /> remembers it as well, resets the radio and marks it inactive.
 ///         </item>
-///         <item><see cref="Stop" /> saves the tuning, resets the radios and marks them inactive.</item>
 ///     </list>
 /// </summary>
-public sealed class RadioStateSyncService : IHandle<ServerSettingsUpdatedMessage>
+public sealed class RadioStateSyncService
 {
     public static readonly TimeSpan LoopInterval = TimeSpan.FromMilliseconds(200);
     public static readonly TimeSpan RadioUpdatePingInterval = TimeSpan.FromSeconds(60);
-    public static readonly TimeSpan ActivationFallbackDelay = TimeSpan.FromSeconds(2);
+    public static readonly TimeSpan SaveDelay = TimeSpan.FromSeconds(2);
 
     private static readonly Logger Logger = LogManager.GetCurrentClassLogger();
 
     private readonly ClientStateSingleton _clientState = ClientStateSingleton.Instance;
     private readonly GlobalSettingsStore _globalSettings = GlobalSettingsStore.Instance;
-    private readonly SyncedServerSettings _serverSettings = SyncedServerSettings.Instance;
 
     private readonly object _sync = new();
 
-    private volatile bool _activated;
     private CancellationTokenSource _cts;
     private int _loopErrors;
 
@@ -63,48 +56,12 @@ public sealed class RadioStateSyncService : IHandle<ServerSettingsUpdatedMessage
     private string _lastName;
     private PlayerRadioInfo _lastSent;
 
-    private RadioLayout _layout;
-
-    public Task HandleAsync(ServerSettingsUpdatedMessage message, CancellationToken cancellationToken)
-    {
-        var cts = _cts;
-        if (cts == null || cts.IsCancellationRequested) return Task.CompletedTask;
-
-        try
-        {
-            if (!_activated)
-            {
-                Activate(cts.Token, false);
-            }
-            else if (IsLayoutOutdated())
-            {
-                Logger.Info("The server radio layout changed - reloading the radios");
-
-                lock (_sync)
-                {
-                    if (!cts.IsCancellationRequested) RadioStatePersistence.Save(_clientState.PlayerRadioInfo);
-                }
-
-                Activate(cts.Token, true);
-            }
-            else
-            {
-                lock (_sync)
-                {
-                    EnforceServerRules(_clientState.PlayerRadioInfo);
-                }
-
-                // make sure a changed server setting is reflected immediately
-                _clientState.LastSent = 0;
-            }
-        }
-        catch (Exception ex)
-        {
-            Logger.Error(ex, "Failed to apply the server settings to the radios");
-        }
-
-        return Task.CompletedTask;
-    }
+    // what was remembered last (radio-state.json), the tuning seen last and when it changed
+    private double _savedFrequency = double.NaN;
+    private float _savedVolume = float.NaN;
+    private double _pendingFrequency = double.NaN;
+    private float _pendingVolume = float.NaN;
+    private long _tuningChangedAt;
 
     public void Start()
     {
@@ -115,35 +72,10 @@ public sealed class RadioStateSyncService : IHandle<ServerSettingsUpdatedMessage
 
             _cts = new CancellationTokenSource();
             token = _cts.Token;
-            _activated = false;
             _lastSent = null;
-            _layout = null;
+
+            Activate();
         }
-
-        EventBus.Instance.SubscribeOnBackgroundThread(this);
-
-        // normally the SYNC reply (server settings) arrives right after connecting - don't wait forever for it
-        _ = Task.Run(async () =>
-        {
-            try
-            {
-                await Task.Delay(ActivationFallbackDelay, token);
-
-                if (!_activated)
-                {
-                    Logger.Warn("No server settings received - activating the radios with the current settings");
-                    Activate(token, false);
-                }
-            }
-            catch (OperationCanceledException)
-            {
-                // stopped
-            }
-            catch (Exception ex)
-            {
-                Logger.Error(ex, "Failed to activate the radios");
-            }
-        }, token);
 
         _ = Task.Run(() => LoopAsync(token), token);
 
@@ -160,66 +92,43 @@ public sealed class RadioStateSyncService : IHandle<ServerSettingsUpdatedMessage
             _cts = null;
 
             var info = _clientState.PlayerRadioInfo;
-            if (_activated && info.IsActive) RadioStatePersistence.Save(info);
+            if (info.IsActive) SaveTuning(info.Radio, true);
 
             info.Reset();
 
-            _activated = false;
             _lastSent = null;
-            _layout = null;
             _clientState.LastSent = 0;
         }
-
-        EventBus.Instance.Unsubscribe(this);
 
         Logger.Info("Radio state sync stopped");
     }
 
-    /// <param name="reload">false: do nothing if the radios are already activated (first activation only)</param>
-    private void Activate(CancellationToken token, bool reload)
+    /// <summary>Switches the radio on with the remembered tuning. Called under <see cref="_sync" />.</summary>
+    private void Activate()
     {
-        lock (_sync)
-        {
-            if (token.IsCancellationRequested) return;
-            if (_activated && !reload) return;
+        var state = RadioStatePersistence.Load();
 
-            var allowServerPreset =
-                _globalSettings.ProfileSettingsStore.GetClientSettingBool(ProfileSettingsKeys.AllowServerRadioPreset);
+        var info = _clientState.PlayerRadioInfo;
+        info.Reset();
 
-            var layout = RadioDefinitionStore.Load(_serverSettings, allowServerPreset);
+        // slot 0 is reserved and slots 2..10 stay switched off
+        info.radios[PlayerRadioInfo.RadioId] = Radio.Create(state.Frequency, state.Volume);
 
-            var info = _clientState.PlayerRadioInfo;
-            info.Reset();
+        _savedFrequency = _pendingFrequency = info.Radio.freq;
+        _savedVolume = _pendingVolume = info.Radio.volume;
+        _tuningChangedAt = 0;
 
-            for (var i = 0; i < info.radios.Length; i++)
-                info.radios[i] = i < layout.Definitions.Count
-                    ? Radio.FromDefinition(layout.Definitions[i])
-                    : new Radio();
+        UpdateBackgroundSound(info);
 
-            // reserved slot - never usable
-            info.radios[0] = new Radio();
+        _lastSent = null;
+        info.IsActive = true;
 
-            var restoredSlots = RadioStatePersistence.Apply(info);
+        // force an immediate RADIO_UPDATE
+        _clientState.LastSent = 0;
 
-            if (info.selected < PlayerRadioInfo.FirstUserRadio || info.selected >= info.radios.Length ||
-                !info.radios[info.selected].IsEnabled)
-                info.selected = FirstEnabledRadio(info);
-
-            EnforceServerRules(info);
-            UpdateBackgroundSound(info);
-
-            _layout = layout;
-            _lastSent = null;
-            _activated = true;
-            info.IsActive = true;
-
-            InitPresetChannels(info, restoredSlots);
-
-            // force an immediate RADIO_UPDATE
-            _clientState.LastSent = 0;
-
-            Logger.Info($"Radios activated from {layout.Source} ({layout.SourceDescription})");
-        }
+        var band = info.Radio.Band;
+        Logger.Info(
+            $"Radio switched on: {RadioCalculator.FormatMHz(info.Radio.freq)} MHz ({band.Label}, {band.Modulation}, {band.Model})");
     }
 
     private async Task LoopAsync(CancellationToken token)
@@ -230,7 +139,7 @@ public sealed class RadioStateSyncService : IHandle<ServerSettingsUpdatedMessage
 
             try
             {
-                if (_activated) await SendUpdateIfNeededAsync(token);
+                await SendUpdateIfNeededAsync(token);
 
                 _loopErrors = 0;
             }
@@ -262,10 +171,10 @@ public sealed class RadioStateSyncService : IHandle<ServerSettingsUpdatedMessage
         lock (_sync)
         {
             var info = _clientState.PlayerRadioInfo;
-            if (token.IsCancellationRequested || !_activated || !info.IsActive) return;
+            if (token.IsCancellationRequested || !info.IsActive) return;
 
-            EnforceServerRules(info);
             UpdateBackgroundSound(info);
+            SaveTuning(info.Radio, false);
 
             var name = _clientState.EffectiveName;
             var allowRecord = _globalSettings.GetClientSettingBool(GlobalSettingsKeys.AllowRecording);
@@ -281,6 +190,7 @@ public sealed class RadioStateSyncService : IHandle<ServerSettingsUpdatedMessage
             if (changed || lastSent < 1 || sinceLastSent > RadioUpdatePingInterval)
             {
                 _clientState.LastSent = DateTime.Now.Ticks;
+                // one snapshot: the radio may be retuned meanwhile - send exactly what is remembered as sent
                 _lastSent = info.DeepClone();
                 _lastName = name;
                 _lastAllowRecord = allowRecord;
@@ -293,7 +203,7 @@ public sealed class RadioStateSyncService : IHandle<ServerSettingsUpdatedMessage
                         ClientGuid = _clientState.ShortGUID,
                         Name = name,
                         AllowRecord = allowRecord,
-                        RadioInfo = info.ConvertToRadioBase()
+                        RadioInfo = _lastSent.ConvertToRadioBase()
                     }
                 };
             }
@@ -306,39 +216,39 @@ public sealed class RadioStateSyncService : IHandle<ServerSettingsUpdatedMessage
         }
     }
 
-    /// <summary>True if the server's radio layout should replace the current one (or stop being used).</summary>
-    private bool IsLayoutOutdated()
+    /// <summary>
+    ///     Remembers frequency and volume once they have not changed for <see cref="SaveDelay" /> (immediately with
+    ///     <paramref name="now" />), so tuning with the knob does not write the file for every step.
+    /// </summary>
+    private void SaveTuning(Radio radio, bool now)
     {
-        var layout = _layout;
-        if (layout == null) return false;
+        if (radio == null || !radio.IsEnabled) return;
 
-        var allowServerPreset =
-            _globalSettings.ProfileSettingsStore.GetClientSettingBool(ProfileSettingsKeys.AllowServerRadioPreset);
-        var serverHasPreset = _serverSettings.ServerRadioPreset.Count == Constants.MAX_RADIOS;
+        var frequency = radio.freq;
+        var volume = radio.volume;
+        var ticks = DateTime.Now.Ticks;
 
-        if (layout.Source == RadioLayoutSource.Server)
-            return !allowServerPreset || !serverHasPreset ||
-                   !string.Equals(layout.ServerPresetJson, _serverSettings.ServerRadioPresetJson,
-                       StringComparison.Ordinal);
+        // the delay starts again with every change
+        if (!SameTuning(frequency, volume, _pendingFrequency, _pendingVolume))
+        {
+            _pendingFrequency = frequency;
+            _pendingVolume = volume;
+            _tuningChangedAt = ticks;
+        }
 
-        return allowServerPreset && serverHasPreset;
+        if (SameTuning(frequency, volume, _savedFrequency, _savedVolume)) return;
+
+        if (!now && TimeSpan.FromTicks(ticks - _tuningChangedAt) < SaveDelay) return;
+
+        RadioStatePersistence.SaveTuning(frequency, volume);
+
+        _savedFrequency = frequency;
+        _savedVolume = volume;
     }
 
-    /// <summary>Encryption only on capable radios and only if the server allows it; keys 1..252.</summary>
-    private void EnforceServerRules(PlayerRadioInfo info)
+    private static bool SameTuning(double frequency, float volume, double otherFrequency, float otherVolume)
     {
-        var encryptionAllowed = _serverSettings.GetSettingAsBool(ServerSettingsKeys.ALLOW_RADIO_ENCRYPTION);
-
-        foreach (var radio in info.radios)
-        {
-            if (radio == null) continue;
-
-            if (radio.enc && (!encryptionAllowed || !radio.encCapable || !radio.IsEnabled)) radio.enc = false;
-
-            if (radio.encKey < RadioDefinition.MinEncryptionKey || radio.encKey > RadioDefinition.MaxEncryptionKey)
-                radio.encKey = Math.Clamp(radio.encKey, RadioDefinition.MinEncryptionKey,
-                    RadioDefinition.MaxEncryptionKey);
-        }
+        return Math.Abs(frequency - otherFrequency) < 0.5 && Math.Abs(volume - otherVolume) < 0.001f;
     }
 
     /// <summary>Writes the profile's background sound (BackgroundSound / BackgroundSoundVolume) into ambient.</summary>
@@ -363,79 +273,5 @@ public sealed class RadioStateSyncService : IHandle<ServerSettingsUpdatedMessage
         var ambient = info.ambient;
         if (ambient == null || ambient.abType != name || ambient.vol != volume)
             info.ambient = new Ambient { abType = name, vol = volume };
-    }
-
-    private void InitPresetChannels(PlayerRadioInfo info, HashSet<int> restoredSlots)
-    {
-        var autoSelect =
-            _globalSettings.ProfileSettingsStore.GetClientSettingBool(ProfileSettingsKeys.AutoSelectPresetChannel);
-
-        var fixedChannels = _clientState.FixedChannels;
-
-        for (var radioId = PlayerRadioInfo.FirstUserRadio; radioId < info.radios.Length; radioId++)
-        {
-            var channelIndex = radioId - 1;
-            if (fixedChannels == null || channelIndex >= fixedChannels.Length) break;
-
-            var channels = fixedChannels[channelIndex];
-            var radio = info.radios[radioId];
-
-            if (channels == null) continue;
-
-            try
-            {
-                if (!radio.IsEnabled)
-                {
-                    channels.Clear();
-                    continue;
-                }
-
-                channels.Max = radio.freqMax;
-                channels.Min = radio.freqMin;
-                channels.Reload();
-
-                var preselected = radio.channel;
-                radio.channel = -1;
-
-                var count = channels.PresetChannels.Count;
-
-                if (restoredSlots.Contains(radioId))
-                {
-                    // keep the restored frequency; re-select the channel the user had
-                    if (preselected >= 1 && preselected <= count) SelectPresetChannel(channels, radio, preselected);
-                }
-                else if (autoSelect && count > 0)
-                {
-                    SelectPresetChannel(channels, radio, 1);
-                }
-                else if (preselected >= 1 && preselected <= count)
-                {
-                    SelectPresetChannel(channels, radio, preselected);
-                }
-            }
-            catch (Exception ex)
-            {
-                Logger.Warn(ex, $"Unable to load the preset channels of radio {radioId}");
-            }
-        }
-    }
-
-    private static void SelectPresetChannel(PresetChannelsViewModel channels, Radio radio, int channel)
-    {
-        var preset = channels.PresetChannels[channel - 1];
-        if (preset?.Value is not double frequency || !double.IsFinite(frequency)) return;
-
-        radio.freq = Math.Clamp(frequency, radio.freqMin, radio.freqMax);
-        radio.channel = preset.Channel > 0 ? preset.Channel : channel;
-        channels.SelectedPresetChannel = preset;
-    }
-
-    private static short FirstEnabledRadio(PlayerRadioInfo info)
-    {
-        for (var i = PlayerRadioInfo.FirstUserRadio; i < info.radios.Length; i++)
-            if (info.radios[i].IsEnabled)
-                return (short)i;
-
-        return PlayerRadioInfo.FirstUserRadio;
     }
 }

@@ -20,7 +20,7 @@ using LogManager = NLog.LogManager;
 
 namespace EasyRadioLink.Common.Network.Server;
 
-internal class UDPVoiceRouter : IHandle<ServerFrequenciesChanged>, IHandle<ServerSettingsChangedMessage>
+internal class UDPVoiceRouter : IHandle<ServerFrequenciesChanged>
 {
     // WSAIoctl SIO_UDP_CONNRESET: stop Windows from failing the next receive with WSAECONNRESET (10054) after an
     // ICMP "port unreachable" for a packet sent to a client that has gone away
@@ -38,9 +38,6 @@ internal class UDPVoiceRouter : IHandle<ServerFrequenciesChanged>, IHandle<Serve
     private readonly ServerSettingsStore _serverSettings = ServerSettingsStore.Instance;
     private volatile List<double> _testFrequencies = new();
 
-    // read for every voice packet - cached instead of taking the settings lock each time
-    private volatile bool _strictEncryption;
-
     private TransmissionLoggingQueue _transmissionLoggingQueue;
 
     public UDPVoiceRouter(ConcurrentDictionary<string, ClientInfo> clientsList, IEventAggregator eventAggregator)
@@ -51,7 +48,6 @@ internal class UDPVoiceRouter : IHandle<ServerFrequenciesChanged>, IHandle<Serve
 
         var freqString = _serverSettings.GetGeneralSetting(ServerSettingsKeys.TEST_FREQUENCIES).StringValue;
         UpdateTestFrequencies(freqString);
-        UpdateStrictEncryption();
     }
 
     public Task HandleAsync(ServerFrequenciesChanged message, CancellationToken cancellationToken)
@@ -60,17 +56,6 @@ internal class UDPVoiceRouter : IHandle<ServerFrequenciesChanged>, IHandle<Serve
             UpdateTestFrequencies(message.TestFrequencies);
 
         return Task.CompletedTask;
-    }
-
-    public Task HandleAsync(ServerSettingsChangedMessage message, CancellationToken cancellationToken)
-    {
-        UpdateStrictEncryption();
-        return Task.CompletedTask;
-    }
-
-    private void UpdateStrictEncryption()
-    {
-        _strictEncryption = _serverSettings.GetGeneralSetting(ServerSettingsKeys.STRICT_RADIO_ENCRYPTION).BoolValue;
     }
 
     private void UpdateTestFrequencies(string freqString)
@@ -365,8 +350,7 @@ internal class UDPVoiceRouter : IHandle<ServerFrequenciesChanged>, IHandle<Serve
     private OutgoingUDPPackets GenerateOutgoingPacket(UDPVoicePacket udpVoice, PendingPacket pendingPacket,
         ClientInfo sender)
     {
-        var outgoingList = VoiceRouting.SelectRecipients(_clientsList.Values, sender, udpVoice, _strictEncryption,
-            _testFrequencies);
+        var outgoingList = VoiceRouting.SelectRecipients(_clientsList.Values, sender, udpVoice, _testFrequencies);
 
         if (outgoingList.Count > 0)
             return new OutgoingUDPPackets

@@ -10,7 +10,6 @@ using System.Windows.Input;
 using Caliburn.Micro;
 using EasyRadioLink.Client.Properties;
 using EasyRadioLink.Client.UI.ClientWindow.RadioPanel;
-using EasyRadioLink.Client.UI.ClientWindow.RadioPanel.PresetChannels;
 using EasyRadioLink.Client.Utils;
 using EasyRadioLink.Common.Audio.Models;
 using EasyRadioLink.Common.Audio.Providers;
@@ -25,7 +24,7 @@ namespace EasyRadioLink.Client.UI.ClientWindow.ClientSettingsControl;
 
 /// <summary>
 ///     Settings tab: application settings (global.cfg) and the settings of the current profile (radio effects,
-///     background sound, push-to-talk, audio channels).
+///     background sound, push-to-talk, stereo balance).
 /// </summary>
 public class ClientSettingsViewModel : PropertyChangedBaseClass
 {
@@ -37,7 +36,7 @@ public class ClientSettingsViewModel : PropertyChangedBaseClass
     {
         ResetRadioPanelCommand = new DelegateCommand(() =>
         {
-            // an open radio panel closes without saving, so it can't overwrite the defaults below
+            // an open radio window closes without saving, so it can't overwrite the defaults below
             EventBus.Instance.PublishOnUIThreadAsync(new ResetRadioPanelMessage());
 
             RadioPanelWindow.ResetSavedPlacement(_globalSettings);
@@ -206,45 +205,7 @@ public class ClientSettingsViewModel : PropertyChangedBaseClass
     }
 
 
-    /// <summary>
-    ///     Choices for <see cref="SelectedServerPresetConfiguration" />: Key = <see cref="ServerPresetConfiguration" />
-    ///     name (stored in the profile), Value = display text.
-    /// </summary>
-    public IReadOnlyList<KeyValuePair<string, string>> ServerPresetConfigurations { get; } =
-    [
-        new(nameof(ServerPresetConfiguration.USE_CLIENT_AND_SERVER_IF_SET), Resources.PresetsUseClientAndServer),
-        new(nameof(ServerPresetConfiguration.USE_SERVER_ONLY_IF_SET), Resources.PresetsUseServerIfSet),
-        new(nameof(ServerPresetConfiguration.USE_CLIENT_ONLY), Resources.PresetsUseClientOnly)
-    ];
-
-    public string SelectedServerPresetConfiguration
-    {
-        set
-        {
-            GlobalSettingsStore.Instance.ProfileSettingsStore.SetClientSettingString(
-                ProfileSettingsKeys.ServerPresetSelection, value);
-            NotifyPropertyChanged();
-            EventBus.Instance.PublishOnUIThreadAsync(new ServerSettingsPresetsSettingChangedMessage());
-        }
-        get =>
-            GlobalSettingsStore.Instance.ProfileSettingsStore.GetClientSettingString(ProfileSettingsKeys
-                .ServerPresetSelection);
-    }
-
-    /// <summary>Use the server's radio layout if the server provides one (applied on the next connect).</summary>
-    public bool ServerRadioPresetEnabled
-    {
-        get => GlobalSettingsStore.Instance.ProfileSettingsStore.GetClientSettingBool(
-            ProfileSettingsKeys.AllowServerRadioPreset);
-        set
-        {
-            _globalSettings.ProfileSettingsStore.SetClientSettingBool(ProfileSettingsKeys.AllowServerRadioPreset,
-                value);
-            NotifyPropertyChanged();
-        }
-    }
-
-    /// <summary>Open the radio panel automatically after connecting.</summary>
+    /// <summary>Open the radio window automatically after connecting.</summary>
     public bool AutoOpenRadioPanel
     {
         get => _globalSettings.GetClientSettingBool(GlobalSettingsKeys.AutoOpenRadioPanel);
@@ -323,16 +284,6 @@ public class ClientSettingsViewModel : PropertyChangedBaseClass
         set
         {
             _globalSettings.SetClientSetting(GlobalSettingsKeys.RecordingQuality, $"V{value}");
-            NotifyPropertyChanged();
-        }
-    }
-
-    public bool SingleFileMixdown
-    {
-        get => _globalSettings.GetClientSettingBool(GlobalSettingsKeys.SingleFileMixdown);
-        set
-        {
-            _globalSettings.SetClientSetting(GlobalSettingsKeys.SingleFileMixdown, value);
             NotifyPropertyChanged();
         }
     }
@@ -471,28 +422,6 @@ public class ClientSettingsViewModel : PropertyChangedBaseClass
          * Profile Settings
          */
 
-    public bool RadioSwitchIsPTT
-    {
-        get => _globalSettings.ProfileSettingsStore.GetClientSettingBool(ProfileSettingsKeys.RadioSwitchIsPTT);
-        set
-        {
-            _globalSettings.ProfileSettingsStore.SetClientSettingBool(ProfileSettingsKeys.RadioSwitchIsPTT, value);
-            NotifyPropertyChanged();
-        }
-    }
-
-    public bool AutoSelectChannel
-    {
-        get => _globalSettings.ProfileSettingsStore.GetClientSettingBool(
-            ProfileSettingsKeys.AutoSelectPresetChannel);
-        set
-        {
-            _globalSettings.ProfileSettingsStore.SetClientSettingBool(ProfileSettingsKeys.AutoSelectPresetChannel,
-                value);
-            NotifyPropertyChanged();
-        }
-    }
-
     public float PTTReleaseDelay
     {
         get => _globalSettings.ProfileSettingsStore.GetClientSettingFloat(ProfileSettingsKeys.PTTReleaseDelay);
@@ -568,19 +497,6 @@ public class ClientSettingsViewModel : PropertyChangedBaseClass
             NotifyPropertyChanged();
         }
     }
-
-    public bool RadioEncryptionEffectsToggle
-    {
-        get => _globalSettings.ProfileSettingsStore.GetClientSettingBool(
-            ProfileSettingsKeys.RadioEncryptionEffects);
-        set
-        {
-            _globalSettings.ProfileSettingsStore.SetClientSettingBool(ProfileSettingsKeys.RadioEncryptionEffects,
-                value);
-            NotifyPropertyChanged();
-        }
-    }
-
 
     /// <summary>Listener: play the background sounds of other users.</summary>
     public bool AmbientEffectToggle
@@ -808,106 +724,13 @@ public class ClientSettingsViewModel : PropertyChangedBaseClass
     }
 
 
-    /**
-         * Radio Audio Balance
-         */
-
-    public float RadioChannel1
+    /// <summary>Stereo balance of the radio (-1 left .. +1 right; profile key Radio1Channel).</summary>
+    public float RadioBalance
     {
         get => _globalSettings.ProfileSettingsStore.GetClientSettingFloat(ProfileSettingsKeys.Radio1Channel);
         set
         {
             _globalSettings.ProfileSettingsStore.SetClientSettingFloat(ProfileSettingsKeys.Radio1Channel, value);
-            NotifyPropertyChanged();
-        }
-    }
-
-    public float RadioChannel2
-    {
-        get => _globalSettings.ProfileSettingsStore.GetClientSettingFloat(ProfileSettingsKeys.Radio2Channel);
-        set
-        {
-            _globalSettings.ProfileSettingsStore.SetClientSettingFloat(ProfileSettingsKeys.Radio2Channel, value);
-            NotifyPropertyChanged();
-        }
-    }
-
-    public float RadioChannel3
-    {
-        get => _globalSettings.ProfileSettingsStore.GetClientSettingFloat(ProfileSettingsKeys.Radio3Channel);
-        set
-        {
-            _globalSettings.ProfileSettingsStore.SetClientSettingFloat(ProfileSettingsKeys.Radio3Channel, value);
-            NotifyPropertyChanged();
-        }
-    }
-
-    public float RadioChannel4
-    {
-        get => _globalSettings.ProfileSettingsStore.GetClientSettingFloat(ProfileSettingsKeys.Radio4Channel);
-        set
-        {
-            _globalSettings.ProfileSettingsStore.SetClientSettingFloat(ProfileSettingsKeys.Radio4Channel, value);
-            NotifyPropertyChanged();
-        }
-    }
-
-    public float RadioChannel5
-    {
-        get => _globalSettings.ProfileSettingsStore.GetClientSettingFloat(ProfileSettingsKeys.Radio5Channel);
-        set
-        {
-            _globalSettings.ProfileSettingsStore.SetClientSettingFloat(ProfileSettingsKeys.Radio5Channel, value);
-            NotifyPropertyChanged();
-        }
-    }
-
-    public float RadioChannel6
-    {
-        get => _globalSettings.ProfileSettingsStore.GetClientSettingFloat(ProfileSettingsKeys.Radio6Channel);
-        set
-        {
-            _globalSettings.ProfileSettingsStore.SetClientSettingFloat(ProfileSettingsKeys.Radio6Channel, value);
-            NotifyPropertyChanged();
-        }
-    }
-
-    public float RadioChannel7
-    {
-        get => _globalSettings.ProfileSettingsStore.GetClientSettingFloat(ProfileSettingsKeys.Radio7Channel);
-        set
-        {
-            _globalSettings.ProfileSettingsStore.SetClientSettingFloat(ProfileSettingsKeys.Radio7Channel, value);
-            NotifyPropertyChanged();
-        }
-    }
-
-    public float RadioChannel8
-    {
-        get => _globalSettings.ProfileSettingsStore.GetClientSettingFloat(ProfileSettingsKeys.Radio8Channel);
-        set
-        {
-            _globalSettings.ProfileSettingsStore.SetClientSettingFloat(ProfileSettingsKeys.Radio8Channel, value);
-            NotifyPropertyChanged();
-        }
-    }
-
-    public float RadioChannel9
-    {
-        get => _globalSettings.ProfileSettingsStore.GetClientSettingFloat(ProfileSettingsKeys.Radio9Channel);
-        set
-        {
-            _globalSettings.ProfileSettingsStore.SetClientSettingFloat(ProfileSettingsKeys.Radio9Channel, value);
-            NotifyPropertyChanged();
-        }
-    }
-
-    public float RadioChannel10
-    {
-        get => _globalSettings.ProfileSettingsStore.GetClientSettingFloat(ProfileSettingsKeys.Radio10Channel);
-        set
-        {
-            _globalSettings.ProfileSettingsStore.SetClientSettingFloat(ProfileSettingsKeys.Radio10Channel, value);
             NotifyPropertyChanged();
         }
     }
@@ -974,7 +797,6 @@ public class ClientSettingsViewModel : PropertyChangedBaseClass
 
         NotifyPropertyChanged(nameof(AllowTransmissionsRecording));
         NotifyPropertyChanged(nameof(RecordTransmissions));
-        NotifyPropertyChanged(nameof(SingleFileMixdown));
         NotifyPropertyChanged(nameof(RecordingQuality));
 
         NotifyPropertyChanged(nameof(RequireAdminToggle));
@@ -983,8 +805,6 @@ public class ClientSettingsViewModel : PropertyChangedBaseClass
         NotifyPropertyChanged(nameof(PlayConnectionSounds));
         //TODO handle Profile list??
 
-        NotifyPropertyChanged(nameof(RadioSwitchIsPTT));
-        NotifyPropertyChanged(nameof(AutoSelectChannel));
         NotifyPropertyChanged(nameof(AllowRotaryIncrement));
         NotifyPropertyChanged(nameof(PTTReleaseDelay));
         NotifyPropertyChanged(nameof(PTTStartDelay));
@@ -994,7 +814,6 @@ public class ClientSettingsViewModel : PropertyChangedBaseClass
         NotifyPropertyChanged(nameof(RadioTxEnd));
         NotifyPropertyChanged(nameof(SelectedRadioTransmissionStartEffect));
         NotifyPropertyChanged(nameof(SelectedRadioTransmissionEndEffect));
-        NotifyPropertyChanged(nameof(RadioEncryptionEffectsToggle));
         NotifyPropertyChanged(nameof(RadioSoundEffectsRatio));
         NotifyPropertyChanged(nameof(RadioSoundEffectsClipping));
         NotifyPropertyChanged(nameof(NATORadioToneToggle));
@@ -1008,21 +827,9 @@ public class ClientSettingsViewModel : PropertyChangedBaseClass
         NotifyPropertyChanged(nameof(RadioRxSquelchTail));
         NotifyPropertyChanged(nameof(BackgroundSound));
         NotifyPropertyChanged(nameof(BackgroundSoundVolume));
-        NotifyPropertyChanged(nameof(ServerRadioPresetEnabled));
-        NotifyPropertyChanged(nameof(SelectedServerPresetConfiguration));
 
-        NotifyPropertyChanged(nameof(RadioChannel1));
-        NotifyPropertyChanged(nameof(RadioChannel2));
-        NotifyPropertyChanged(nameof(RadioChannel3));
-        NotifyPropertyChanged(nameof(RadioChannel4));
-        NotifyPropertyChanged(nameof(RadioChannel5));
-        NotifyPropertyChanged(nameof(RadioChannel6));
-        NotifyPropertyChanged(nameof(RadioChannel7));
-        NotifyPropertyChanged(nameof(RadioChannel8));
-        NotifyPropertyChanged(nameof(RadioChannel9));
-        NotifyPropertyChanged(nameof(RadioChannel10));
-        
-        NotifyPropertyChanged(nameof(ServerPresetConfigurations));
+        NotifyPropertyChanged(nameof(PerRadioModelEffects));
+        NotifyPropertyChanged(nameof(RadioBalance));
 
         //TODO send message to tell input to reload!
         //TODO pick up in inputhandler that settings have changed?

@@ -57,7 +57,7 @@ namespace EasyRadioLink.Installer
     /// <remarks>
     ///     Every installed file is recorded (relative to the install folder) in <see cref="ManifestFileName" />. Updates and
     ///     the uninstaller delete exactly those files, so data that the programs create next to their executables (for example
-    ///     server.cfg, banned.txt, Presets\ and logs in the Server folder) survives an update. User settings of the client live
+    ///     server.cfg, banned.txt and logs in the Server folder) survives an update. User settings of the client live
     ///     in %AppData%\EasyRadioLink and recordings in Documents\EasyRadioLink\Recordings; the setup never touches them.
     /// </remarks>
     public static class SetupEngine
@@ -104,8 +104,8 @@ namespace EasyRadioLink.Installer
         public static readonly string[] ProgramFolders = { ClientFolder, ServerFolder, CliWindowsFolder, CliLinuxFolder };
 
         /// <summary>
-        ///     Sub folders whose programs write files next to their executable: the servers (server.cfg, Presets\,
-        ///     server-radios.json, banned.txt, logs, client export). The client keeps all its data in %AppData%\EasyRadioLink
+        ///     Sub folders whose programs write files next to their executable: the servers (server.cfg, banned.txt, logs,
+        ///     transmission logs, client export). The client keeps all its data in %AppData%\EasyRadioLink
         ///     and Documents, so Client\ and the install folder itself, which holds the elevated setup, stay write-protected.
         ///     Because the user can create junctions in these folders, the setup never follows junctions or symbolic links
         ///     below the install folder (see <see cref="IsLinkedPath" /> and <see cref="RemoveLinksOnPath" />).
@@ -148,7 +148,6 @@ namespace EasyRadioLink.Installer
             Path.Combine(ClientFolder, ClientExe),
             Path.Combine(ClientFolder, "opus.dll"),
             Path.Combine(ClientFolder, "speexdsp.dll"),
-            Path.Combine(ClientFolder, "radios.json"),
             Path.Combine(ServerFolder, ServerExe)
         };
 
@@ -993,8 +992,8 @@ namespace EasyRadioLink.Installer
         }
 
         /// <summary>
-        ///     Files in the program folders that were not installed by the setup, e.g. server.cfg, banned.txt, Presets\ and
-        ///     logs written by the server. Relative to the install folder.
+        ///     Files in the program folders that were not installed by the setup, e.g. server.cfg, banned.txt and logs
+        ///     written by the server. Relative to the install folder.
         /// </summary>
         public static List<string> FindUserFiles(string installDirectory)
         {
@@ -1301,6 +1300,7 @@ namespace EasyRadioLink.Installer
                 return true;
             }
 
+            // shipped by version 1.0 (radio layout) - removed together with the old program files
             if (inClient && string.Equals(fileName, "radios.json", StringComparison.OrdinalIgnoreCase))
             {
                 return true;

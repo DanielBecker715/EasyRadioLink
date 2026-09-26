@@ -39,11 +39,6 @@ public partial class ServerSettingsWindow : MetroWindow
         return value ? Properties.Resources.ValueON : Properties.Resources.ValueOFF;
     }
 
-    private static string EnabledDisabled(bool value)
-    {
-        return value ? Properties.Resources.ValueENABLED : Properties.Resources.ValueDISABLED;
-    }
-
     /// <summary>"27.405, 446.19375 MHz" or "None".</summary>
     private static string FrequencyList(IReadOnlyList<double> frequencies)
     {
@@ -60,15 +55,8 @@ public partial class ServerSettingsWindow : MetroWindow
         {
             RealRadio.Text = OnOff(settings.GetSettingAsBool(ServerSettingsKeys.IRL_RADIO_TX));
             RadioRXInterference.Text = OnOff(settings.GetSettingAsBool(ServerSettingsKeys.IRL_RADIO_RX_INTERFERENCE));
-            AllowRadioEncryption.Text = OnOff(settings.GetSettingAsBool(ServerSettingsKeys.ALLOW_RADIO_ENCRYPTION));
-            StrictRadioEncryption.Text = OnOff(settings.GetSettingAsBool(ServerSettingsKeys.STRICT_RADIO_ENCRYPTION));
             TunedClientCount.Text = OnOff(settings.GetSettingAsBool(ServerSettingsKeys.SHOW_TUNED_COUNT));
             ShowTransmitterName.Text = OnOff(settings.GetSettingAsBool(ServerSettingsKeys.SHOW_TRANSMITTER_NAME));
-
-            ServerPresetsEnabled.Text =
-                EnabledDisabled(settings.GetSettingAsBool(ServerSettingsKeys.SERVER_PRESETS_ENABLED));
-            ServerRadioPresetEnabled.Text =
-                EnabledDisabled(settings.GetSettingAsBool(ServerSettingsKeys.SERVER_RADIO_PRESET_ENABLED));
 
             TestFrequencies.Text = FrequencyList(settings.TestFrequencies);
             CleanFrequencies.Text = FrequencyList(settings.CleanFrequencies);

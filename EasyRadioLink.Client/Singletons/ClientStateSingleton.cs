@@ -4,8 +4,6 @@ using System.Threading.Tasks;
 using Caliburn.Micro;
 using EasyRadioLink.Client.Network.Models;
 using EasyRadioLink.Client.Radios;
-using EasyRadioLink.Client.Settings.RadioChannels;
-using EasyRadioLink.Client.UI.ClientWindow.RadioPanel.PresetChannels;
 using EasyRadioLink.Common;
 using EasyRadioLink.Common.Helpers;
 using EasyRadioLink.Common.Models;
@@ -19,8 +17,7 @@ using RadioReceivingState = EasyRadioLink.Common.Models.RadioReceivingState;
 namespace EasyRadioLink.Client.Singletons;
 
 /// <summary>
-///     Application wide client state: the local radios, TX/RX indicators, preset channels, identity and connection
-///     status.
+///     Application wide client state: the local radio, TX/RX indicators, identity and connection status.
 /// </summary>
 public sealed class ClientStateSingleton : PropertyChangedBaseClass, IHandle<TCPClientStatusMessage>
 {
@@ -47,13 +44,6 @@ public sealed class ClientStateSingleton : PropertyChangedBaseClass, IHandle<TCP
         ShortGUID = ShortGuid.NewGuid();
         PlayerRadioInfo = new PlayerRadioInfo();
 
-        // one preset channel list per user radio: FixedChannels[radioId - 1] belongs to radio 1..10
-        FixedChannels = new PresetChannelsViewModel[Constants.RADIO_COUNT];
-
-        for (var i = 0; i < FixedChannels.Length; i++)
-            FixedChannels[i] = new PresetChannelsViewModel(new FilePresetChannelsStore(),
-                i + PlayerRadioInfo.FirstUserRadio);
-
         LastSent = 0;
 
         IsConnected = false;
@@ -64,11 +54,8 @@ public sealed class ClientStateSingleton : PropertyChangedBaseClass, IHandle<TCP
         EventBus.Instance.SubscribeOnUIThread(this);
     }
 
-    /// <summary>The local radios (one instance for the whole application).</summary>
+    /// <summary>The local radio (one instance for the whole application).</summary>
     public PlayerRadioInfo PlayerRadioInfo { get; }
-
-    /// <summary>Preset channels of radio 1..10 at index radioId - 1.</summary>
-    public PresetChannelsViewModel[] FixedChannels { get; }
 
     /// <summary>
     ///     Ticks of the last RADIO_UPDATE sent by <see cref="RadioStateSyncService" />. Setting it to 0 marks the
@@ -78,7 +65,7 @@ public sealed class ClientStateSingleton : PropertyChangedBaseClass, IHandle<TCP
 
     public RadioSendingState RadioSendingState { get; set; }
 
-    // indexed by radio (0..10)
+    // indexed by radio slot (0..10) - only PlayerRadioInfo.RadioId is used
     public RadioReceivingState[] RadioReceivingState { get; }
 
     public bool IsConnected
@@ -169,6 +156,9 @@ public sealed class ClientStateSingleton : PropertyChangedBaseClass, IHandle<TCP
         }
     }
 
+    /// <summary>The server allows showing the number of users on a frequency (SHOW_TUNED_COUNT).</summary>
+    public static bool ShowTunedCount => SyncedServerSettings.Instance.GetSettingAsBool(ServerSettingsKeys.SHOW_TUNED_COUNT);
+
     public Task HandleAsync(TCPClientStatusMessage message, CancellationToken cancellationToken)
     {
         IsConnected = message.Connected;
@@ -183,11 +173,11 @@ public sealed class ClientStateSingleton : PropertyChangedBaseClass, IHandle<TCP
 
     /// <summary>
     ///     Number of other users with a radio tuned to <paramref name="freq" /> / <paramref name="modulation" />
-    ///     (0 unless the server enables SHOW_TUNED_COUNT).
+    ///     (0 unless the server enables SHOW_TUNED_COUNT - see <see cref="ShowTunedCount" />).
     /// </summary>
     public int ClientsOnFreq(double freq, Modulation modulation)
     {
-        if (!SyncedServerSettings.Instance.GetSettingAsBool(ServerSettingsKeys.SHOW_TUNED_COUNT)) return 0;
+        if (!ShowTunedCount) return 0;
 
         var count = 0;
 
@@ -198,7 +188,7 @@ public sealed class ClientStateSingleton : PropertyChangedBaseClass, IHandle<TCP
             var radioInfo = client.Value?.RadioInfo;
             if (radioInfo == null) continue;
 
-            var receivingRadio = radioInfo.CanHearTransmission(freq, modulation, 0, false, null, out _, out _);
+            var receivingRadio = radioInfo.CanHearTransmission(freq, modulation, 0, null, out _, out _);
 
             if (receivingRadio != null) count++;
         }

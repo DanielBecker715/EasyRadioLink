@@ -150,7 +150,7 @@ namespace EasyRadioLink.Client.Properties {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to The Radio Panel opens. Click a radio to select it and set its frequency by typing it or with the arr....
+        ///   Looks up a localized string similar to The radio opens. Turn the tuning knob (or use the mouse wheel, the arrow keys, ▲ / ▼ and STEP) to se....
         /// </summary>
         public static string AboutQuickStart3 {
             get {
@@ -159,7 +159,7 @@ namespace EasyRadioLink.Client.Properties {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to Set a Push-To-Talk key on the Controls tab and hold it to talk on the selected radio. Everybody tune....
+        ///   Looks up a localized string similar to Set a Push-To-Talk key on the Controls tab and hold it to talk. Everybody tuned to the same frequenc....
         /// </summary>
         public static string AboutQuickStart4 {
             get {
@@ -195,7 +195,7 @@ namespace EasyRadioLink.Client.Properties {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to Settings, favourites and radios: .
+        ///   Looks up a localized string similar to Settings and favourites: .
         /// </summary>
         public static string AboutSettingsFolder {
             get {
@@ -231,29 +231,11 @@ namespace EasyRadioLink.Client.Properties {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to Preset channels: put a text file named after the radio (letters and digits only, e.g. "vhfairband.tx....
-        /// </summary>
-        public static string AboutTipPresets {
-            get {
-                return ResourceManager.GetString("AboutTipPresets", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to Radio Panel: the dot of the selected radio is green. Right-click the display or use the G button to ....
+        ///   Looks up a localized string similar to Radio: the underlined digit is the one the knob changes - STEP (or the arrow keys Left / Right) choo....
         /// </summary>
         public static string AboutTipRadioPanel {
             get {
                 return ResourceManager.GetString("AboutTipRadioPanel", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to Your own radios: copy radios.json from the program folder to radios-custom.json in the settings fold....
-        /// </summary>
-        public static string AboutTipRadios {
-            get {
-                return ResourceManager.GetString("AboutTipRadios", resourceCulture);
             }
         }
 
@@ -281,15 +263,6 @@ namespace EasyRadioLink.Client.Properties {
         public static string AllowRotaryIncrement {
             get {
                 return ResourceManager.GetString("AllowRotaryIncrement", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to Use the server's radio layout (if the server has one).
-        /// </summary>
-        public static string AllowServerRadioPreset {
-            get {
-                return ResourceManager.GetString("AllowServerRadioPreset", resourceCulture);
             }
         }
 
@@ -340,7 +313,7 @@ namespace EasyRadioLink.Client.Properties {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to Audio Channels (Left / Right).
+        ///   Looks up a localized string similar to Stereo Balance.
         /// </summary>
         public static string AudioHeader {
             get {
@@ -349,20 +322,11 @@ namespace EasyRadioLink.Client.Properties {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to Open the Radio Panel when connected.
+        ///   Looks up a localized string similar to Open the radio when connected.
         /// </summary>
         public static string AutoOpenRadioPanel {
             get {
                 return ResourceManager.GetString("AutoOpenRadioPanel", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to Select the first preset channel when the radios are loaded.
-        /// </summary>
-        public static string AutoSelectChannel {
-            get {
-                return ResourceManager.GetString("AutoSelectChannel", resourceCulture);
             }
         }
 
@@ -417,24 +381,6 @@ namespace EasyRadioLink.Client.Properties {
         public static string BtnClose {
             get {
                 return ResourceManager.GetString("BtnClose", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to Disable.
-        /// </summary>
-        public static string BtnDisable {
-            get {
-                return ResourceManager.GetString("BtnDisable", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to Enable.
-        /// </summary>
-        public static string BtnEnable {
-            get {
-                return ResourceManager.GetString("BtnEnable", resourceCulture);
             }
         }
 
@@ -547,16 +493,7 @@ namespace EasyRadioLink.Client.Properties {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to Encryption of the selected radio.
-        /// </summary>
-        public static string ControlsEncryptionHeader {
-            get {
-                return ResourceManager.GetString("ControlsEncryptionHeader", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to Frequency of the selected radio.
+        ///   Looks up a localized string similar to Frequency.
         /// </summary>
         public static string ControlsFrequencyHeader {
             get {
@@ -583,15 +520,6 @@ namespace EasyRadioLink.Client.Properties {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to Selected radio.
-        /// </summary>
-        public static string ControlsRadioHeader {
-            get {
-                return ResourceManager.GetString("ControlsRadioHeader", resourceCulture);
-            }
-        }
-
-        /// <summary>
         ///   Looks up a localized string similar to Controls.
         /// </summary>
         public static string ControlsTab {
@@ -601,7 +529,7 @@ namespace EasyRadioLink.Client.Properties {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to Push-To-Talk and radio selection.
+        ///   Looks up a localized string similar to Push-To-Talk.
         /// </summary>
         public static string ControlsTalkHeader {
             get {
@@ -997,47 +925,11 @@ namespace EasyRadioLink.Client.Properties {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to Encryption key down.
-        /// </summary>
-        public static string InputEncryptionDecrease {
-            get {
-                return ResourceManager.GetString("InputEncryptionDecrease", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to Encryption key up.
-        /// </summary>
-        public static string InputEncryptionIncrease {
-            get {
-                return ResourceManager.GetString("InputEncryptionIncrease", resourceCulture);
-            }
-        }
-
-        /// <summary>
         ///   Looks up a localized string similar to Modifier.
         /// </summary>
         public static string InputModifier {
             get {
                 return ResourceManager.GetString("InputModifier", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to Select next radio.
-        /// </summary>
-        public static string InputNextRadio {
-            get {
-                return ResourceManager.GetString("InputNextRadio", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to Select previous radio.
-        /// </summary>
-        public static string InputPreviousRadio {
-            get {
-                return ResourceManager.GetString("InputPreviousRadio", resourceCulture);
             }
         }
 
@@ -1051,115 +943,7 @@ namespace EasyRadioLink.Client.Properties {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to Select radio 1.
-        /// </summary>
-        public static string InputRadio1 {
-            get {
-                return ResourceManager.GetString("InputRadio1", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to Select radio 10.
-        /// </summary>
-        public static string InputRadio10 {
-            get {
-                return ResourceManager.GetString("InputRadio10", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to Select radio 2.
-        /// </summary>
-        public static string InputRadio2 {
-            get {
-                return ResourceManager.GetString("InputRadio2", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to Select radio 3.
-        /// </summary>
-        public static string InputRadio3 {
-            get {
-                return ResourceManager.GetString("InputRadio3", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to Select radio 4.
-        /// </summary>
-        public static string InputRadio4 {
-            get {
-                return ResourceManager.GetString("InputRadio4", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to Select radio 5.
-        /// </summary>
-        public static string InputRadio5 {
-            get {
-                return ResourceManager.GetString("InputRadio5", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to Select radio 6.
-        /// </summary>
-        public static string InputRadio6 {
-            get {
-                return ResourceManager.GetString("InputRadio6", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to Select radio 7.
-        /// </summary>
-        public static string InputRadio7 {
-            get {
-                return ResourceManager.GetString("InputRadio7", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to Select radio 8.
-        /// </summary>
-        public static string InputRadio8 {
-            get {
-                return ResourceManager.GetString("InputRadio8", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to Select radio 9.
-        /// </summary>
-        public static string InputRadio9 {
-            get {
-                return ResourceManager.GetString("InputRadio9", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to Previous preset channel.
-        /// </summary>
-        public static string InputRadioChannelDown {
-            get {
-                return ResourceManager.GetString("InputRadioChannelDown", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to Next preset channel.
-        /// </summary>
-        public static string InputRadioChannelUp {
-            get {
-                return ResourceManager.GetString("InputRadioChannelUp", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to Show / hide the Radio Panel.
+        ///   Looks up a localized string similar to Show / hide the radio.
         /// </summary>
         public static string InputRadioPanelToggle {
             get {
@@ -1191,24 +975,6 @@ namespace EasyRadioLink.Client.Properties {
         public static string InputTextNone {
             get {
                 return ResourceManager.GetString("InputTextNone", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to Encryption on / off.
-        /// </summary>
-        public static string InputToggleEncryption {
-            get {
-                return ResourceManager.GetString("InputToggleEncryption", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to Guard receiver on / off.
-        /// </summary>
-        public static string InputToggleGuard {
-            get {
-                return ResourceManager.GetString("InputToggleGuard", resourceCulture);
             }
         }
 
@@ -1581,23 +1347,6 @@ namespace EasyRadioLink.Client.Properties {
             }
         }
 
-        /// <summary>
-        ///   Looks up a localized string similar to Preset channels.
-        /// </summary>
-        public static string MsgBoxPresetCreated {
-            get {
-                return ResourceManager.GetString("MsgBoxPresetCreated", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to The preset file was created: ....
-        /// </summary>
-        public static string MsgBoxPresetCreatedText {
-            get {
-                return ResourceManager.GetString("MsgBoxPresetCreatedText", resourceCulture);
-            }
-        }
         
         /// <summary>
         ///   Looks up a localized string similar to A profile named &quot;{0}&quot; already exists.
@@ -1609,7 +1358,7 @@ namespace EasyRadioLink.Client.Properties {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to The Radio Panel was outside the visible screen area (for example after a monitor change). Its positi....
+        ///   Looks up a localized string similar to The radio was outside the visible screen area (for example after a monitor change). Its position has....
         /// </summary>
         public static string MsgBoxRadioPanelNotVisibleText {
             get {
@@ -1717,65 +1466,11 @@ namespace EasyRadioLink.Client.Properties {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to Ch..
-        /// </summary>
-        public static string OverlayChannelTab {
-            get {
-                return ResourceManager.GetString("OverlayChannelTab", resourceCulture);
-            }
-        }
-
-        /// <summary>
         ///   Looks up a localized string similar to DIG.
         /// </summary>
         public static string OverlayDIG {
             get {
                 return ResourceManager.GetString("OverlayDIG", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to Encryption key.
-        /// </summary>
-        public static string OverlayEncryptionKey {
-            get {
-                return ResourceManager.GetString("OverlayEncryptionKey", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to Not allowed on this server.
-        /// </summary>
-        public static string OverlayEncryptionNotAllowed {
-            get {
-                return ResourceManager.GetString("OverlayEncryptionNotAllowed", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to Not encrypted.
-        /// </summary>
-        public static string OverlayEncryptionOff {
-            get {
-                return ResourceManager.GetString("OverlayEncryptionOff", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to Encrypted (key {0}).
-        /// </summary>
-        public static string OverlayEncryptionOn {
-            get {
-                return ResourceManager.GetString("OverlayEncryptionOn", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to Enc.
-        /// </summary>
-        public static string OverlayEncryptionTab {
-            get {
-                return ResourceManager.GetString("OverlayEncryptionTab", resourceCulture);
             }
         }
 
@@ -1789,88 +1484,7 @@ namespace EasyRadioLink.Client.Properties {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to G.
-        /// </summary>
-        public static string OverlayGuard {
-            get {
-                return ResourceManager.GetString("OverlayGuard", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to No Radio.
-        /// </summary>
-        public static string OverlayNoRadio {
-            get {
-                return ResourceManager.GetString("OverlayNoRadio", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to Create.
-        /// </summary>
-        public static string OverlayPresetCreate {
-            get {
-                return ResourceManager.GetString("OverlayPresetCreate", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to Reload.
-        /// </summary>
-        public static string OverlayPresetReload {
-            get {
-                return ResourceManager.GetString("OverlayPresetReload", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to Radio.
-        /// </summary>
-        public static string OverlayRadioTab {
-            get {
-                return ResourceManager.GetString("OverlayRadioTab", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to Simultaneous TX: Off.
-        /// </summary>
-        public static string OverlaySimulTransOFF {
-            get {
-                return ResourceManager.GetString("OverlaySimulTransOFF", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to Simultaneous TX: On.
-        /// </summary>
-        public static string OverlaySimulTransON {
-            get {
-                return ResourceManager.GetString("OverlaySimulTransON", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to ST.
-        /// </summary>
-        public static string OverlaySimulTransST {
-            get {
-                return ResourceManager.GetString("OverlaySimulTransST", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to Sound.
-        /// </summary>
-        public static string OverlaySound {
-            get {
-                return ResourceManager.GetString("OverlaySound", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to Use the sender's radio sound.
+        ///   Looks up a localized string similar to Radio sound of the band (CB, PMR, airband, ...).
         /// </summary>
         public static string PerRadioModelEffects {
             get {
@@ -1884,69 +1498,6 @@ namespace EasyRadioLink.Client.Properties {
         public static string PlayConnectionSounds {
             get {
                 return ResourceManager.GetString("PlayConnectionSounds", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to Browse....
-        /// </summary>
-        public static string PresetsFolderBrowseButton {
-            get {
-                return ResourceManager.GetString("PresetsFolderBrowseButton", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to (default).
-        /// </summary>
-        public static string PresetsFolderDefault {
-            get {
-                return ResourceManager.GetString("PresetsFolderDefault", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to Presets folder.
-        /// </summary>
-        public static string PresetsFolderLabel {
-            get {
-                return ResourceManager.GetString("PresetsFolderLabel", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to Reset.
-        /// </summary>
-        public static string PresetsFolderResetButton {
-            get {
-                return ResourceManager.GetString("PresetsFolderResetButton", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to My presets and the server's.
-        /// </summary>
-        public static string PresetsUseClientAndServer {
-            get {
-                return ResourceManager.GetString("PresetsUseClientAndServer", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to My presets only.
-        /// </summary>
-        public static string PresetsUseClientOnly {
-            get {
-                return ResourceManager.GetString("PresetsUseClientOnly", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to The server's presets (mine if it has none).
-        /// </summary>
-        public static string PresetsUseServerIfSet {
-            get {
-                return ResourceManager.GetString("PresetsUseServerIfSet", resourceCulture);
             }
         }
 
@@ -2113,96 +1664,6 @@ namespace EasyRadioLink.Client.Properties {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to Radio 10.
-        /// </summary>
-        public static string Radio10Config {
-            get {
-                return ResourceManager.GetString("Radio10Config", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to Radio 1.
-        /// </summary>
-        public static string Radio1Config {
-            get {
-                return ResourceManager.GetString("Radio1Config", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to Radio 2.
-        /// </summary>
-        public static string Radio2Config {
-            get {
-                return ResourceManager.GetString("Radio2Config", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to Radio 3.
-        /// </summary>
-        public static string Radio3Config {
-            get {
-                return ResourceManager.GetString("Radio3Config", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to Radio 4.
-        /// </summary>
-        public static string Radio4Config {
-            get {
-                return ResourceManager.GetString("Radio4Config", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to Radio 5.
-        /// </summary>
-        public static string Radio5Config {
-            get {
-                return ResourceManager.GetString("Radio5Config", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to Radio 6.
-        /// </summary>
-        public static string Radio6Config {
-            get {
-                return ResourceManager.GetString("Radio6Config", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to Radio 7.
-        /// </summary>
-        public static string Radio7Config {
-            get {
-                return ResourceManager.GetString("Radio7Config", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to Radio 8.
-        /// </summary>
-        public static string Radio8Config {
-            get {
-                return ResourceManager.GetString("Radio8Config", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to Radio 9.
-        /// </summary>
-        public static string Radio9Config {
-            get {
-                return ResourceManager.GetString("Radio9Config", resourceCulture);
-            }
-        }
-
-        /// <summary>
         ///   Looks up a localized string similar to Centre.
         /// </summary>
         public static string RadioChannelEqual {
@@ -2239,15 +1700,6 @@ namespace EasyRadioLink.Client.Properties {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to Encryption sound effects.
-        /// </summary>
-        public static string RadioEncryptionEffectsToggle {
-            get {
-                return ResourceManager.GetString("RadioEncryptionEffectsToggle", resourceCulture);
-            }
-        }
-
-        /// <summary>
         ///   Looks up a localized string similar to Transmit end click.
         /// </summary>
         public static string RadioEndTransmitEffect {
@@ -2257,7 +1709,7 @@ namespace EasyRadioLink.Client.Properties {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to Hide the Radio Panel from the taskbar.
+        ///   Looks up a localized string similar to Hide the radio from the taskbar.
         /// </summary>
         public static string RadioPanelTaskbarItem {
             get {
@@ -2265,53 +1717,10 @@ namespace EasyRadioLink.Client.Properties {
             }
         }
 
-        /// <summary>
-        ///   Looks up a localized string similar to Radio Panel.
-        /// </summary>
-        public static string RadioPanelHeader {
-            get {
-                return ResourceManager.GetString("RadioPanelHeader", resourceCulture);
-            }
-        }
+        
         
         /// <summary>
-        ///   Looks up a localized string similar to Loading radios....
-        /// </summary>
-        public static string RadioPanelLoading {
-            get {
-                return ResourceManager.GetString("RadioPanelLoading", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Connected, but the radio layout has no radio switched on. Check radios-custom.json or the server&apos;s radio layout.
-        /// </summary>
-        public static string RadioPanelNoRadiosEnabled {
-            get {
-                return ResourceManager.GetString("RadioPanelNoRadiosEnabled", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to No radios yet - connect to a server in the EasyRadioLink window..
-        /// </summary>
-        public static string RadioPanelNotConnected {
-            get {
-                return ResourceManager.GetString("RadioPanelNotConnected", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to Opacity.
-        /// </summary>
-        public static string RadioPanelOpacity {
-            get {
-                return ResourceManager.GetString("RadioPanelOpacity", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to EasyRadioLink - Radio Panel.
+        ///   Looks up a localized string similar to EasyRadioLink - Radio.
         /// </summary>
         public static string RadioPanelTitle {
             get {
@@ -2356,7 +1765,7 @@ namespace EasyRadioLink.Client.Properties {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to Radios.
+        ///   Looks up a localized string similar to Radio.
         /// </summary>
         public static string RadiosHeader {
             get {
@@ -2388,15 +1797,6 @@ namespace EasyRadioLink.Client.Properties {
         public static string RadioStartTransmitEffect {
             get {
                 return ResourceManager.GetString("RadioStartTransmitEffect", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to Radio select keys also work as Push-To-Talk.
-        /// </summary>
-        public static string RadioSwitchIsPTT {
-            get {
-                return ResourceManager.GetString("RadioSwitchIsPTT", resourceCulture);
             }
         }
 
@@ -2527,7 +1927,7 @@ namespace EasyRadioLink.Client.Properties {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to Reset the position and size of the Radio Panel.
+        ///   Looks up a localized string similar to Reset the position and size of the radio.
         /// </summary>
         public static string ResetRadioPanel {
             get {
@@ -2563,7 +1963,7 @@ namespace EasyRadioLink.Client.Properties {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to Settings of the connected server that affect your radios..
+        ///   Looks up a localized string similar to Settings of the connected server that affect your radio..
         /// </summary>
         public static string ServerInfoHint {
             get {
@@ -2586,15 +1986,6 @@ namespace EasyRadioLink.Client.Properties {
         public static string ServerPasswordWatermark {
             get {
                 return ResourceManager.GetString("ServerPasswordWatermark", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to Preset channels.
-        /// </summary>
-        public static string ServerPresetsConfiguration {
-            get {
-                return ResourceManager.GetString("ServerPresetsConfiguration", resourceCulture);
             }
         }
 
@@ -2635,7 +2026,7 @@ namespace EasyRadioLink.Client.Properties {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to Radio Panel.
+        ///   Looks up a localized string similar to Show Radio.
         /// </summary>
         public static string ShowRadioPanel {
             get {
@@ -2649,15 +2040,6 @@ namespace EasyRadioLink.Client.Properties {
         public static string ShowTransmitterName {
             get {
                 return ResourceManager.GetString("ShowTransmitterName", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to Record all radios into a single file.
-        /// </summary>
-        public static string SingleFileMixdown {
-            get {
-                return ResourceManager.GetString("SingleFileMixdown", resourceCulture);
             }
         }
 
@@ -2680,38 +2062,11 @@ namespace EasyRadioLink.Client.Properties {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to Radio encryption allowed.
-        /// </summary>
-        public static string SrvAllowRadioEncryption {
-            get {
-                return ResourceManager.GetString("SrvAllowRadioEncryption", resourceCulture);
-            }
-        }
-
-        /// <summary>
         ///   Looks up a localized string similar to Clean frequencies (no radio effects).
         /// </summary>
         public static string SrvCleanFrequencies {
             get {
                 return ResourceManager.GetString("SrvCleanFrequencies", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to Server preset channels.
-        /// </summary>
-        public static string SrvPresetsEnabled {
-            get {
-                return ResourceManager.GetString("SrvPresetsEnabled", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to Server radio layout.
-        /// </summary>
-        public static string SrvRadioPresetEnabled {
-            get {
-                return ResourceManager.GetString("SrvRadioPresetEnabled", resourceCulture);
             }
         }
 
@@ -2748,15 +2103,6 @@ namespace EasyRadioLink.Client.Properties {
         public static string SrvShowTransmitterName {
             get {
                 return ResourceManager.GetString("SrvShowTransmitterName", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to Strict encryption (the key must match).
-        /// </summary>
-        public static string SrvStrictRadioEncryption {
-            get {
-                return ResourceManager.GetString("SrvStrictRadioEncryption", resourceCulture);
             }
         }
 
@@ -2869,15 +2215,6 @@ namespace EasyRadioLink.Client.Properties {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to The server can define your radios (names, frequency ranges, guard). Applied when you connect..
-        /// </summary>
-        public static string ToolTipAllowServerRadioPreset {
-            get {
-                return ResourceManager.GetString("ToolTipAllowServerRadioPreset", resourceCulture);
-            }
-        }
-
-        /// <summary>
         ///   Looks up a localized string similar to Other users can mix a background sound (jet, prop, helicopter) into their transmissions.
         /// </summary>
         public static string ToolTipAmbientEffect {
@@ -2887,7 +2224,7 @@ namespace EasyRadioLink.Client.Properties {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to Shows the Radio Panel automatically after connecting to a server.
+        ///   Looks up a localized string similar to Shows the radio automatically after connecting to a server.
         /// </summary>
         public static string ToolTipAutoOpenRadioPanel {
             get {
@@ -2950,15 +2287,6 @@ namespace EasyRadioLink.Client.Properties {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to Encryption key 1-252 (type it, or use the mouse wheel / arrow keys) - both sides need the same key.
-        /// </summary>
-        public static string ToolTipEncryptionKey {
-            get {
-                return ResourceManager.GetString("ToolTipEncryptionKey", resourceCulture);
-            }
-        }
-
-        /// <summary>
         ///   Looks up a localized string similar to Add this server to the favourites.
         /// </summary>
         public static string ToolTipFavAdd {
@@ -2991,33 +2319,6 @@ namespace EasyRadioLink.Client.Properties {
         public static string ToolTipFmTone {
             get {
                 return ResourceManager.GetString("ToolTipFmTone", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to Simultaneous transmission: Push-To-Talk also transmits on every radio with ST switched on (up to 3 m....
-        /// </summary>
-        public static string ToolTipGlobalSimulTrans {
-            get {
-                return ResourceManager.GetString("ToolTipGlobalSimulTrans", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to Guard receiver.
-        /// </summary>
-        public static string ToolTipGuard {
-            get {
-                return ResourceManager.GetString("ToolTipGuard", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to Guard receiver: also listen on {0} MHz. Click to switch it on or off (orange = on)..
-        /// </summary>
-        public static string ToolTipGuardFrequency {
-            get {
-                return ResourceManager.GetString("ToolTipGuardFrequency", resourceCulture);
             }
         }
 
@@ -3067,20 +2368,11 @@ namespace EasyRadioLink.Client.Properties {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to You can still listen to the radios, but you can't transmit..
+        ///   Looks up a localized string similar to You can still listen to the radio, but you can't transmit..
         /// </summary>
         public static string ToolTipNoMicL2 {
             get {
                 return ResourceManager.GetString("ToolTipNoMicL2", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to Opacity of the Radio Panel.
-        /// </summary>
-        public static string ToolTipOpacity {
-            get {
-                return ResourceManager.GetString("ToolTipOpacity", resourceCulture);
             }
         }
 
@@ -3094,47 +2386,11 @@ namespace EasyRadioLink.Client.Properties {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to Transmissions sound like the radio the sender selected (Sound on the Radio Panel). Off: every transm....
+        ///   Looks up a localized string similar to Transmissions sound like the radio of their band (CB, PMR, airband, ...). Off: every transmission us....
         /// </summary>
         public static string ToolTipPerRadioModelEffects {
             get {
                 return ResourceManager.GetString("ToolTipPerRadioModelEffects", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to Preset channels of this radio.
-        /// </summary>
-        public static string ToolTipPresetChannels {
-            get {
-                return ResourceManager.GetString("ToolTipPresetChannels", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to Create the preset file of this radio in the presets folder.
-        /// </summary>
-        public static string ToolTipPresetCreate {
-            get {
-                return ResourceManager.GetString("ToolTipPresetCreate", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to Reload the preset channels.
-        /// </summary>
-        public static string ToolTipPresetReload {
-            get {
-                return ResourceManager.GetString("ToolTipPresetReload", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to Folder with the preset channel files of your radios (&lt;radio name&gt;.txt).
-        /// </summary>
-        public static string ToolTipPresetsFolder {
-            get {
-                return ResourceManager.GetString("ToolTipPresetsFolder", resourceCulture);
             }
         }
 
@@ -3148,25 +2404,7 @@ namespace EasyRadioLink.Client.Properties {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to Frequency in MHz - type a frequency and press Enter. Click to select this radio, right-click to swit....
-        /// </summary>
-        public static string ToolTipRadioFrequency {
-            get {
-                return ResourceManager.GetString("ToolTipRadioFrequency", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to Sound: how your transmissions on this radio sound to the other users.
-        /// </summary>
-        public static string ToolTipRadioModel {
-            get {
-                return ResourceManager.GetString("ToolTipRadioModel", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to Show or hide the Radio Panel.
+        ///   Looks up a localized string similar to Show or hide the radio.
         /// </summary>
         public static string ToolTipRadioPanel {
             get {
@@ -3211,7 +2449,7 @@ namespace EasyRadioLink.Client.Properties {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to Moves the Radio Panel back to its default position and size (an open panel is closed).
+        ///   Looks up a localized string similar to Moves the radio back to its default position and size (an open radio is closed).
         /// </summary>
         public static string ToolTipResetRadioPanel {
             get {
@@ -3220,7 +2458,7 @@ namespace EasyRadioLink.Client.Properties {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to The frequency step buttons and keys change only their digit and roll over from 9 to 0, like a rotary....
+        ///   Looks up a localized string similar to Tuning (knob, ▲ / ▼, keys) changes only the underlined digit and rolls over from 9 to 0 instead of c....
         /// </summary>
         public static string ToolTipRotaryIncrement {
             get {
@@ -3234,15 +2472,6 @@ namespace EasyRadioLink.Client.Properties {
         public static string ToolTipSavedAddressTab {
             get {
                 return ResourceManager.GetString("ToolTipSavedAddressTab", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to Green: selected radio (Push-To-Talk transmits on it). Click to select this radio..
-        /// </summary>
-        public static string ToolTipSelectedRadio {
-            get {
-                return ResourceManager.GetString("ToolTipSelectedRadio", resourceCulture);
             }
         }
 
@@ -3274,29 +2503,11 @@ namespace EasyRadioLink.Client.Properties {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to Which preset channels the channel tab offers: your preset files, the server's presets, or both.
-        /// </summary>
-        public static string ToolTipServerPresetsConfiguration {
-            get {
-                return ResourceManager.GetString("ToolTipServerPresetsConfiguration", resourceCulture);
-            }
-        }
-
-        /// <summary>
         ///   Looks up a localized string similar to Connection to the server.
         /// </summary>
         public static string ToolTipServerStatus {
             get {
                 return ResourceManager.GetString("ToolTipServerStatus", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to Also transmit on this radio (needs simultaneous transmission on).
-        /// </summary>
-        public static string ToolTipSimulTrans {
-            get {
-                return ResourceManager.GetString("ToolTipSimulTrans", resourceCulture);
             }
         }
 
@@ -3319,7 +2530,7 @@ namespace EasyRadioLink.Client.Properties {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to Transmits on the selected radio while you speak - no Push-To-Talk needed.
+        ///   Looks up a localized string similar to Transmits while you speak - no Push-To-Talk needed.
         /// </summary>
         public static string ToolTipVOXEnabled {
             get {
@@ -3342,24 +2553,6 @@ namespace EasyRadioLink.Client.Properties {
         public static string ToolTipVOXThreshold {
             get {
                 return ResourceManager.GetString("ToolTipVOXThreshold", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to Disabled.
-        /// </summary>
-        public static string ValueDISABLED {
-            get {
-                return ResourceManager.GetString("ValueDISABLED", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to Enabled.
-        /// </summary>
-        public static string ValueENABLED {
-            get {
-                return ResourceManager.GetString("ValueENABLED", resourceCulture);
             }
         }
 
@@ -3427,7 +2620,7 @@ namespace EasyRadioLink.Client.Properties {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to Transmit on the selected radio when speaking (VOX).
+        ///   Looks up a localized string similar to Transmit when speaking (VOX).
         /// </summary>
         public static string VOXEnabled {
             get {
@@ -3531,6 +2724,132 @@ namespace EasyRadioLink.Client.Properties {
         public static string VOXModeLower {
             get {
                 return ResourceManager.GetString("VOXModeLower", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to The frequency decides everything else: 26.965 - 27.405 MHz is CB (AM), 446.000 - 446.200 MHz is PMR ....
+        /// </summary>
+        public static string AboutTipBands {
+            get {
+                return ResourceManager.GetString("AboutTipBands", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Volume.
+        /// </summary>
+        public static string ControlsVolumeHeader {
+            get {
+                return ResourceManager.GetString("ControlsVolumeHeader", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Radio balance.
+        /// </summary>
+        public static string RadioBalance {
+            get {
+                return ResourceManager.GetString("RadioBalance", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to STANDBY.
+        /// </summary>
+        public static string RadioStatusLoading {
+            get {
+                return ResourceManager.GetString("RadioStatusLoading", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to NO LINK.
+        /// </summary>
+        public static string RadioStatusNoLink {
+            get {
+                return ResourceManager.GetString("RadioStatusNoLink", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to STEP {0}.
+        /// </summary>
+        public static string RadioStepFormat {
+            get {
+                return ResourceManager.GetString("RadioStepFormat", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Plays the radio on the left, on the right or on both sides of your speakers / headphones.
+        /// </summary>
+        public static string ToolTipRadioBalance {
+            get {
+                return ResourceManager.GetString("ToolTipRadioBalance", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Double-click (or press Enter) to type a frequency. Mouse wheel or arrow keys Up / Down: tune. Left /....
+        /// </summary>
+        public static string ToolTipRadioDisplay {
+            get {
+                return ResourceManager.GetString("ToolTipRadioDisplay", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Drag to resize the radio.
+        /// </summary>
+        public static string ToolTipResizeRadio {
+            get {
+                return ResourceManager.GetString("ToolTipResizeRadio", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Tuning step: 1 kHz, 10 kHz, 100 kHz, 1 MHz, 10 MHz or 100 MHz (the underlined digit).
+        /// </summary>
+        public static string ToolTipStep {
+            get {
+                return ResourceManager.GetString("ToolTipStep", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Tune down one step.
+        /// </summary>
+        public static string ToolTipStepDown {
+            get {
+                return ResourceManager.GetString("ToolTipStepDown", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Tune up one step.
+        /// </summary>
+        public static string ToolTipStepUp {
+            get {
+                return ResourceManager.GetString("ToolTipStepUp", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Tuning knob: drag it round or use the mouse wheel - one click is one step.
+        /// </summary>
+        public static string ToolTipTuningKnob {
+            get {
+                return ResourceManager.GetString("ToolTipTuningKnob", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Other users on this frequency.
+        /// </summary>
+        public static string ToolTipUsersOnFrequency {
+            get {
+                return ResourceManager.GetString("ToolTipUsersOnFrequency", resourceCulture);
             }
         }
     }

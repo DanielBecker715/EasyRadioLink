@@ -59,8 +59,8 @@ namespace EasyRadioLink.Common.Audio.Providers
                 }
                 else
                 {
-                    var preset = GetRadioModel(transmission, RadioModelFactory.DefaultModelKey);
-                    wetProvider = BuildRadioEffectsChain(wetProvider, preset, transmission);
+                    var radioModel = GetRadioModel(transmission, RadioModelFactory.DefaultModelKey);
+                    wetProvider = BuildRadioEffectsChain(wetProvider, radioModel, transmission);
                 }
             }
 
@@ -163,7 +163,7 @@ namespace EasyRadioLink.Common.Audio.Providers
 
             var noiseGeneratorGainDB = !isHFNoise ? noiseGainDB : 0f;
 
-            // #TODO: noise type should be part of the radio preset really.
+            // #TODO: noise type should be part of the radio model really.
             // Tube/HF noise (red/pink) vs transistor (white/AGWN)
             ISampleProvider noiseProvider = null;
             if (!isHFNoise)
@@ -231,7 +231,9 @@ namespace EasyRadioLink.Common.Audio.Providers
         private ISampleProvider BuildRadioPipeline(ISampleProvider voiceProvider, TxRadioModel radioModel, DeJitteredTransmission details)
         {
             radioModel.TxSource.Source = voiceProvider;
-            var encryptionEffects = RadioEncryptionEffect && details.Encryption > 0;
+            // Radios of this version never encrypt; an encrypted transmission (older clients) can't be decrypted and
+            // gets the model's encryption effect on top of the garbling done by ClientAudioProvider.
+            var encryptionEffects = details.Encryption > 0;
             if (encryptionEffects && radioModel.EncryptionProvider != null)
             {
                 voiceProvider = radioModel.EncryptionProvider;
@@ -321,7 +323,6 @@ namespace EasyRadioLink.Common.Audio.Providers
             // Use RadioEffectsAmount as float (0..1), clamp for safety
             RadioEffectsRatio = Math.Clamp(profileSettings.GetClientSettingFloat(ProfileSettingsKeys.RadioEffectsRatio), 0f, 1f);
 
-            RadioEncryptionEffect = profileSettings.GetClientSettingBool(ProfileSettingsKeys.RadioEncryptionEffects);
             clippingEnabled = profileSettings.GetClientSettingBool(ProfileSettingsKeys.RadioEffectsClipping);
             BackgroundNoiseEffect = profileSettings.GetClientSettingBool(ProfileSettingsKeys.RadioBackgroundNoiseEffect);
 
@@ -336,7 +337,6 @@ namespace EasyRadioLink.Common.Audio.Providers
 
         private bool PerRadioModelEffect { get; set; }
         private float RadioEffectsRatio { get; set; } = 1.0f;
-        private bool RadioEncryptionEffect { get; set; }
         private bool BackgroundNoiseEffect { get; set; }
 
         private bool clippingEnabled = false;

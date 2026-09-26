@@ -86,12 +86,6 @@
             <!-- Radio realism -->
             <GroupBox Header="{x:Static p:Resources.GroupRadioRealism}">
                 <StackPanel>
-                    <CheckBox IsChecked="{Binding AllowRadioEncryption}"
-                              Content="{x:Static p:Resources.LabelRadioEncryption}"
-                              ToolTip="{x:Static p:Resources.TooltipRadioEncryption}" />
-                    <CheckBox IsChecked="{Binding StrictRadioEncryption}"
-                              Content="{x:Static p:Resources.LabelStrictEncryption}"
-                              ToolTip="{x:Static p:Resources.TooltipStrictEncryption}" />
                     <CheckBox IsChecked="{Binding HalfDuplexRadios}"
                               Content="{x:Static p:Resources.LabelRealTx}"
                               ToolTip="{x:Static p:Resources.TooltipRealTx}" />
@@ -142,12 +136,6 @@
                     <CheckBox IsChecked="{Binding ShowTransmitterName}"
                               Content="{x:Static p:Resources.LabelShowTransmitterName}"
                               ToolTip="{x:Static p:Resources.TooltipShowTransmitterName}" />
-                    <CheckBox IsChecked="{Binding ServerPresetsEnabled}"
-                              Content="{x:Static p:Resources.LabelServerPresets}"
-                              ToolTip="{x:Static p:Resources.TooltipServerPresets}" />
-                    <CheckBox IsChecked="{Binding ServerRadioPresetEnabled}"
-                              Content="{x:Static p:Resources.LabelServerRadioPreset}"
-                              ToolTip="{x:Static p:Resources.TooltipServerRadioPreset}" />
                 </StackPanel>
             </GroupBox>
 

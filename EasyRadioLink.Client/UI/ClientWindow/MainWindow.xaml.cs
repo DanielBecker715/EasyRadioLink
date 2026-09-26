@@ -7,10 +7,8 @@ using System.Runtime;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Documents;
-using System.Windows.Forms;
 using System.Windows.Navigation;
 using EasyRadioLink.Client.Settings.Favourites;
-using EasyRadioLink.Client.Settings.RadioChannels;
 using EasyRadioLink.Client.UI.ClientWindow.Favourites;
 using EasyRadioLink.Client.UI.ClientWindow.RadioPanel;
 using EasyRadioLink.Client.Utils;
@@ -76,8 +74,6 @@ public partial class MainWindow : MetroWindow
         ((MainWindowViewModel)DataContext).SelectStartFavourite();
 
         BindServerPassword((MainWindowViewModel)DataContext);
-
-        UpdatePresetsFolderLabel();
 
         InitAboutText();
 
@@ -176,18 +172,16 @@ public partial class MainWindow : MetroWindow
         var mainWindowY = _globalSettings.GetPositionSetting(GlobalSettingsKeys.ClientY).DoubleValue;
         var radioWindowX = _globalSettings.GetPositionSetting(GlobalSettingsKeys.RadioX).DoubleValue;
         var radioWindowY = _globalSettings.GetPositionSetting(GlobalSettingsKeys.RadioY).DoubleValue;
-        var radioWindowWidth = _globalSettings.GetPositionSetting(GlobalSettingsKeys.RadioWidth).DoubleValue;
+        var radioWindowWidth = RadioPanelWindow.NaturalWidth * RadioPanelWindow.ReadSavedScale(_globalSettings);
 
         Logger.Info($"Checking window visibility for main client window {{X={mainWindowX},Y={mainWindowY}}}");
-        Logger.Info($"Checking window visibility for radio panel {{X={radioWindowX},Y={radioWindowY}}}");
+        Logger.Info($"Checking window visibility for the radio window {{X={radioWindowX},Y={radioWindowY}}}");
 
-        // The title bar (the panel's header) must be on one of the connected monitors, so the window can be dragged.
+        // The title bar (the radio's header) must be on one of the connected monitors, so the window can be dragged.
         // The virtual screen is not enough: with monitors of different sizes it contains areas no monitor shows.
         var mainWindowVisible = ScreenHelper.IsTitleVisible(mainWindowX, mainWindowY, Width);
 
-        // 0 = natural size of the panel (at least one radio wide)
-        var radioWindowVisible = ScreenHelper.IsTitleVisible(radioWindowX, radioWindowY,
-            double.IsFinite(radioWindowWidth) && radioWindowWidth > 0 ? radioWindowWidth : 200);
+        var radioWindowVisible = ScreenHelper.IsTitleVisible(radioWindowX, radioWindowY, radioWindowWidth);
 
         // defaults on the primary monitor (WPF units, like the stored positions)
         var primaryArea = SystemParameters.WorkArea;
@@ -223,7 +217,7 @@ public partial class MainWindow : MetroWindow
                 MessageBoxImage.Warning);
 
             Logger.Warn(
-                $"Radio panel window outside visible area of monitors, resetting position ({radioWindowX},{radioWindowY}) to defaults");
+                $"Radio window outside visible area of monitors, resetting position ({radioWindowX},{radioWindowY}) to defaults");
 
             EventBus.Instance.PublishOnUIThreadAsync(new ResetRadioPanelMessage());
 
@@ -255,39 +249,6 @@ public partial class MainWindow : MetroWindow
     {
         TabControl.SelectedItem = FavouritesSeversTab;
     }
-
-    #region Presets folder
-
-    private void UpdatePresetsFolderLabel()
-    {
-        var presetsFolder = FilePresetChannelsStore.PresetsFolder;
-        var isDefault = string.Equals(Path.GetFullPath(presetsFolder), Path.GetFullPath(AppPaths.PresetsDirectory),
-            StringComparison.OrdinalIgnoreCase);
-
-        PresetsFolderLabel.Content = isDefault
-            ? Properties.Resources.PresetsFolderDefault
-            : Path.GetFileName(presetsFolder.TrimEnd('\\', '/'));
-        PresetsFolderLabel.ToolTip = presetsFolder;
-    }
-
-    private void PresetsFolderBrowseButton_Click(object sender, RoutedEventArgs e)
-    {
-        using var selectPresetsFolder = new FolderBrowserDialog();
-        selectPresetsFolder.SelectedPath = FilePresetChannelsStore.PresetsFolder;
-        if (selectPresetsFolder.ShowDialog() == System.Windows.Forms.DialogResult.OK)
-        {
-            _globalSettings.SetClientSetting(GlobalSettingsKeys.LastPresetsFolder, selectPresetsFolder.SelectedPath);
-            UpdatePresetsFolderLabel();
-        }
-    }
-
-    private void PresetsFolderResetButton_Click(object sender, RoutedEventArgs e)
-    {
-        _globalSettings.SetClientSetting(GlobalSettingsKeys.LastPresetsFolder, AppPaths.PresetsDirectory);
-        UpdatePresetsFolderLabel();
-    }
-
-    #endregion
 
     #region About tab
 

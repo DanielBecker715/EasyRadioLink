@@ -40,8 +40,8 @@ namespace EasyRadioLink.Client.UI.ClientWindow;
 ///     <para>
 ///         Connect flow: <see cref="ConnectAsync" /> creates the <see cref="TCPClientHandler" /> (with the server
 ///         password) and shows "Connecting..."; <c>TCPClientStatusMessage(true)</c> arrives after the server accepted
-///         the handshake - then audio and the <see cref="RadioStateSyncService" /> are started (radios become usable)
-///         and the radio panel is opened if <c>AutoOpenRadioPanel</c> is set. Any disconnect stops both again; a
+///         the handshake - then audio and the <see cref="RadioStateSyncService" /> are started (the radio becomes usable)
+///         and the radio window is opened if <c>AutoOpenRadioPanel</c> is set. Any disconnect stops both again; a
 ///         wrong password, an incompatible server or an unreachable server is reported with a dialog.
 ///     </para>
 /// </summary>
@@ -108,7 +108,7 @@ public class MainWindowViewModel : PropertyChangedBaseClass, IHandle<TCPClientSt
 
     public ICommand ServerSettingsCommand { get; set; }
 
-    /// <summary>Shows / hides the radio panel (button "Radio Panel", hotkey InputBinding.RadioPanelToggle).</summary>
+    /// <summary>Shows / hides the radio window (button "Show Radio", hotkey InputBinding.RadioPanelToggle).</summary>
     public DelegateCommand RadioPanelCommand { get; set; }
 
     public ClientStateSingleton ClientState { get; } = ClientStateSingleton.Instance;
@@ -116,7 +116,7 @@ public class MainWindowViewModel : PropertyChangedBaseClass, IHandle<TCPClientSt
     public AudioInputSingleton AudioInput { get; } = AudioInputSingleton.Instance;
     public AudioOutputSingleton AudioOutput { get; } = AudioOutputSingleton.Instance;
 
-    /// <summary>Connected: the server accepted the handshake (radios and audio are running).</summary>
+    /// <summary>Connected: the server accepted the handshake (radio and audio are running).</summary>
     public bool IsConnected { get; set; }
 
     /// <summary>A connection attempt is running (between Connect and the server's answer).</summary>
@@ -403,7 +403,7 @@ public class MainWindowViewModel : PropertyChangedBaseClass, IHandle<TCPClientSt
         {
             if (!ReferenceEquals(client, _client) || !IsConnected)
             {
-                Logger.Info("Disconnected while the connection was set up - not starting audio and radios");
+                Logger.Info("Disconnected while the connection was set up - not starting audio and the radio");
                 return;
             }
 
@@ -413,7 +413,7 @@ public class MainWindowViewModel : PropertyChangedBaseClass, IHandle<TCPClientSt
                 return;
             }
 
-            // loads the radios once the server settings are known and keeps the server up to date
+            // switches the radio on (remembered frequency) and keeps the server up to date
             _radioSync?.Stop();
             _radioSync = new RadioStateSyncService();
             _radioSync.Start();
@@ -586,7 +586,7 @@ public class MainWindowViewModel : PropertyChangedBaseClass, IHandle<TCPClientSt
         });
     }
 
-    /// <summary>Stops audio, radios and the connection.</summary>
+    /// <summary>Stops audio, the radio and the connection.</summary>
     /// <param name="userInitiated">true: the user disconnected (the connection is closed without an error)</param>
     private void Stop(bool userInitiated = true)
     {
@@ -614,7 +614,7 @@ public class MainWindowViewModel : PropertyChangedBaseClass, IHandle<TCPClientSt
 
         try
         {
-            // saves the radio tuning and marks the radios unavailable
+            // remembers the radio tuning and marks the radio unavailable
             _radioSync?.Stop();
         }
         catch (Exception ex)

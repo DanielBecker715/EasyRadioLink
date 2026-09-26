@@ -93,9 +93,8 @@ public class ClientAudioProvider : AudioProvider
         //   var waveBuffer = new WaveBuffer(tmp);
 
         // waveWriter.WriteSamples(tmp,0,tmp.Length);
-        var
-            decrytable =
-                audio.Decryptable /* || (audio.Encryption == 0) <--- this test has already been performed by all callers and would require another call to check for STRICT_AUDIO_ENCRYPTION */;
+        // unencrypted transmissions (every transmission since 1.1) are always decryptable - the callers checked the key
+        var decrytable = audio.Decryptable;
 
         // Clean frequencies of the server are always played without radio effects.
         var noAudioEffects =

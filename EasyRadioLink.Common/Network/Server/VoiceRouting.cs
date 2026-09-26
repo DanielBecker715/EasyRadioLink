@@ -13,8 +13,8 @@ namespace EasyRadioLink.Common.Network.Server;
 ///         <item>the sender gets its own transmission back only on a radio check (test) frequency,</item>
 ///         <item>every other client receives the packet if one of its radios <see cref="CanReceive" /> it.</item>
 ///     </list>
-///     Clients without a known UDP endpoint are skipped. Encryption does not stop delivery: a listener on the right
-///     frequency whose key does not match still gets the packet and plays scrambled audio.
+///     Clients without a known UDP endpoint are skipped. The encryption byte of the packet (always 0 since 1.1, set by
+///     older clients) does not stop delivery: a listener on the right frequency still gets the packet.
 /// </summary>
 public static class VoiceRouting
 {
@@ -22,7 +22,7 @@ public static class VoiceRouting
     private static readonly List<int> NoBlockedRadios = new();
 
     /// <summary>True if one of <paramref name="receiver" />'s radios is tuned to one of the packet's frequencies.</summary>
-    public static bool CanReceive(PlayerRadioInfoBase receiver, UDPVoicePacket packet, bool strictEncryption)
+    public static bool CanReceive(PlayerRadioInfoBase receiver, UDPVoicePacket packet)
     {
         if (receiver == null || packet?.Frequencies == null || packet.Modulations == null) return false;
 
@@ -35,7 +35,6 @@ public static class VoiceRouting
             if (receiver.CanHearTransmission(packet.Frequencies[i],
                     (Modulation)packet.Modulations[i],
                     encryption,
-                    strictEncryption,
                     NoBlockedRadios,
                     out _,
                     out _) != null)
@@ -81,7 +80,6 @@ public static class VoiceRouting
     public static HashSet<IPEndPoint> SelectRecipients(IEnumerable<ClientInfo> clients,
         ClientInfo sender,
         UDPVoicePacket packet,
-        bool strictEncryption,
         IReadOnlyList<double> testFrequencies)
     {
         var recipients = new HashSet<IPEndPoint>();
@@ -101,7 +99,7 @@ public static class VoiceRouting
                 continue;
             }
 
-            if (CanReceive(client.RadioInfo, packet, strictEncryption)) recipients.Add(endpoint);
+            if (CanReceive(client.RadioInfo, packet)) recipients.Add(endpoint);
         }
 
         return recipients;

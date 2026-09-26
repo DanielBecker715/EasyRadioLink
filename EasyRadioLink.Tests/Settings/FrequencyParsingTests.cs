@@ -99,10 +99,9 @@ public class FrequencyParsingTests
         CollectionAssert.AreEqual(new List<double> { 27405000, 446193750 },
             new List<double>(settings.TestFrequencies));
         Assert.IsEmpty(settings.CleanFrequencies);
-        Assert.IsTrue(settings.GetSettingAsBool(ServerSettingsKeys.ALLOW_RADIO_ENCRYPTION));
         Assert.IsTrue(settings.GetSettingAsBool(ServerSettingsKeys.SHOW_TUNED_COUNT));
-        Assert.IsFalse(settings.GetSettingAsBool(ServerSettingsKeys.STRICT_RADIO_ENCRYPTION));
-        Assert.IsEmpty(settings.ServerRadioPreset);
+        Assert.IsFalse(settings.GetSettingAsBool(ServerSettingsKeys.SHOW_TRANSMITTER_NAME));
+        Assert.IsFalse(settings.GetSettingAsBool(ServerSettingsKeys.IRL_RADIO_TX));
         Assert.AreEqual(2, settings.GetSettingAsInt(ServerSettingsKeys.TRANSMISSION_LOG_RETENTION));
     }
 
@@ -112,14 +111,14 @@ public class FrequencyParsingTests
         var settings = new SyncedServerSettings();
         settings.Decode(new Dictionary<string, string>
         {
-            { ServerSettingsKeys.ALLOW_RADIO_ENCRYPTION.ToString(), "" },
-            { ServerSettingsKeys.STRICT_RADIO_ENCRYPTION.ToString(), "True" },
-            { ServerSettingsKeys.SHOW_TUNED_COUNT.ToString(), "garbage" }
+            { ServerSettingsKeys.SHOW_TUNED_COUNT.ToString(), "" },
+            { ServerSettingsKeys.IRL_RADIO_TX.ToString(), "True" },
+            { ServerSettingsKeys.SHOW_TRANSMITTER_NAME.ToString(), "garbage" }
         });
 
-        Assert.IsTrue(settings.GetSettingAsBool(ServerSettingsKeys.ALLOW_RADIO_ENCRYPTION));
-        Assert.IsTrue(settings.GetSettingAsBool(ServerSettingsKeys.STRICT_RADIO_ENCRYPTION));
         Assert.IsTrue(settings.GetSettingAsBool(ServerSettingsKeys.SHOW_TUNED_COUNT));
+        Assert.IsTrue(settings.GetSettingAsBool(ServerSettingsKeys.IRL_RADIO_TX));
+        Assert.IsFalse(settings.GetSettingAsBool(ServerSettingsKeys.SHOW_TRANSMITTER_NAME));
     }
 
     [TestMethod]
@@ -129,14 +128,14 @@ public class FrequencyParsingTests
         settings.Decode(new Dictionary<string, string>
         {
             { ServerSettingsKeys.CLEAN_FREQUENCIES.ToString(), "145.5" },
-            { ServerSettingsKeys.STRICT_RADIO_ENCRYPTION.ToString(), "true" }
+            { ServerSettingsKeys.IRL_RADIO_TX.ToString(), "true" }
         });
         settings.ServerVersion = "1.0.0";
 
         settings.Reset();
 
         Assert.IsEmpty(settings.CleanFrequencies);
-        Assert.IsFalse(settings.GetSettingAsBool(ServerSettingsKeys.STRICT_RADIO_ENCRYPTION));
+        Assert.IsFalse(settings.GetSettingAsBool(ServerSettingsKeys.IRL_RADIO_TX));
         Assert.IsNull(settings.ServerVersion);
     }
 

@@ -244,7 +244,7 @@ To install or update EasyRadioLink, run EasyRadioLink-Setup.exe from the extract
 Your personal settings (%AppData%\EasyRadioLink) and recordings (Documents\EasyRadioLink\Recordings) are not deleted.</value>
   </data>
   <data name="MsgBoxUninstallDataText" xml:space="preserve">
-    <value>The install folder contains files that were not installed by the setup, for example server settings (server.cfg), presets or log files:
+    <value>The install folder contains files that were not installed by the setup, for example server settings (server.cfg), the ban list (banned.txt) or log files:
 
 {0}
 

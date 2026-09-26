@@ -659,11 +659,11 @@ public class AudioManager : IHandle<ClientUpdateMessage>
         return false;
     }
 
-    public void PlaySoundEffectStartTransmit(int sendingOn, bool encrypted)
+    public void PlaySoundEffectStartTransmit(int sendingOn)
     {
         var mixers = _radioMixingProvider;
         if (mixers != null && sendingOn >= 0 && sendingOn < mixers.Count)
-            mixers[sendingOn]?.PlaySoundEffectStartTransmit(encrypted);
+            mixers[sendingOn]?.PlaySoundEffectStartTransmit();
     }
 
     public void PlaySoundEffectEndTransmit(int sendingOn)

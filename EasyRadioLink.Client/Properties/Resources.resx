@@ -124,7 +124,7 @@
     <value>Based on DCS-SimpleRadio Standalone by Ciribob and contributors (GPL-3.0)</value>
   </data>
   <data name="AboutDescription" xml:space="preserve">
-    <value>Digital radio voice communication with realistic radio effects. Connect to an EasyRadioLink server, tune your radios and talk to everybody on the same frequency.</value>
+    <value>Digital radio voice communication with realistic radio effects. Connect to an EasyRadioLink server, tune the radio and talk to everybody on the same frequency.</value>
   </data>
   <data name="AboutFilesHeader" xml:space="preserve">
     <value>Files and folders</value>
@@ -148,10 +148,10 @@
     <value>Enter your name and the server address (and the password, if the server has one), then click Connect.</value>
   </data>
   <data name="AboutQuickStart3" xml:space="preserve">
-    <value>The Radio Panel opens. Click a radio to select it and set its frequency by typing it or with the arrow buttons.</value>
+    <value>The radio opens. Turn the tuning knob (or use the mouse wheel, the arrow keys, ▲ / ▼ and STEP) to set the frequency - or double-click the display and type it.</value>
   </data>
   <data name="AboutQuickStart4" xml:space="preserve">
-    <value>Set a Push-To-Talk key on the Controls tab and hold it to talk on the selected radio. Everybody tuned to the same frequency and mode hears you.</value>
+    <value>Set a Push-To-Talk key on the Controls tab and hold it to talk. Everybody tuned to the same frequency hears you.</value>
   </data>
   <data name="AboutQuickStartHeader" xml:space="preserve">
     <value>Quick start</value>
@@ -163,7 +163,7 @@
     <value>Recordings: </value>
   </data>
   <data name="AboutSettingsFolder" xml:space="preserve">
-    <value>Settings, favourites and radios: </value>
+    <value>Settings and favourites: </value>
   </data>
   <data name="AboutTab" xml:space="preserve">
     <value>About</value>
@@ -174,14 +174,8 @@
   <data name="AboutTipInputDevices" xml:space="preserve">
     <value>Controller not detected? Enable "Allow more controller input devices" in Settings and restart EasyRadioLink.</value>
   </data>
-  <data name="AboutTipPresets" xml:space="preserve">
-    <value>Preset channels: put a text file named after the radio (letters and digits only, e.g. "vhfairband.txt" for "VHF Airband") into the presets folder, with one channel per line as Name|MHz or just MHz, e.g. "Channel 19|27.185". Click Reload on the channel tab after editing it.</value>
-  </data>
   <data name="AboutTipRadioPanel" xml:space="preserve">
-    <value>Radio Panel: the dot of the selected radio is green. Right-click the display or use the G button to switch the guard receiver on or off. Sound sets how your transmissions on that radio sound to the others. Drag the bottom-right corner to resize the panel.</value>
-  </data>
-  <data name="AboutTipRadios" xml:space="preserve">
-    <value>Your own radios: copy radios.json from the program folder to radios-custom.json in the settings folder and edit it. A server can also provide the radio layout (see Settings).</value>
+    <value>Radio: the underlined digit is the one the knob changes - STEP (or the arrow keys Left / Right) chooses 1 kHz to 100 MHz. Drag the bottom-right corner to resize the radio.</value>
   </data>
   <data name="AboutTipsHeader" xml:space="preserve">
     <value>Tips</value>
@@ -191,9 +185,6 @@
   </data>
   <data name="AllowRotaryIncrement" xml:space="preserve">
     <value>Rotary style frequency steps</value>
-  </data>
-  <data name="AllowServerRadioPreset" xml:space="preserve">
-    <value>Use the server's radio layout (if the server has one)</value>
   </data>
   <data name="AllowTransmissionsRecord" xml:space="preserve">
     <value>Allow others to record my transmissions</value>
@@ -211,13 +202,10 @@
     <value>..\audio-headset.ico;System.Drawing.Icon, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
   <data name="AudioHeader" xml:space="preserve">
-    <value>Audio Channels (Left / Right)</value>
+    <value>Stereo Balance</value>
   </data>
   <data name="AutoOpenRadioPanel" xml:space="preserve">
-    <value>Open the Radio Panel when connected</value>
-  </data>
-  <data name="AutoSelectChannel" xml:space="preserve">
-    <value>Select the first preset channel when the radios are loaded</value>
+    <value>Open the radio when connected</value>
   </data>
   <data name="BackgroundRadioNoise" xml:space="preserve">
     <value>Radio static (background noise)</value>
@@ -236,12 +224,6 @@
   </data>
   <data name="BtnClose" xml:space="preserve">
     <value>Close</value>
-  </data>
-  <data name="BtnDisable" xml:space="preserve">
-    <value>Disable</value>
-  </data>
-  <data name="BtnEnable" xml:space="preserve">
-    <value>Enable</value>
   </data>
   <data name="ButtonLabel" xml:space="preserve">
     <value>Button</value>
@@ -279,11 +261,8 @@
   <data name="ConnectionHeader" xml:space="preserve">
     <value>Connection</value>
   </data>
-  <data name="ControlsEncryptionHeader" xml:space="preserve">
-    <value>Encryption of the selected radio</value>
-  </data>
   <data name="ControlsFrequencyHeader" xml:space="preserve">
-    <value>Frequency of the selected radio</value>
+    <value>Frequency</value>
   </data>
   <data name="ControlsHeader" xml:space="preserve">
     <value>Controls</value>
@@ -291,14 +270,11 @@
   <data name="ControlsHint" xml:space="preserve">
     <value>Click Set and press a key or a controller button. A modifier is an optional second button that has to be held as well. Bindings are saved in the current profile.</value>
   </data>
-  <data name="ControlsRadioHeader" xml:space="preserve">
-    <value>Selected radio</value>
-  </data>
   <data name="ControlsTab" xml:space="preserve">
     <value>Controls</value>
   </data>
   <data name="ControlsTalkHeader" xml:space="preserve">
-    <value>Push-To-Talk and radio selection</value>
+    <value>Push-To-Talk</value>
   </data>
   <data name="ControlsWindowsHeader" xml:space="preserve">
     <value>Windows</value>
@@ -429,62 +405,14 @@
   <data name="InputDown100" xml:space="preserve">
     <value>Frequency down 100 MHz</value>
   </data>
-  <data name="InputEncryptionDecrease" xml:space="preserve">
-    <value>Encryption key down</value>
-  </data>
-  <data name="InputEncryptionIncrease" xml:space="preserve">
-    <value>Encryption key up</value>
-  </data>
   <data name="InputModifier" xml:space="preserve">
     <value>Modifier</value>
-  </data>
-  <data name="InputNextRadio" xml:space="preserve">
-    <value>Select next radio</value>
-  </data>
-  <data name="InputPreviousRadio" xml:space="preserve">
-    <value>Select previous radio</value>
   </data>
   <data name="InputPTT" xml:space="preserve">
     <value>Push-To-Talk (PTT)</value>
   </data>
-  <data name="InputRadio1" xml:space="preserve">
-    <value>Select radio 1</value>
-  </data>
-  <data name="InputRadio10" xml:space="preserve">
-    <value>Select radio 10</value>
-  </data>
-  <data name="InputRadio2" xml:space="preserve">
-    <value>Select radio 2</value>
-  </data>
-  <data name="InputRadio3" xml:space="preserve">
-    <value>Select radio 3</value>
-  </data>
-  <data name="InputRadio4" xml:space="preserve">
-    <value>Select radio 4</value>
-  </data>
-  <data name="InputRadio5" xml:space="preserve">
-    <value>Select radio 5</value>
-  </data>
-  <data name="InputRadio6" xml:space="preserve">
-    <value>Select radio 6</value>
-  </data>
-  <data name="InputRadio7" xml:space="preserve">
-    <value>Select radio 7</value>
-  </data>
-  <data name="InputRadio8" xml:space="preserve">
-    <value>Select radio 8</value>
-  </data>
-  <data name="InputRadio9" xml:space="preserve">
-    <value>Select radio 9</value>
-  </data>
-  <data name="InputRadioChannelDown" xml:space="preserve">
-    <value>Previous preset channel</value>
-  </data>
-  <data name="InputRadioChannelUp" xml:space="preserve">
-    <value>Next preset channel</value>
-  </data>
   <data name="InputRadioPanelToggle" xml:space="preserve">
-    <value>Show / hide the Radio Panel</value>
+    <value>Show / hide the radio</value>
   </data>
   <data name="InputRadioVolumeDown" xml:space="preserve">
     <value>Radio volume down</value>
@@ -494,12 +422,6 @@
   </data>
   <data name="InputTextNone" xml:space="preserve">
     <value>None</value>
-  </data>
-  <data name="InputToggleEncryption" xml:space="preserve">
-    <value>Encryption on / off</value>
-  </data>
-  <data name="InputToggleGuard" xml:space="preserve">
-    <value>Guard receiver on / off</value>
   </data>
   <data name="InputUp0001" xml:space="preserve">
     <value>Frequency up 0.001 MHz</value>
@@ -640,22 +562,11 @@ Select "None (no mic output)" or a different device as mic output.</value>
   <data name="MsgBoxNotVisibleText" xml:space="preserve">
     <value>The EasyRadioLink window was outside the visible screen area (for example after a monitor change). Its position has been reset.</value>
   </data>
-  <data name="MsgBoxPresetCreated" xml:space="preserve">
-    <value>Preset channels</value>
-  </data>
-  <data name="MsgBoxPresetCreatedText" xml:space="preserve">
-    <value>The preset file was created:
-{0}
-
-Add one channel per line as Name|MHz or just MHz (e.g. Channel 19|27.185), save the file and click Reload.
-
-Open the file now?</value>
-  </data>
   <data name="MsgBoxProfileExistsText" xml:space="preserve">
     <value>A profile named "{0}" already exists.</value>
   </data>
   <data name="MsgBoxRadioPanelNotVisibleText" xml:space="preserve">
-    <value>The Radio Panel was outside the visible screen area (for example after a monitor change). Its position has been reset.</value>
+    <value>The radio was outside the visible screen area (for example after a monitor change). Its position has been reset.</value>
   </data>
   <data name="MsgBoxRescan" xml:space="preserve">
     <value>Controllers rescanned</value>
@@ -695,83 +606,17 @@ This client: protocol {2} (servers with protocol {3} or newer are supported)</va
   <data name="OverlayAM" xml:space="preserve">
     <value>AM</value>
   </data>
-  <data name="OverlayChannelTab" xml:space="preserve">
-    <value>Ch.</value>
-  </data>
   <data name="OverlayDIG" xml:space="preserve">
     <value>DIG</value>
-  </data>
-  <data name="OverlayEncryptionKey" xml:space="preserve">
-    <value>Encryption key</value>
-  </data>
-  <data name="OverlayEncryptionNotAllowed" xml:space="preserve">
-    <value>Not allowed on this server</value>
-  </data>
-  <data name="OverlayEncryptionOff" xml:space="preserve">
-    <value>Not encrypted</value>
-  </data>
-  <data name="OverlayEncryptionOn" xml:space="preserve">
-    <value>Encrypted (key {0})</value>
-  </data>
-  <data name="OverlayEncryptionTab" xml:space="preserve">
-    <value>Enc</value>
   </data>
   <data name="OverlayFM" xml:space="preserve">
     <value>FM</value>
   </data>
-  <data name="OverlayGuard" xml:space="preserve">
-    <value>G</value>
-  </data>
-  <data name="OverlayNoRadio" xml:space="preserve">
-    <value>No Radio</value>
-  </data>
-  <data name="OverlayPresetCreate" xml:space="preserve">
-    <value>Create</value>
-  </data>
-  <data name="OverlayPresetReload" xml:space="preserve">
-    <value>Reload</value>
-  </data>
-  <data name="OverlayRadioTab" xml:space="preserve">
-    <value>Radio</value>
-  </data>
-  <data name="OverlaySimulTransOFF" xml:space="preserve">
-    <value>Simultaneous TX: Off</value>
-  </data>
-  <data name="OverlaySimulTransON" xml:space="preserve">
-    <value>Simultaneous TX: On</value>
-  </data>
-  <data name="OverlaySimulTransST" xml:space="preserve">
-    <value>ST</value>
-  </data>
-  <data name="OverlaySound" xml:space="preserve">
-    <value>Sound</value>
-  </data>
   <data name="PerRadioModelEffects" xml:space="preserve">
-    <value>Use the sender's radio sound</value>
+    <value>Radio sound of the band (CB, PMR, airband, ...)</value>
   </data>
   <data name="PlayConnectionSounds" xml:space="preserve">
     <value>Play connect and disconnect sounds</value>
-  </data>
-  <data name="PresetsFolderBrowseButton" xml:space="preserve">
-    <value>Browse...</value>
-  </data>
-  <data name="PresetsFolderDefault" xml:space="preserve">
-    <value>(default)</value>
-  </data>
-  <data name="PresetsFolderLabel" xml:space="preserve">
-    <value>Presets folder</value>
-  </data>
-  <data name="PresetsFolderResetButton" xml:space="preserve">
-    <value>Reset</value>
-  </data>
-  <data name="PresetsUseClientAndServer" xml:space="preserve">
-    <value>My presets and the server's</value>
-  </data>
-  <data name="PresetsUseClientOnly" xml:space="preserve">
-    <value>My presets only</value>
-  </data>
-  <data name="PresetsUseServerIfSet" xml:space="preserve">
-    <value>The server's presets (mine if it has none)</value>
   </data>
   <data name="PreviewAudio" xml:space="preserve">
     <value>Audio Preview</value>
@@ -789,7 +634,7 @@ This client: protocol {2} (servers with protocol {3} or newer are supported)</va
     <value>Profile</value>
   </data>
   <data name="ProfileHint" xml:space="preserve">
-    <value>A profile holds the key bindings and the profile settings below (radio effects, background sound, push-to-talk, audio channels).</value>
+    <value>A profile holds the key bindings and the profile settings below (radio effects, background sound, push-to-talk, stereo balance).</value>
   </data>
   <data name="ProfileNamePrompt" xml:space="preserve">
     <value>Profile name</value>
@@ -827,36 +672,6 @@ This client: protocol {2} (servers with protocol {3} or newer are supported)</va
   <data name="PTTStartDelay500" xml:space="preserve">
     <value>500</value>
   </data>
-  <data name="Radio10Config" xml:space="preserve">
-    <value>Radio 10</value>
-  </data>
-  <data name="Radio1Config" xml:space="preserve">
-    <value>Radio 1</value>
-  </data>
-  <data name="Radio2Config" xml:space="preserve">
-    <value>Radio 2</value>
-  </data>
-  <data name="Radio3Config" xml:space="preserve">
-    <value>Radio 3</value>
-  </data>
-  <data name="Radio4Config" xml:space="preserve">
-    <value>Radio 4</value>
-  </data>
-  <data name="Radio5Config" xml:space="preserve">
-    <value>Radio 5</value>
-  </data>
-  <data name="Radio6Config" xml:space="preserve">
-    <value>Radio 6</value>
-  </data>
-  <data name="Radio7Config" xml:space="preserve">
-    <value>Radio 7</value>
-  </data>
-  <data name="Radio8Config" xml:space="preserve">
-    <value>Radio 8</value>
-  </data>
-  <data name="Radio9Config" xml:space="preserve">
-    <value>Radio 9</value>
-  </data>
   <data name="RadioChannelEqual" xml:space="preserve">
     <value>Centre</value>
   </data>
@@ -869,32 +684,14 @@ This client: protocol {2} (servers with protocol {3} or newer are supported)</va
   <data name="RadioEffectHeader" xml:space="preserve">
     <value>Radio Effects</value>
   </data>
-  <data name="RadioEncryptionEffectsToggle" xml:space="preserve">
-    <value>Encryption sound effects</value>
-  </data>
   <data name="RadioEndTransmitEffect" xml:space="preserve">
     <value>Transmit end click</value>
   </data>
   <data name="RadioPanelTaskbarItem" xml:space="preserve">
-    <value>Hide the Radio Panel from the taskbar</value>
-  </data>
-  <data name="RadioPanelHeader" xml:space="preserve">
-    <value>Radio Panel</value>
-  </data>
-  <data name="RadioPanelLoading" xml:space="preserve">
-    <value>Loading radios...</value>
-  </data>
-  <data name="RadioPanelNoRadiosEnabled" xml:space="preserve">
-    <value>Connected, but the radio layout has no radio switched on. Check radios-custom.json or the server's radio layout.</value>
-  </data>
-  <data name="RadioPanelNotConnected" xml:space="preserve">
-    <value>No radios yet - connect to a server in the EasyRadioLink window.</value>
-  </data>
-  <data name="RadioPanelOpacity" xml:space="preserve">
-    <value>Opacity</value>
+    <value>Hide the radio from the taskbar</value>
   </data>
   <data name="RadioPanelTitle" xml:space="preserve">
-    <value>EasyRadioLink - Radio Panel</value>
+    <value>EasyRadioLink - Radio</value>
   </data>
   <data name="RadioRxEffects" xml:space="preserve">
     <value>Receive clicks</value>
@@ -909,7 +706,7 @@ This client: protocol {2} (servers with protocol {3} or newer are supported)</va
     <value>Start</value>
   </data>
   <data name="RadiosHeader" xml:space="preserve">
-    <value>Radios</value>
+    <value>Radio</value>
   </data>
   <data name="RadioSoundEffects" xml:space="preserve">
     <value>Radio effect strength</value>
@@ -919,9 +716,6 @@ This client: protocol {2} (servers with protocol {3} or newer are supported)</va
   </data>
   <data name="RadioStartTransmitEffect" xml:space="preserve">
     <value>Transmit start click</value>
-  </data>
-  <data name="RadioSwitchIsPTT" xml:space="preserve">
-    <value>Radio select keys also work as Push-To-Talk</value>
   </data>
   <data name="RadioTab" xml:space="preserve">
     <value>Radio</value>
@@ -966,7 +760,7 @@ This client: protocol {2} (servers with protocol {3} or newer are supported)</va
     <value>Reset</value>
   </data>
   <data name="ResetRadioPanel" xml:space="preserve">
-    <value>Reset the position and size of the Radio Panel</value>
+    <value>Reset the position and size of the radio</value>
   </data>
   <data name="Server" xml:space="preserve">
     <value>Server</value>
@@ -978,16 +772,13 @@ This client: protocol {2} (servers with protocol {3} or newer are supported)</va
     <value>Server</value>
   </data>
   <data name="ServerInfoHint" xml:space="preserve">
-    <value>Settings of the connected server that affect your radios.</value>
+    <value>Settings of the connected server that affect your radio.</value>
   </data>
   <data name="ServerPasswordLabel" xml:space="preserve">
     <value>Password</value>
   </data>
   <data name="ServerPasswordWatermark" xml:space="preserve">
     <value>optional</value>
-  </data>
-  <data name="ServerPresetsConfiguration" xml:space="preserve">
-    <value>Preset channels</value>
   </data>
   <data name="ServerWindowTitle" xml:space="preserve">
     <value>Server Info</value>
@@ -1002,13 +793,10 @@ This client: protocol {2} (servers with protocol {3} or newer are supported)</va
     <value>Users ({0})</value>
   </data>
   <data name="ShowRadioPanel" xml:space="preserve">
-    <value>Radio Panel</value>
+    <value>Show Radio</value>
   </data>
   <data name="ShowTransmitterName" xml:space="preserve">
     <value>Show who is transmitting (if the server allows it)</value>
-  </data>
-  <data name="SingleFileMixdown" xml:space="preserve">
-    <value>Record all radios into a single file</value>
   </data>
   <data name="SpeakerBoost" xml:space="preserve">
     <value>Speaker boost</value>
@@ -1016,17 +804,8 @@ This client: protocol {2} (servers with protocol {3} or newer are supported)</va
   <data name="SpeakerLabel" xml:space="preserve">
     <value>Speakers</value>
   </data>
-  <data name="SrvAllowRadioEncryption" xml:space="preserve">
-    <value>Radio encryption allowed</value>
-  </data>
   <data name="SrvCleanFrequencies" xml:space="preserve">
     <value>Clean frequencies (no radio effects)</value>
-  </data>
-  <data name="SrvPresetsEnabled" xml:space="preserve">
-    <value>Server preset channels</value>
-  </data>
-  <data name="SrvRadioPresetEnabled" xml:space="preserve">
-    <value>Server radio layout</value>
   </data>
   <data name="SrvRadioRXInterference" xml:space="preserve">
     <value>Radio interference (simultaneous transmissions)</value>
@@ -1039,9 +818,6 @@ This client: protocol {2} (servers with protocol {3} or newer are supported)</va
   </data>
   <data name="SrvShowTransmitterName" xml:space="preserve">
     <value>Show transmitter name</value>
-  </data>
-  <data name="SrvStrictRadioEncryption" xml:space="preserve">
-    <value>Strict encryption (the key must match)</value>
   </data>
   <data name="SrvTestFrequencies" xml:space="preserve">
     <value>Radio check (echo) frequencies</value>
@@ -1079,14 +855,11 @@ This client: protocol {2} (servers with protocol {3} or newer are supported)</va
   <data name="ToolTipAllowRecording" xml:space="preserve">
     <value>Other users can only record your voice if this is on. The setting is sent to the server when you connect.</value>
   </data>
-  <data name="ToolTipAllowServerRadioPreset" xml:space="preserve">
-    <value>The server can define your radios (names, frequency ranges, guard). Applied when you connect.</value>
-  </data>
   <data name="ToolTipAmbientEffect" xml:space="preserve">
     <value>Other users can mix a background sound (jet, prop, helicopter) into their transmissions</value>
   </data>
   <data name="ToolTipAutoOpenRadioPanel" xml:space="preserve">
-    <value>Shows the Radio Panel automatically after connecting to a server</value>
+    <value>Shows the radio automatically after connecting to a server</value>
   </data>
   <data name="ToolTipBackgroundSound" xml:space="preserve">
     <value>A background sound mixed into your transmissions, e.g. an engine. Everybody who hears you hears it too.</value>
@@ -1106,9 +879,6 @@ This client: protocol {2} (servers with protocol {3} or newer are supported)</va
   <data name="ToolTipDisplayName" xml:space="preserve">
     <value>Your name - shown to other users and in the server's user list</value>
   </data>
-  <data name="ToolTipEncryptionKey" xml:space="preserve">
-    <value>Encryption key 1-252 (type it, or use the mouse wheel / arrow keys) - both sides need the same key</value>
-  </data>
   <data name="ToolTipFavAdd" xml:space="preserve">
     <value>Add this server to the favourites</value>
   </data>
@@ -1120,15 +890,6 @@ This client: protocol {2} (servers with protocol {3} or newer are supported)</va
   </data>
   <data name="ToolTipFmTone" xml:space="preserve">
     <value>The quiet tone heard on FM radios while receiving</value>
-  </data>
-  <data name="ToolTipGlobalSimulTrans" xml:space="preserve">
-    <value>Simultaneous transmission: Push-To-Talk also transmits on every radio with ST switched on (up to 3 more radios)</value>
-  </data>
-  <data name="ToolTipGuard" xml:space="preserve">
-    <value>Guard receiver</value>
-  </data>
-  <data name="ToolTipGuardFrequency" xml:space="preserve">
-    <value>Guard receiver: also listen on {0} MHz. Click to switch it on or off (orange = on).</value>
   </data>
   <data name="ToolTipHFNoiseGainDB" xml:space="preserve">
     <value>Extra static for frequencies below 30 MHz (e.g. CB and HF radios)</value>
@@ -1146,40 +907,19 @@ This client: protocol {2} (servers with protocol {3} or newer are supported)</va
     <value>No valid microphone is available - others will not be able to hear you.</value>
   </data>
   <data name="ToolTipNoMicL2" xml:space="preserve">
-    <value>You can still listen to the radios, but you can't transmit.</value>
-  </data>
-  <data name="ToolTipOpacity" xml:space="preserve">
-    <value>Opacity of the Radio Panel</value>
+    <value>You can still listen to the radio, but you can't transmit.</value>
   </data>
   <data name="ToolTipOpenFolder" xml:space="preserve">
     <value>Open the folder in Explorer</value>
   </data>
   <data name="ToolTipPerRadioModelEffects" xml:space="preserve">
-    <value>Transmissions sound like the radio the sender selected (Sound on the Radio Panel). Off: every transmission uses the standard sound.</value>
-  </data>
-  <data name="ToolTipPresetChannels" xml:space="preserve">
-    <value>Preset channels of this radio</value>
-  </data>
-  <data name="ToolTipPresetCreate" xml:space="preserve">
-    <value>Create the preset file of this radio in the presets folder</value>
-  </data>
-  <data name="ToolTipPresetReload" xml:space="preserve">
-    <value>Reload the preset channels</value>
-  </data>
-  <data name="ToolTipPresetsFolder" xml:space="preserve">
-    <value>Folder with the preset channel files of your radios (&lt;radio name&gt;.txt)</value>
+    <value>Transmissions sound like the radio of their band (CB, PMR, airband, ...). Off: every transmission uses the standard sound.</value>
   </data>
   <data name="ToolTipPreviewModel" xml:space="preserve">
     <value>Radio sound used by Audio Preview - hear yourself through that radio</value>
   </data>
-  <data name="ToolTipRadioFrequency" xml:space="preserve">
-    <value>Frequency in MHz - type a frequency and press Enter. Click to select this radio, right-click to switch the guard receiver on or off.</value>
-  </data>
-  <data name="ToolTipRadioModel" xml:space="preserve">
-    <value>Sound: how your transmissions on this radio sound to the other users</value>
-  </data>
   <data name="ToolTipRadioPanel" xml:space="preserve">
-    <value>Show or hide the Radio Panel</value>
+    <value>Show or hide the radio</value>
   </data>
   <data name="ToolTipRadioRxSquelchTail" xml:space="preserve">
     <value>Plays a short burst of static when a received AM or FM transmission ends, like a CB radio</value>
@@ -1194,16 +934,13 @@ This client: protocol {2} (servers with protocol {3} or newer are supported)</va
     <value>The quality can only be changed while recording is off</value>
   </data>
   <data name="ToolTipResetRadioPanel" xml:space="preserve">
-    <value>Moves the Radio Panel back to its default position and size (an open panel is closed)</value>
+    <value>Moves the radio back to its default position and size (an open radio is closed)</value>
   </data>
   <data name="ToolTipRotaryIncrement" xml:space="preserve">
-    <value>The frequency step buttons and keys change only their digit and roll over from 9 to 0, like a rotary knob</value>
+    <value>Tuning (knob, ▲ / ▼, keys) changes only the underlined digit and rolls over from 9 to 0 instead of carrying into the next digit</value>
   </data>
   <data name="ToolTipSavedAddressTab" xml:space="preserve">
     <value>Edit the favourite servers</value>
-  </data>
-  <data name="ToolTipSelectedRadio" xml:space="preserve">
-    <value>Green: selected radio (Push-To-Talk transmits on it). Click to select this radio.</value>
   </data>
   <data name="ToolTipServerAddress" xml:space="preserve">
     <value>Host name or IP address of the server, optionally followed by :port (default port 5010)</value>
@@ -1215,14 +952,8 @@ This client: protocol {2} (servers with protocol {3} or newer are supported)</va
     <value>Only needed if the server is password protected.
 The password is sent to the server unencrypted.</value>
   </data>
-  <data name="ToolTipServerPresetsConfiguration" xml:space="preserve">
-    <value>Which preset channels the channel tab offers: your preset files, the server's presets, or both</value>
-  </data>
   <data name="ToolTipServerStatus" xml:space="preserve">
     <value>Connection to the server</value>
-  </data>
-  <data name="ToolTipSimulTrans" xml:space="preserve">
-    <value>Also transmit on this radio (needs simultaneous transmission on)</value>
   </data>
   <data name="ToolTipSpeakerBoost" xml:space="preserve">
     <value>Boosts all received audio</value>
@@ -1231,19 +962,13 @@ The password is sent to the server unencrypted.</value>
     <value>Voice connection (UDP) to the server</value>
   </data>
   <data name="ToolTipVOXEnabled" xml:space="preserve">
-    <value>Transmits on the selected radio while you speak - no Push-To-Talk needed</value>
+    <value>Transmits while you speak - no Push-To-Talk needed</value>
   </data>
   <data name="ToolTipVOXSensitivity" xml:space="preserve">
     <value>The higher the sensitivity the less likely speech is missed, but the higher the chance that noise starts a transmission</value>
   </data>
   <data name="ToolTipVOXThreshold" xml:space="preserve">
     <value>Minimum loudness that counts as speech</value>
-  </data>
-  <data name="ValueDISABLED" xml:space="preserve">
-    <value>Disabled</value>
-  </data>
-  <data name="ValueENABLED" xml:space="preserve">
-    <value>Enabled</value>
   </data>
   <data name="ValueNo" xml:space="preserve">
     <value>No</value>
@@ -1267,7 +992,7 @@ The password is sent to the server unencrypted.</value>
     <value>Voice</value>
   </data>
   <data name="VOXEnabled" xml:space="preserve">
-    <value>Transmit on the selected radio when speaking (VOX)</value>
+    <value>Transmit when speaking (VOX)</value>
   </data>
   <data name="VOXHeader" xml:space="preserve">
     <value>Voice Activation (VOX)</value>
@@ -1301,5 +1026,47 @@ The password is sent to the server unencrypted.</value>
   </data>
   <data name="VOXModeLower" xml:space="preserve">
     <value>Lower</value>
+  </data>
+  <data name="AboutTipBands" xml:space="preserve">
+    <value>The frequency decides everything else: 26.965 - 27.405 MHz is CB (AM), 446.000 - 446.200 MHz is PMR (FM), 108 - 137 MHz is airband (AM), 900 MHz and above is digital, and so on. Everybody on the same frequency uses the same mode and radio sound.</value>
+  </data>
+  <data name="ControlsVolumeHeader" xml:space="preserve">
+    <value>Volume</value>
+  </data>
+  <data name="RadioBalance" xml:space="preserve">
+    <value>Radio balance</value>
+  </data>
+  <data name="RadioStatusLoading" xml:space="preserve">
+    <value>STANDBY</value>
+  </data>
+  <data name="RadioStatusNoLink" xml:space="preserve">
+    <value>NO LINK</value>
+  </data>
+  <data name="RadioStepFormat" xml:space="preserve">
+    <value>STEP {0}</value>
+  </data>
+  <data name="ToolTipRadioBalance" xml:space="preserve">
+    <value>Plays the radio on the left, on the right or on both sides of your speakers / headphones</value>
+  </data>
+  <data name="ToolTipRadioDisplay" xml:space="preserve">
+    <value>Double-click (or press Enter) to type a frequency. Mouse wheel or arrow keys Up / Down: tune. Left / Right: tuning step.</value>
+  </data>
+  <data name="ToolTipResizeRadio" xml:space="preserve">
+    <value>Drag to resize the radio</value>
+  </data>
+  <data name="ToolTipStep" xml:space="preserve">
+    <value>Tuning step: 1 kHz, 10 kHz, 100 kHz, 1 MHz, 10 MHz or 100 MHz (the underlined digit)</value>
+  </data>
+  <data name="ToolTipStepDown" xml:space="preserve">
+    <value>Tune down one step</value>
+  </data>
+  <data name="ToolTipStepUp" xml:space="preserve">
+    <value>Tune up one step</value>
+  </data>
+  <data name="ToolTipTuningKnob" xml:space="preserve">
+    <value>Tuning knob: drag it round or use the mouse wheel - one click is one step</value>
+  </data>
+  <data name="ToolTipUsersOnFrequency" xml:space="preserve">
+    <value>Other users on this frequency</value>
   </data>
 </root>

@@ -23,7 +23,14 @@
     </ItemGroup>
     <ItemGroup>
         <ProjectReference Include="..\EasyRadioLink.Common\EasyRadioLink.Common.csproj" />
+        <!-- the client's radio logic (band plan use, tuning, radio state, wire view) -->
+        <ProjectReference Include="..\EasyRadioLink.Client\EasyRadioLink.Client.csproj" />
     </ItemGroup>
+    <!-- The client's NLog.config (a log file in the client's settings folder) is copied along with the client; the
+         tests must not pick it up. -->
+    <Target Name="RemoveClientLogConfig" AfterTargets="CopyFilesToOutputDirectory">
+        <Delete Files="$(OutDir)NLog.config" />
+    </Target>
     <Choose>
         <When Condition="'$(VisualStudioVersion)' == '10.0' And '$(IsCodedUITest)' == 'True'">
             <ItemGroup>

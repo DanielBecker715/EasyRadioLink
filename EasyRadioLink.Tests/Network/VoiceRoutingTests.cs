@@ -47,12 +47,11 @@ public class VoiceRoutingTests
         };
     }
 
-    private static HashSet<IPEndPoint> Route(ClientInfo sender, UDPVoicePacket packet, bool strict,
-        params ClientInfo[] others)
+    private static HashSet<IPEndPoint> Route(ClientInfo sender, UDPVoicePacket packet, params ClientInfo[] others)
     {
         var all = new List<ClientInfo> { sender };
         all.AddRange(others);
-        return VoiceRouting.SelectRecipients(all, sender, packet, strict, TestFrequencies);
+        return VoiceRouting.SelectRecipients(all, sender, packet, TestFrequencies);
     }
 
     [TestMethod]
@@ -61,7 +60,7 @@ public class VoiceRoutingTests
         var sender = Client("sender_______________1", 1000, Radio(Cb19, Modulation.AM));
         var receiver = Client("receiver_____________1", 1001, Radio(Cb19, Modulation.AM));
 
-        var recipients = Route(sender, Packet(Cb19, Modulation.AM), false, receiver);
+        var recipients = Route(sender, Packet(Cb19, Modulation.AM), receiver);
 
         Assert.HasCount(1, recipients);
         Assert.Contains(receiver.VoipPort, recipients);
@@ -74,7 +73,7 @@ public class VoiceRoutingTests
         var close = Client("receiver_____________1", 1001, Radio(Cb19 + 400, Modulation.AM));
         var far = Client("receiver_____________2", 1002, Radio(Cb19 + 10000, Modulation.AM));
 
-        var recipients = Route(sender, Packet(Cb19, Modulation.AM), false, close, far);
+        var recipients = Route(sender, Packet(Cb19, Modulation.AM), close, far);
 
         Assert.Contains(close.VoipPort, recipients);
         Assert.DoesNotContain(far.VoipPort, recipients);
@@ -86,8 +85,8 @@ public class VoiceRoutingTests
         var sender = Client("sender_______________1", 1000);
         var fmReceiver = Client("receiver_____________1", 1001, Radio(Pmr1, Modulation.FM));
 
-        Assert.IsEmpty(Route(sender, Packet(Pmr1, Modulation.AM), false, fmReceiver));
-        Assert.HasCount(1, Route(sender, Packet(Pmr1, Modulation.FM), false, fmReceiver));
+        Assert.IsEmpty(Route(sender, Packet(Pmr1, Modulation.AM), fmReceiver));
+        Assert.HasCount(1, Route(sender, Packet(Pmr1, Modulation.FM), fmReceiver));
     }
 
     [TestMethod]
@@ -97,8 +96,8 @@ public class VoiceRoutingTests
         var disabled = Client("receiver_____________1", 1001, Radio(Cb19, Modulation.DISABLED));
         var enabled = Client("receiver_____________2", 1002, Radio(Cb19, Modulation.AM));
 
-        Assert.IsEmpty(Route(sender, Packet(Cb19, Modulation.AM), false, disabled));
-        Assert.IsEmpty(Route(sender, Packet(Cb19, Modulation.DISABLED), false, enabled));
+        Assert.IsEmpty(Route(sender, Packet(Cb19, Modulation.AM), disabled));
+        Assert.IsEmpty(Route(sender, Packet(Cb19, Modulation.DISABLED), enabled));
     }
 
     [TestMethod]
@@ -108,10 +107,10 @@ public class VoiceRoutingTests
         var receiver = Client("receiver_____________1", 1001,
             Radio(124800000, Modulation.AM, AirbandGuard));
 
-        var recipients = Route(sender, Packet(AirbandGuard, Modulation.AM), false, receiver);
+        var recipients = Route(sender, Packet(AirbandGuard, Modulation.AM), receiver);
         Assert.HasCount(1, recipients);
 
-        var radio = receiver.RadioInfo.CanHearTransmission(AirbandGuard, Modulation.AM, 0, false, new List<int>(),
+        var radio = receiver.RadioInfo.CanHearTransmission(AirbandGuard, Modulation.AM, 0, new List<int>(),
             out var state, out var decryptable);
         Assert.IsNotNull(radio);
         Assert.IsNotNull(state);
@@ -127,7 +126,7 @@ public class VoiceRoutingTests
         var receiver = Client("receiver_____________1", 1001,
             Radio(124800000, Modulation.AM, AirbandGuard));
 
-        Assert.IsEmpty(Route(sender, Packet(AirbandGuard, Modulation.FM), false, receiver));
+        Assert.IsEmpty(Route(sender, Packet(AirbandGuard, Modulation.FM), receiver));
     }
 
     [TestMethod]
@@ -136,56 +135,47 @@ public class VoiceRoutingTests
         var sender = Client("sender_______________1", 1000);
         var receiver = Client("receiver_____________1", 1001, Radio(124800000, Modulation.AM, 0));
 
-        Assert.IsEmpty(Route(sender, Packet(AirbandGuard, Modulation.AM), false, receiver));
+        Assert.IsEmpty(Route(sender, Packet(AirbandGuard, Modulation.AM), receiver));
     }
 
     [TestMethod]
     public void EncryptedTransmissionIsDeliveredButOnlyDecryptableWithMatchingKey()
     {
+        // only clients older than 1.1 encrypt - their transmissions still reach everybody on the frequency
         var sender = Client("sender_______________1", 1000);
         var clear = Client("receiver_____________1", 1001, Radio(Cb19, Modulation.AM));
         var sameKey = Client("receiver_____________2", 1002, Radio(Cb19, Modulation.AM, enc: true, encKey: 5));
         var otherKey = Client("receiver_____________3", 1003, Radio(Cb19, Modulation.AM, enc: true, encKey: 6));
 
-        foreach (var strict in new[] { false, true })
-        {
-            // everybody tuned in gets the packet - non-matching keys play scrambled audio
-            var recipients = Route(sender, Packet(Cb19, Modulation.AM, 5), strict, clear, sameKey, otherKey);
-            Assert.HasCount(3, recipients);
+        // everybody tuned in gets the packet - non-matching keys play scrambled audio
+        var recipients = Route(sender, Packet(Cb19, Modulation.AM, 5), clear, sameKey, otherKey);
+        Assert.HasCount(3, recipients);
 
-            Assert.IsNotNull(clear.RadioInfo.CanHearTransmission(Cb19, Modulation.AM, 5, strict, null, out _,
-                out var clearDecryptable));
-            Assert.IsFalse(clearDecryptable);
+        Assert.IsNotNull(clear.RadioInfo.CanHearTransmission(Cb19, Modulation.AM, 5, null, out _,
+            out var clearDecryptable));
+        Assert.IsFalse(clearDecryptable);
 
-            Assert.IsNotNull(sameKey.RadioInfo.CanHearTransmission(Cb19, Modulation.AM, 5, strict, null, out _,
-                out var sameKeyDecryptable));
-            Assert.IsTrue(sameKeyDecryptable);
+        Assert.IsNotNull(sameKey.RadioInfo.CanHearTransmission(Cb19, Modulation.AM, 5, null, out _,
+            out var sameKeyDecryptable));
+        Assert.IsTrue(sameKeyDecryptable);
 
-            Assert.IsNotNull(otherKey.RadioInfo.CanHearTransmission(Cb19, Modulation.AM, 5, strict, null, out _,
-                out var otherKeyDecryptable));
-            Assert.IsFalse(otherKeyDecryptable);
-        }
+        Assert.IsNotNull(otherKey.RadioInfo.CanHearTransmission(Cb19, Modulation.AM, 5, null, out _,
+            out var otherKeyDecryptable));
+        Assert.IsFalse(otherKeyDecryptable);
     }
 
     [TestMethod]
-    public void ClearTransmissionOnEncryptingRadioDependsOnStrictEncryption()
+    public void ClearTransmissionIsUnderstoodByEveryRadio()
     {
+        // a radio of an older client that encrypts still understands the clear transmissions of the current version
         var receiver = Client("receiver_____________1", 1001, Radio(Cb19, Modulation.AM, enc: true, encKey: 5));
 
-        // non-strict: an encrypting radio still understands clear transmissions
-        Assert.IsNotNull(receiver.RadioInfo.CanHearTransmission(Cb19, Modulation.AM, 0, false, null, out _,
-            out var nonStrictDecryptable));
-        Assert.IsTrue(nonStrictDecryptable);
+        Assert.IsNotNull(receiver.RadioInfo.CanHearTransmission(Cb19, Modulation.AM, 0, null, out _,
+            out var decryptable));
+        Assert.IsTrue(decryptable);
 
-        // strict: only the same key is understood
-        Assert.IsNotNull(receiver.RadioInfo.CanHearTransmission(Cb19, Modulation.AM, 0, true, null, out _,
-            out var strictDecryptable));
-        Assert.IsFalse(strictDecryptable);
-
-        // delivered in both modes
         var sender = Client("sender_______________1", 1000);
-        Assert.HasCount(1, Route(sender, Packet(Cb19, Modulation.AM), false, receiver));
-        Assert.HasCount(1, Route(sender, Packet(Cb19, Modulation.AM), true, receiver));
+        Assert.HasCount(1, Route(sender, Packet(Cb19, Modulation.AM), receiver));
     }
 
     [TestMethod]
@@ -195,7 +185,7 @@ public class VoiceRoutingTests
         info.radios[1] = Radio(Cb19, Modulation.AM, enc: true, encKey: 9);
         info.radios[2] = Radio(Cb19, Modulation.AM, enc: true, encKey: 5);
 
-        var radio = info.CanHearTransmission(Cb19, Modulation.AM, 5, true, new List<int>(), out var state,
+        var radio = info.CanHearTransmission(Cb19, Modulation.AM, 5, new List<int>(), out var state,
             out var decryptable);
 
         Assert.AreSame(info.radios[2], radio);
@@ -208,9 +198,9 @@ public class VoiceRoutingTests
     {
         var sender = Client("sender_______________1", 1000, Radio(27405000, Modulation.AM));
 
-        Assert.IsEmpty(Route(sender, Packet(Cb19, Modulation.AM), false));
+        Assert.IsEmpty(Route(sender, Packet(Cb19, Modulation.AM)));
 
-        var echo = Route(sender, Packet(27405000, Modulation.AM), false);
+        var echo = Route(sender, Packet(27405000, Modulation.AM));
         Assert.HasCount(1, echo);
         Assert.Contains(sender.VoipPort, echo);
     }
@@ -222,7 +212,7 @@ public class VoiceRoutingTests
         sender.Muted = true;
         var receiver = Client("receiver_____________1", 1001, Radio(Cb19, Modulation.AM));
 
-        Assert.IsEmpty(Route(sender, Packet(Cb19, Modulation.AM), false, receiver));
+        Assert.IsEmpty(Route(sender, Packet(Cb19, Modulation.AM), receiver));
     }
 
     [TestMethod]
@@ -236,7 +226,7 @@ public class VoiceRoutingTests
         var brokenRadios = Client("receiver_____________3", 1003);
         brokenRadios.RadioInfo.radios = null;
 
-        Assert.IsEmpty(Route(sender, Packet(Cb19, Modulation.AM), false, noEndpoint, noRadios, brokenRadios));
+        Assert.IsEmpty(Route(sender, Packet(Cb19, Modulation.AM), noEndpoint, noRadios, brokenRadios));
     }
 
     [TestMethod]
@@ -252,7 +242,7 @@ public class VoiceRoutingTests
             Encryptions = new byte[] { 0, 0 }
         };
 
-        Assert.HasCount(1, Route(sender, packet, false, receiver));
+        Assert.HasCount(1, Route(sender, packet, receiver));
     }
 
     [TestMethod]
@@ -269,7 +259,7 @@ public class VoiceRoutingTests
         Assert.AreEqual(Modulation.FM, info.radios[1].modulation);
         foreach (var radio in info.radios) Assert.IsNotNull(radio);
 
-        Assert.IsNull(info.CanHearTransmission(Cb19, Modulation.AM, 0, false, null, out _, out _));
+        Assert.IsNull(info.CanHearTransmission(Cb19, Modulation.AM, 0, null, out _, out _));
     }
 
     [TestMethod]

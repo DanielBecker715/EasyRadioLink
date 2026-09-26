@@ -105,6 +105,10 @@ internal class Program : IHandle<ClientConnectionMessage>, IHandle<ServerStartFa
             return ExitCodeInvalidOptions;
         }
 
+        foreach (var removedOption in options.RemovedOptionsUsed())
+            Console.Error.WriteLine(
+                $"Warning: {removedOption} was removed in EasyRadioLink 1.1 and is ignored - please remove it from your start script or service file.");
+
         // default: server.cfg next to the executable; a relative --cfg is relative to the current directory
         if (!string.IsNullOrWhiteSpace(options.ConfigFile))
             ServerSettingsStore.SetConfigFile(options.ConfigFile);
@@ -186,10 +190,6 @@ internal class Program : IHandle<ClientConnectionMessage>, IHandle<ServerStartFa
             store.SetGeneralSetting(ServerSettingsKeys.IRL_RADIO_TX, options.RealRadioTX.Value);
         if (options.RealRadioRX.HasValue)
             store.SetGeneralSetting(ServerSettingsKeys.IRL_RADIO_RX_INTERFERENCE, options.RealRadioRX.Value);
-        if (options.AllowRadioEncryption.HasValue)
-            store.SetGeneralSetting(ServerSettingsKeys.ALLOW_RADIO_ENCRYPTION, options.AllowRadioEncryption.Value);
-        if (options.StrictRadioEncryption.HasValue)
-            store.SetGeneralSetting(ServerSettingsKeys.STRICT_RADIO_ENCRYPTION, options.StrictRadioEncryption.Value);
         if (options.TestFrequencies != null)
             store.SetGeneralSetting(ServerSettingsKeys.TEST_FREQUENCIES,
                 RadioCalculator.NormaliseFrequencyListMHz(options.TestFrequencies));
@@ -200,10 +200,6 @@ internal class Program : IHandle<ClientConnectionMessage>, IHandle<ServerStartFa
             store.SetGeneralSetting(ServerSettingsKeys.SHOW_TUNED_COUNT, options.ShowTunedCount.Value);
         if (options.ShowTransmitterName.HasValue)
             store.SetGeneralSetting(ServerSettingsKeys.SHOW_TRANSMITTER_NAME, options.ShowTransmitterName.Value);
-        if (options.ServerPresetChannelsEnabled.HasValue)
-            store.SetGeneralSetting(ServerSettingsKeys.SERVER_PRESETS_ENABLED, options.ServerPresetChannelsEnabled.Value);
-        if (options.ServerRadioPresetEnabled.HasValue)
-            store.SetGeneralSetting(ServerSettingsKeys.SERVER_RADIO_PRESET_ENABLED, options.ServerRadioPresetEnabled.Value);
         if (options.TransmissionLogEnabled.HasValue)
             store.SetGeneralSetting(ServerSettingsKeys.TRANSMISSION_LOG_ENABLED, options.TransmissionLogEnabled.Value);
         if (options.TransmissionLogRetention.HasValue)
@@ -312,17 +308,6 @@ public class Options
         Required = false)]
     public bool? RealRadioRX { get; set; }
 
-    [Option("allow-encryption",
-        HelpText = "Allows radios that support it to encrypt (scramble) their transmissions. Default is true",
-        Required = false)]
-    public bool? AllowRadioEncryption { get; set; }
-
-    [Option("strict-encryption",
-        HelpText =
-            "Encrypted radios only understand transmissions with the same key (unencrypted ones are scrambled too). Default is false.",
-        Required = false)]
-    public bool? StrictRadioEncryption { get; set; }
-
     [Option("test-frequencies",
         HelpText =
             "Radio check (echo) frequencies in MHz, comma separated with '.' as decimal separator. Transmissions on them are played back to the sender. Default is 27.405,446.19375",
@@ -337,7 +322,7 @@ public class Options
 
     [Option("show-tuned-count",
         HelpText =
-            "Lets users see how many people are tuned to each frequency. Default is true",
+            "Lets users see how many people are tuned to their frequency. Default is true",
         Required = false)]
     public bool? ShowTunedCount { get; set; }
 
@@ -346,17 +331,20 @@ public class Options
         Required = false)]
     public bool? ShowTransmitterName { get; set; }
 
-    [Option("server-presets",
-        HelpText =
-            "Offers server channel presets to clients - put one *.txt file per radio name (lines \"Name|MHz\") in a folder called Presets next to your server.cfg file. Default is false",
-        Required = false)]
-    public bool? ServerPresetChannelsEnabled { get; set; }
+    // Removed in 1.1 (encryption, server channel presets and the server radio layout are gone). Still accepted -
+    // hidden from --help and ignored with a warning - so start scripts and service files of 1.0 keep working.
 
-    [Option("server-radio-layout",
-        HelpText =
-            "Makes clients use the server radio layout - put a server-radios.json file (same format as the client's radios.json) next to your server.cfg file. Default is false",
-        Required = false)]
-    public bool? ServerRadioPresetEnabled { get; set; }
+    [Option("allow-encryption", Hidden = true, Required = false)]
+    public bool? RemovedAllowEncryption { get; set; }
+
+    [Option("strict-encryption", Hidden = true, Required = false)]
+    public bool? RemovedStrictEncryption { get; set; }
+
+    [Option("server-presets", Hidden = true, Required = false)]
+    public bool? RemovedServerPresets { get; set; }
+
+    [Option("server-radio-layout", Hidden = true, Required = false)]
+    public bool? RemovedServerRadioLayout { get; set; }
 
     [Option("transmission-log",
         HelpText = "Log all transmissions to a CSV. Default is false.",
@@ -385,7 +373,7 @@ public class Options
 
     [Option('c', "cfg", Required = false,
         HelpText =
-            "Configuration file path, e.g. --cfg=C:\\some-path\\server.cfg. Default is server.cfg next to the server executable; a relative path is relative to the current directory. Presets, server-radios.json, banned.txt, the logs and the client export live in the same folder.")]
+            "Configuration file path, e.g. --cfg=C:\\some-path\\server.cfg. Default is server.cfg next to the server executable; a relative path is relative to the current directory. banned.txt, the logs, the transmission logs and the client export live in the same folder.")]
     public string ConfigFile
     {
         get => _configFile;
@@ -414,6 +402,15 @@ public class Options
         return null;
     }
 
+    /// <summary>The options of 1.0 that were removed in 1.1 and are given on the command line (they are ignored).</summary>
+    public IEnumerable<string> RemovedOptionsUsed()
+    {
+        if (RemovedAllowEncryption.HasValue) yield return "--allow-encryption";
+        if (RemovedStrictEncryption.HasValue) yield return "--strict-encryption";
+        if (RemovedServerPresets.HasValue) yield return "--server-presets";
+        if (RemovedServerRadioLayout.HasValue) yield return "--server-radio-layout";
+    }
+
     public override string ToString()
     {
         return
@@ -427,14 +424,10 @@ public class Options
             $"{nameof(ClientExportPath)}: {ClientExportPath}, \n" +
             $"{nameof(RealRadioTX)}: {RealRadioTX}, \n" +
             $"{nameof(RealRadioRX)}: {RealRadioRX}, \n" +
-            $"{nameof(AllowRadioEncryption)}: {AllowRadioEncryption}, \n" +
-            $"{nameof(StrictRadioEncryption)}: {StrictRadioEncryption}, \n" +
             $"{nameof(TestFrequencies)}: {TestFrequencies}, \n" +
             $"{nameof(CleanFrequencies)}: {CleanFrequencies}, \n" +
             $"{nameof(ShowTunedCount)}: {ShowTunedCount}, \n" +
             $"{nameof(ShowTransmitterName)}: {ShowTransmitterName}, \n" +
-            $"{nameof(ServerPresetChannelsEnabled)}: {ServerPresetChannelsEnabled}, \n" +
-            $"{nameof(ServerRadioPresetEnabled)}: {ServerRadioPresetEnabled}, \n" +
             $"{nameof(TransmissionLogEnabled)}: {TransmissionLogEnabled}, \n" +
             $"{nameof(TransmissionLogRetention)}: {TransmissionLogRetention}, \n" +
             $"{nameof(HttpServerEnabled)}: {HttpServerEnabled}, \n" +

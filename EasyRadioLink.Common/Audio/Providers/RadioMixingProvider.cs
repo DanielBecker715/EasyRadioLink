@@ -12,28 +12,16 @@ using System.Collections.Generic;
 namespace EasyRadioLink.Common.Audio.Providers;
 
 /// <summary>
-///     Output of ONE local radio (index 0..10, slot 0 is reserved and never receives): start/end clicks, encryption
-///     tones, squelch tail, the mix of all received transmissions (receive filter, FM capture) and the stereo balance.
+///     Output of ONE local radio slot (index 0..10; only the radio in slot 1 is ever used, the other slots stay
+///     silent): start/end clicks, squelch tail, the mix of all received transmissions (receive filter, FM capture) and
+///     the stereo balance.
 /// </summary>
 public class RadioMixingProvider : ISampleProvider
 {
     private static readonly Logger logger = LogManager.GetCurrentClassLogger();
 
-    // Stereo balance setting per radio index (slot 0 is reserved - centred).
-    private static readonly ProfileSettingsKeys?[] BalanceKeys =
-    {
-        null,
-        ProfileSettingsKeys.Radio1Channel,
-        ProfileSettingsKeys.Radio2Channel,
-        ProfileSettingsKeys.Radio3Channel,
-        ProfileSettingsKeys.Radio4Channel,
-        ProfileSettingsKeys.Radio5Channel,
-        ProfileSettingsKeys.Radio6Channel,
-        ProfileSettingsKeys.Radio7Channel,
-        ProfileSettingsKeys.Radio8Channel,
-        ProfileSettingsKeys.Radio9Channel,
-        ProfileSettingsKeys.Radio10Channel
-    };
+    // Index of the radio that has a stereo balance setting (Radio1Channel); every other slot is centred.
+    private const int BalancedRadio = Constants.FIRST_RADIO_INDEX;
 
     private readonly AudioRecordingManager _audioRecordingManager = AudioRecordingManager.Instance;
 
@@ -112,7 +100,6 @@ public class RadioMixingProvider : ISampleProvider
             List<TransmissionSegment> segments = null;
 
             // Update sources by queueing incoming audio.
-            var encryptionTone = false;
             var longestSegmentLength = 0;
             lock (sources)
             {
@@ -135,10 +122,6 @@ public class RadioMixingProvider : ISampleProvider
                             {
                                 segments.Add(segment);
                                 longestSegmentLength = Math.Max(longestSegmentLength, segment.Audio.Length);
-                                if (segment.Decryptable && segment.HasEncryption)
-                                {
-                                    encryptionTone = true;
-                                }
                             }
                         }
                         catch (Exception e)
@@ -164,7 +147,7 @@ public class RadioMixingProvider : ISampleProvider
             }
 
             // #FIXME: Should copy into mixBuffer, and use that throughout as our primary mixdown here.
-            monoOffset += HandleStartEndTones(hasIncomingAudio || availableInBuffer > 0, encryptionTone, monoBuffer, monoOffset, monoBufferLength - monoOffset);
+            monoOffset += HandleStartEndTones(hasIncomingAudio || availableInBuffer > 0, monoBuffer, monoOffset, monoBufferLength - monoOffset);
 
             // Queue new audio (if any).
             if (hasIncomingAudio)
@@ -274,7 +257,7 @@ public class RadioMixingProvider : ISampleProvider
         _rxVolume = 0f;
     }
 
-    private int HandleStartEndTones(bool isActive, bool encryption, float[] buffer, int offset, int count)
+    private int HandleStartEndTones(bool isActive, float[] buffer, int offset, int count)
     {
         if (isActive ^ IsReceiving)
         {
@@ -283,7 +266,7 @@ public class RadioMixingProvider : ISampleProvider
             {
                 // Start
                 effectsBuffer.Reset(); // In case we were playing the end tone, cut it short.
-                PlaySoundEffectStartReceive(encryption);
+                PlaySoundEffectStartReceive();
                 IsReceiving = true;
             }
             else
@@ -339,20 +322,12 @@ public class RadioMixingProvider : ISampleProvider
         WriteEffect(_cachedAudioEffectsProvider.SelectedRadioTransmissionEndEffect);
     }
 
-    /// <summary>Queues the receive start effect: the encryption tone for decryptable encrypted audio, else the selected click.</summary>
-    public void PlaySoundEffectStartReceive(bool encrypted)
+    /// <summary>Queues the receive start effect (selected click) on this radio.</summary>
+    public void PlaySoundEffectStartReceive()
     {
         if (!profileSettings.GetClientSettingBool(ProfileSettingsKeys.RadioRxEffects_Start)) return;
 
-        if (encrypted &&
-            profileSettings.GetClientSettingBool(ProfileSettingsKeys.RadioEncryptionEffects))
-        {
-            WriteEffect(_cachedAudioEffectsProvider.EncryptionReceiveTone);
-        }
-        else
-        {
-            WriteEffect(_cachedAudioEffectsProvider.SelectedRadioTransmissionStartEffect);
-        }
+        WriteEffect(_cachedAudioEffectsProvider.SelectedRadioTransmissionStartEffect);
     }
 
     /// <summary>
@@ -390,19 +365,12 @@ public class RadioMixingProvider : ISampleProvider
         }
     }
 
-    /// <summary>Queues the transmit start effect on this radio: the encryption tone when encrypted, else the selected click.</summary>
-    public void PlaySoundEffectStartTransmit(bool encrypted)
+    /// <summary>Queues the transmit start effect (selected click) on this radio.</summary>
+    public void PlaySoundEffectStartTransmit()
     {
         if (!profileSettings.GetClientSettingBool(ProfileSettingsKeys.RadioTxEffects_Start)) return;
 
-        if (encrypted && profileSettings.GetClientSettingBool(ProfileSettingsKeys.RadioEncryptionEffects))
-        {
-            WriteEffect(_cachedAudioEffectsProvider.EncryptionTransmitTone);
-        }
-        else
-        {
-            WriteEffect(_cachedAudioEffectsProvider.SelectedRadioTransmissionStartEffect);
-        }
+        WriteEffect(_cachedAudioEffectsProvider.SelectedRadioTransmissionStartEffect);
     }
 
     /// <summary>Queues the transmit end effect (selected click) on this radio.</summary>
@@ -417,14 +385,12 @@ public class RadioMixingProvider : ISampleProvider
     public void SeparateAudio(float[] srcFloat, int srcOffset, int srcCount, float[] dstFloat, int dstOffset,
         int radioId)
     {
-        var settingType = radioId >= 0 && radioId < BalanceKeys.Length ? BalanceKeys[radioId] : null;
-
         float balance = 0f;
-        if (settingType.HasValue)
+        if (radioId == BalancedRadio)
         {
             try
             {
-                balance = profileSettings.GetClientSettingFloat(settingType.Value);
+                balance = profileSettings.GetClientSettingFloat(ProfileSettingsKeys.Radio1Channel);
             }
             catch (Exception)
             {

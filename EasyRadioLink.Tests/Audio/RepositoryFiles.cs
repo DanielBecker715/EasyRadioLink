@@ -15,8 +15,6 @@ internal static class RepositoryFiles
 
     public static string AudioEffectsFolder => Path.Combine(ClientFolder, "AudioEffects");
 
-    public static string RadiosJson => Path.Combine(ClientFolder, "radios.json");
-
     private static string FindRoot()
     {
         var directory = new DirectoryInfo(AppContext.BaseDirectory);

@@ -432,7 +432,6 @@ if ($Installer) {
 # Sanity check: everything the users (and the setup) rely on is there.
 Assert-FilesExist $stagingDir @(
     "Client\EasyRadioLink.exe",
-    "Client\radios.json",
     "Client\opus.dll",
     "Client\speexdsp.dll",
     "Server\EasyRadioLink.Server.exe",

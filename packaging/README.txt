@@ -1,10 +1,9 @@
 EasyRadioLink
 =============
 
-EasyRadioLink is a digital radio for your PC. Connect to a server, tune your
-radios to a frequency and talk to everybody on the same frequency - with the
-sound of a real radio: filters, static, squelch, clicks, tones and scrambled
-encryption.
+EasyRadioLink is a digital radio for your PC. Connect to a server, tune the
+radio to a frequency and talk to everybody on the same frequency - with the
+sound of a real radio: filters, static, squelch, clicks and tones.
 
 Website and source code: https://github.com/DanielBecker715/EasyRadioLink
 
@@ -67,56 +66,53 @@ REQUIREMENTS
   3. Radio tab > Connection: enter your name and the server address, for
      example 203.0.113.10:5010 (5010 is the default port), and the server
      password if the server has one. Click "Connect".
-  4. The Radio Panel opens. Tune a radio to the same frequency as the people
-     you want to talk to, hold your PTT button and talk.
+  4. The radio opens. Tune it to the same frequency as the people you want
+     to talk to, hold your PTT button and talk.
 
 
-3. USING THE RADIOS
--------------------
-  Every radio in the Radio Panel shows its name, its frequency and its
-  modulation (AM, FM or DIG = digital). Two radios only hear each other when
-  both frequency and modulation match.
+3. USING THE RADIO
+------------------
+  There is one radio. Tune it to any frequency from 1.000 to 999.999 MHz -
+  there are as many channels as there are frequencies. Everybody on the same
+  frequency hears each other.
 
-  - Change the frequency with the arrow buttons or type it in MHz, always
-    with a dot as decimal separator (27.185, not 27,185).
-  - Click a radio to select it. PTT transmits on the selected radio.
-  - G: also listen on the guard (emergency) frequency of that radio.
-  - Channel: pick a preset channel (see "Preset channels" below).
-  - Encryption (only on radios that support it): radios with encryption on
-    and the same key (1-252) understand each other; everybody else hears
-    scrambled noise.
-  - Sound: the radio model that shapes how the others hear you
-    (CB, walkie-talkie, airband, tactical, HF, vintage, digital, ...).
-  - ST: transmit on this radio at the same time as on the selected radio.
-  - The counter shows how many users are tuned to that frequency (if the
-    server allows it).
+  - Turn the big knob: drag it round with the mouse, or use the mouse wheel
+    over the knob or the display. The arrow keys Up / Down and the buttons
+    with the arrows tune one step as well.
+  - STEP (or the arrow keys Left / Right) chooses the step: 1 kHz, 10 kHz,
+    100 kHz, 1 MHz, 10 MHz or 100 MHz. The digit that changes is underlined.
+  - Double-click the display (or press Enter) to type a frequency in MHz,
+    for example 446.19375 (446,19375 works too). Enter sets it, Esc cancels.
+  - VOL: the small knob sets the volume (drag it up / down or use the wheel).
+  - The display shows the band and the modulation, TX while you transmit, RX
+    while you receive, the name of the speaker and the number of users on the
+    frequency (if the server allows it).
+  - Drag the radio by its case, resize it with the corner at the bottom
+    right. Without a connection the display shows NO LINK.
+  - Controls tab: besides Push-To-Talk you can assign keys or buttons to
+    "Frequency up / down" (one for each step), the radio volume and
+    "Show / hide the radio".
 
-  Default radios:
-    Radio 1  CB              AM    26.965 - 27.405 MHz  (starts on channel 19)
-    Radio 2  PMR446          FM    446.00625 - 446.19375 MHz
-    Radio 3  VHF Airband     AM    118 - 137 MHz        (guard 121.5 MHz)
-    Radio 4  UHF Tactical    AM    225 - 400 MHz        (guard 243.0 MHz, encryption)
-    Radio 5  HF Long Range   AM    3 - 30 MHz
-    Radio 6  Digital         DIG   100 - 199.999 MHz    (clean digital sound, encryption)
-  EasyRadioLink remembers the frequencies and settings of your radios.
+  The frequency decides the band, the modulation and the radio sound:
+    1.000 -   2.999 MHz  MW    AM   vintage radio
+    3.000 -  26.964 MHz  HF    AM   HF radio
+   26.965 -  27.405 MHz  CB    AM   CB radio
+   27.406 -  29.999 MHz  HF    AM   HF radio
+   30.000 -  87.999 MHz  VHF   FM   tactical radio
+   88.000 - 107.999 MHz  FM    FM   walkie-talkie
+  108.000 - 136.999 MHz  AIR   AM   airband radio
+  137.000 - 224.999 MHz  VHF   FM   walkie-talkie
+  225.000 - 399.999 MHz  UHF   AM   tactical radio
+  400.000 - 899.999 MHz  UHF   FM   walkie-talkie
+                               (446.000 - 446.199 MHz is shown as PMR)
+  900.000 - 999.999 MHz  DIG   digital, clean sound without static
+
+  The radio starts on 27.185 MHz (CB channel 19) and remembers its frequency
+  and volume.
 
   Radio check: on a server with default settings, whatever you transmit on
   27.405 MHz (CB channel 40) or 446.19375 MHz (PMR channel 16) is sent back
   to you, so you can hear how you sound.
-
-  Preset channels: create a text file named like the radio (for example
-  "CB.txt" or "PMR446.txt") in %AppData%\EasyRadioLink\Presets (or in the
-  presets folder chosen on the Radio tab) with one channel per line, either
-  "Name|Frequency in MHz" or only the frequency:
-      Channel 9|27.065
-      Channel 19|27.185
-      446.00625
-  The server can also provide preset channels for everybody.
-
-  Your own radio layout: copy radios.json from the EasyRadioLink folder to
-  your settings folder as radios-custom.json
-  (%AppData%\EasyRadioLink\radios-custom.json) and edit it (frequencies in
-  Hz). Delete the file to go back to the default radios.
 
 
 4. HOSTING A SERVER
@@ -140,9 +136,10 @@ REQUIREMENTS
     Note: the password keeps strangers out, but it is sent unencrypted.
   - The server window also sets: radio check (echo) frequencies, clean
     frequencies (played without radio effects), half-duplex radios,
-    interference of simultaneous transmissions, encryption rules, preset
-    channels and the server radio layout, transmission logging. Connected
-    users can be muted, kicked or banned in the client list.
+    interference of simultaneous transmissions, whether users see the
+    number of users on their frequency and the name of the speaker, the
+    client list export and transmission logging. Connected users can be
+    muted, kicked or banned in the client list.
 
   Server without a window (for a dedicated PC or a Linux server):
     Windows (Command Prompt):
@@ -164,29 +161,27 @@ REQUIREMENTS
   file.
 
   Server files: server.cfg (all settings) is kept next to the server
-  program; Server\ and CommandLine\ each have their own. Presets\*.txt
-  (preset channels), server-radios.json (server radio layout), banned.txt
-  and the log files are kept in the same folder as server.cfg. Start the
+  program; Server\ and CommandLine\ each have their own. banned.txt and
+  the log files are kept in the same folder as server.cfg. Start the
   server with --cfg=<path to a server.cfg> to keep all of them in another
   folder.
 
   Update a server: extract the new version, then copy server.cfg (and
-  Presets\, server-radios.json and banned.txt if you use them) from the old
-  server folder into the new one.
+  banned.txt if you use it) from the old server folder into the new one.
+  Settings in server.cfg that the new version does not know any more are
+  ignored; you may delete them.
 
 
 5. FILES AND FOLDERS
 --------------------
   %AppData%\EasyRadioLink             Settings folder: settings, profiles,
-                                      favourite servers, saved radio state,
-                                      radios-custom.json
-  %AppData%\EasyRadioLink\Presets     Preset channel files (*.txt)
+                                      favourite servers, saved radio state
   %AppData%\EasyRadioLink\RadioModels Your own radio models (*.json)
   %AppData%\EasyRadioLink\Logs        Log files (clientlog.txt)
   Documents\EasyRadioLink\Recordings  Recordings
-  EasyRadioLink folder                Program, radios.json, built-in radio
-                                      models and sounds
-  Server folder                       Server program, server.cfg, Presets,
+  EasyRadioLink folder                Program, built-in radio models and
+                                      sounds
+  Server folder                       Server program, server.cfg,
                                       banned.txt, log files
 
   Tip: type %AppData%\EasyRadioLink into the address bar of the File
@@ -205,11 +200,10 @@ REQUIREMENTS
     firewall and the port forwarding (TCP and UDP 5010) on the server PC.
   - "Incompatible server": the client and the server must be compatible
     EasyRadioLink versions. Update both.
-  - Nobody hears you: same frequency AND same modulation? Encryption on both
-    sides with the same key, or off on both? PTT assigned? Correct
+  - Nobody hears you: exactly the same frequency? PTT assigned? Correct
     microphone selected (watch the level meter)?
-  - You only hear scrambled noise: the other station uses encryption with a
-    different key.
+  - You only hear scrambled noise: the other station uses an older
+    EasyRadioLink version with encryption switched on.
   - Anything else: the log files usually tell what went wrong - clientlog.txt
     in %AppData%\EasyRadioLink\Logs (link on the About tab) and serverlog.txt
     in the server folder. Please include them when you report a problem.

@@ -14,20 +14,11 @@ namespace EasyRadioLink.Common.Settings;
 
 public enum ProfileSettingsKeys
 {
-    // Per-radio stereo balance (-1 left .. +1 right), radios 1..10 (slot 0 is reserved).
+    // Stereo balance of the radio (-1 left .. +1 right). The name is kept from the multi-radio versions so the saved
+    // value survives the update.
     Radio1Channel,
-    Radio2Channel,
-    Radio3Channel,
-    Radio4Channel,
-    Radio5Channel,
-    Radio6Channel,
-    Radio7Channel,
-    Radio8Channel,
-    Radio9Channel,
-    Radio10Channel,
 
     RadioEffectsRatio,
-    RadioEncryptionEffects, //Radio Encryption effects
     RadioEffectsClipping,
     NATOTone, // FM tone (user-visible label "FM tone")
 
@@ -35,11 +26,6 @@ public enum ProfileSettingsKeys
     RadioRxEffects_End,
     RadioTxEffects_Start, // Recieving Radio Effects
     RadioTxEffects_End,
-
-    AutoSelectPresetChannel, //auto select preset channel
-
-    RadioSwitchIsPTT,
-    RadioSwitchIsPTTOnlyWhenValid,
 
     PTTReleaseDelay,
 
@@ -49,10 +35,14 @@ public enum ProfileSettingsKeys
     NATOToneVolume, // FM tone volume
     NoiseGainDB,
     HFNoiseGainDB,
+
+    // Listener: transmissions sound like the sender's radio model (the model of the band, see BandPlan);
+    // off = every transmission uses the standard sound.
     PerRadioModelEffects,
 
     PTTStartDelay,
 
+    // Frequency steps (buttons, tuning knob, hotkeys) change only their digit and roll over from 9 to 0.
     RotaryStyleIncrement,
 
     // Short fading noise burst when a received AM/FM transmission ends (not for DIGITAL or clean frequencies).
@@ -66,17 +56,7 @@ public enum ProfileSettingsKeys
 
     // Listener: play the background sounds of other users, and their relative volume.
     BackgroundSoundEffect,
-    BackgroundSoundEffectVolume,
-
-    ServerPresetSelection,
-    AllowServerRadioPreset //use the server's radio layout (SERVER_RADIO_PRESET) if the server provides one
-}
-
-public enum ServerPresetConfiguration
-{
-    USE_SERVER_ONLY_IF_SET,
-    USE_CLIENT_ONLY,
-    USE_CLIENT_AND_SERVER_IF_SET
+    BackgroundSoundEffectVolume
 }
 
 public class ProfileSettingsStore
@@ -85,10 +65,11 @@ public class ProfileSettingsStore
 
     public static readonly Dictionary<string, string> DefaultSettingsProfileSettings = new()
     {
+        { ProfileSettingsKeys.Radio1Channel.ToString(), "0" },
+
         { ProfileSettingsKeys.RadioEffectsRatio.ToString(), "1.0" },
         { ProfileSettingsKeys.RadioEffectsClipping.ToString(), "false" },
 
-        { ProfileSettingsKeys.RadioEncryptionEffects.ToString(), "true" },
         { ProfileSettingsKeys.NATOTone.ToString(), "true" },
 
         { ProfileSettingsKeys.RadioRxEffects_Start.ToString(), "true" },
@@ -103,14 +84,8 @@ public class ProfileSettingsStore
             CachedAudioEffect.AudioEffectTypes.RADIO_TRANS_END + ".wav"
         },
 
-
         { ProfileSettingsKeys.RadioTxEffects_Start.ToString(), "true" },
         { ProfileSettingsKeys.RadioTxEffects_End.ToString(), "true" },
-
-        { ProfileSettingsKeys.AutoSelectPresetChannel.ToString(), "true" },
-
-        { ProfileSettingsKeys.RadioSwitchIsPTT.ToString(), "false" },
-        { ProfileSettingsKeys.RadioSwitchIsPTTOnlyWhenValid.ToString(), "false" },
 
         { ProfileSettingsKeys.PTTReleaseDelay.ToString(), "0" },
         { ProfileSettingsKeys.PTTStartDelay.ToString(), "0" },
@@ -132,29 +107,8 @@ public class ProfileSettingsStore
         { ProfileSettingsKeys.BackgroundSoundEffect.ToString(), "true" },
         {
             ProfileSettingsKeys.BackgroundSoundEffectVolume.ToString(), "1.0"
-        }, //relative volume as the incoming volume is variable
-
-        //server-only
-        //client-only
-        //both
-        {
-            ProfileSettingsKeys.ServerPresetSelection.ToString(),
-            nameof(ServerPresetConfiguration.USE_CLIENT_AND_SERVER_IF_SET)
-        },  
-        { ProfileSettingsKeys.AllowServerRadioPreset.ToString(), "true" },
-        { ProfileSettingsKeys.Radio1Channel.ToString(), "0" },
-        { ProfileSettingsKeys.Radio2Channel.ToString(), "0" },
-        { ProfileSettingsKeys.Radio3Channel.ToString(), "0" },
-        { ProfileSettingsKeys.Radio4Channel.ToString(), "0" },
-        { ProfileSettingsKeys.Radio5Channel.ToString(), "0" },
-        { ProfileSettingsKeys.Radio6Channel.ToString(), "0" },
-        { ProfileSettingsKeys.Radio7Channel.ToString(), "0" },
-        { ProfileSettingsKeys.Radio8Channel.ToString(), "0" },
-        { ProfileSettingsKeys.Radio9Channel.ToString(), "0" },
-        { ProfileSettingsKeys.Radio10Channel.ToString(), "0" },
+        } //relative volume as the incoming volume is variable
     };
-
-    public static readonly List<string> ServerPresetSettings;
 
     private readonly GlobalSettingsStore _globalSettings;
 
@@ -165,12 +119,6 @@ public class ProfileSettingsStore
     private readonly Dictionary<string, Configuration> InputConfigs = new();
     private readonly Logger Logger = LogManager.GetCurrentClassLogger();
     private string _currentProfileName = "default";
-
-    static ProfileSettingsStore()
-    {
-        ServerPresetSettings = new List<string>();
-        foreach (var setting in Enum.GetNames(typeof(ServerPresetConfiguration))) ServerPresetSettings.Add(setting);
-    }
 
     public ProfileSettingsStore(GlobalSettingsStore globalSettingsStore)
     {

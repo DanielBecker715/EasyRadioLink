@@ -74,7 +74,7 @@ public class InputDeviceManager : IDisposable
 
     // First and last main binding polled by GenerateBindStateList (modifier binding = main binding + 100).
     // Values inside the range that are not InputBinding members are skipped.
-    private const InputBinding FirstBinding = InputBinding.Switch1;
+    private const InputBinding FirstBinding = InputBinding.Ptt;
     private const InputBinding LastBinding = InputBinding.RadioPanelToggle;
 
     //last action binding that fired - used to suppress key repeat (null = none)
@@ -570,7 +570,8 @@ public class InputDeviceManager : IDisposable
             }
 
             //now check this is the best binding and no previous ones are better
-            //Means you can have better binds like PTT  = Space and Radio 1 is Space +1 - holding space +1 will actually trigger radio 1 not PTT
+            //Means you can have better binds like PTT = Space and Frequency up = Space + 1 - holding Space + 1 will
+            //step the frequency, not key PTT
             if (bindState.IsActive)
                 for (var j = 0; j < i; j++)
                 {
@@ -613,7 +614,7 @@ public class InputDeviceManager : IDisposable
 
         callback?.Invoke(bindStates);
 
-        // hotkeys: radio panel toggle and radio actions
+        // hotkeys: radio window toggle and radio actions
 
         foreach (var bindState in bindStates)
         {
@@ -634,76 +635,50 @@ public class InputDeviceManager : IDisposable
                 {
                     _lastActiveBinding = bindState.MainDevice.InputBind;
 
-                    var playerRadioInfo = ClientStateSingleton.Instance.PlayerRadioInfo;
-
                     if (RadioHelper.RadiosAvailable())
                         switch (bindState.MainDevice.InputBind)
                         {
                             case InputBinding.Up100:
-                                RadioHelper.UpdateRadioFrequency(100, playerRadioInfo.selected);
+                                RadioHelper.UpdateRadioFrequency(100);
                                 break;
                             case InputBinding.Up10:
-                                RadioHelper.UpdateRadioFrequency(10, playerRadioInfo.selected);
+                                RadioHelper.UpdateRadioFrequency(10);
                                 break;
                             case InputBinding.Up1:
-                                RadioHelper.UpdateRadioFrequency(1, playerRadioInfo.selected);
+                                RadioHelper.UpdateRadioFrequency(1);
                                 break;
                             case InputBinding.Up01:
-                                RadioHelper.UpdateRadioFrequency(0.1, playerRadioInfo.selected);
+                                RadioHelper.UpdateRadioFrequency(0.1);
                                 break;
                             case InputBinding.Up001:
-                                RadioHelper.UpdateRadioFrequency(0.01, playerRadioInfo.selected);
+                                RadioHelper.UpdateRadioFrequency(0.01);
                                 break;
                             case InputBinding.Up0001:
-                                RadioHelper.UpdateRadioFrequency(0.001, playerRadioInfo.selected);
+                                RadioHelper.UpdateRadioFrequency(0.001);
                                 break;
                             case InputBinding.Down100:
-                                RadioHelper.UpdateRadioFrequency(-100, playerRadioInfo.selected);
+                                RadioHelper.UpdateRadioFrequency(-100);
                                 break;
                             case InputBinding.Down10:
-                                RadioHelper.UpdateRadioFrequency(-10, playerRadioInfo.selected);
+                                RadioHelper.UpdateRadioFrequency(-10);
                                 break;
                             case InputBinding.Down1:
-                                RadioHelper.UpdateRadioFrequency(-1, playerRadioInfo.selected);
+                                RadioHelper.UpdateRadioFrequency(-1);
                                 break;
                             case InputBinding.Down01:
-                                RadioHelper.UpdateRadioFrequency(-0.1, playerRadioInfo.selected);
+                                RadioHelper.UpdateRadioFrequency(-0.1);
                                 break;
                             case InputBinding.Down001:
-                                RadioHelper.UpdateRadioFrequency(-0.01, playerRadioInfo.selected);
+                                RadioHelper.UpdateRadioFrequency(-0.01);
                                 break;
                             case InputBinding.Down0001:
-                                RadioHelper.UpdateRadioFrequency(-0.001, playerRadioInfo.selected);
-                                break;
-                            case InputBinding.ToggleGuard:
-                                RadioHelper.ToggleGuard(playerRadioInfo.selected);
-                                break;
-                            case InputBinding.ToggleEncryption:
-                                RadioHelper.ToggleEncryption(playerRadioInfo.selected);
-                                break;
-                            case InputBinding.NextRadio:
-                                RadioHelper.SelectNextRadio();
-                                break;
-                            case InputBinding.PreviousRadio:
-                                RadioHelper.SelectPreviousRadio();
-                                break;
-                            case InputBinding.EncryptionKeyIncrease:
-                                RadioHelper.IncreaseEncryptionKey(playerRadioInfo.selected);
-                                break;
-                            case InputBinding.EncryptionKeyDecrease:
-                                RadioHelper.DecreaseEncryptionKey(playerRadioInfo.selected);
-                                break;
-                            case InputBinding.RadioChannelUp:
-                                RadioHelper.RadioChannelUp(playerRadioInfo.selected);
-                                break;
-                            case InputBinding.RadioChannelDown:
-                                RadioHelper.RadioChannelDown(playerRadioInfo.selected);
+                                RadioHelper.UpdateRadioFrequency(-0.001);
                                 break;
                             case InputBinding.RadioVolumeUp:
-                                RadioHelper.RadioVolumeUp(playerRadioInfo.selected);
+                                RadioHelper.RadioVolumeUp();
                                 break;
                             case InputBinding.RadioVolumeDown:
-                                RadioHelper.RadioVolumeDown(playerRadioInfo.selected);
+                                RadioHelper.RadioVolumeDown();
                                 break;
                         }
 
