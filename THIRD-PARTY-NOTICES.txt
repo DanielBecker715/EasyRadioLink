@@ -45,6 +45,17 @@ WebRTC voice activity detection (WebRtcVad.dll, part of WebRtcVadSharp)
   Copyright (c) 2011, The WebRTC project authors. All rights reserved.
   Website:   https://webrtc.org/
 
+Microsoft Flight Simulator SimConnect client library (SimConnect.dll, client
+download only, used for the Microsoft Flight Simulator 2024 integration)
+  License:   Proprietary - Microsoft Flight Simulator SDK license terms. It is
+             distributable code of the Microsoft Flight Simulator SDK, shipped
+             unmodified with EasyRadioLink as an add-on for Microsoft Flight
+             Simulator. It is NOT covered by the GNU General Public License;
+             EasyRadioLink only loads it at run time and works without it.
+  Copyright (c) Microsoft Corporation. All rights reserved.
+  Website:   https://docs.flightsimulator.com/
+  EasyRadioLink is not made, endorsed or supported by Microsoft.
+
 Microsoft .NET runtime and libraries (System.*, Microsoft.*)
   License:   MIT
   Copyright (c) .NET Foundation and Contributors

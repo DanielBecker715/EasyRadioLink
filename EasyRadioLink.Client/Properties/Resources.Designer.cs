@@ -3142,7 +3142,7 @@ namespace EasyRadioLink.Client.Properties {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to Microsoft Flight Simulator 2024 is running, but SimConnect.dll was not found. Copy SimConnect.dll (from the MSFS SDK, SimConnect SDK\lib) next to EasyRadioLink.exe..
+        ///   Looks up a localized string similar to Microsoft Flight Simulator 2024 is running, but SimConnect.dll is missing from the EasyRadioLink folder. Extract the EasyRadioLink download again, completely..
         /// </summary>
         public static string MsfsStatusNoSimConnect {
             get {

@@ -81,6 +81,11 @@
         <Content Include="speexdsp.dll">
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </Content>
+        <!-- SimConnect client library of the Microsoft Flight Simulator 2024 SDK (SimConnect SDK\lib), redistributed
+             with the client for the MSFS game integration; loaded at run time (GameIntegration\Msfs\SimConnectLibrary). -->
+        <Content Include="SimConnect.dll">
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </Content>
     </ItemGroup>
     <ItemGroup>
 

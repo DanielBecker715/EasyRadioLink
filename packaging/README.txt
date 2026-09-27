@@ -176,9 +176,10 @@ REQUIREMENTS
   (118.000 - 136.990 MHz) tunes COM1 - while you are connected to a server.
   "MSFS 2024: background sound from the aircraft": your background sound
   is helicopter, jet or prop, matching the aircraft you fly (gliders keep
-  the profile's sound). Both are on by default. The integration needs
-  SimConnect.dll from the MSFS SDK (SimConnect SDK\lib): copy it next to
-  EasyRadioLink.exe. The status line in the settings shows what it is doing.
+  the profile's sound). Both are on by default and need nothing else: the
+  SimConnect.dll next to EasyRadioLink.exe (Microsoft's SimConnect library)
+  connects EasyRadioLink with the simulator. The status line in the
+  settings shows what it is doing.
 
   Everything else is under "Advanced settings": microphone and incoming
   audio, voice activation details (voice level threshold, default 60 %;

@@ -35,7 +35,7 @@ simply runs a server and connects.
   profile; switch at the top of the Settings tab.
 
 **Game integration**
-- Detects supported games when they start. *Microsoft Flight Simulator 2024*: the radio follows COM1 of your aircraft
+- Detects supported games when they start - nothing to install. *Microsoft Flight Simulator 2024*: the radio follows COM1 of your aircraft
   and tuning the radio tunes COM1, and your background sound matches the aircraft (prop, jet or helicopter) - see
   [Game integration](#game-integration).
 
@@ -76,7 +76,7 @@ Every download also contains `README.txt` (the end-user guide, [packaging/README
 - Client and server with window: Windows 10/11 x64 and the
   [.NET 10 Desktop Runtime](https://dotnet.microsoft.com/download/dotnet/10.0) (x64).
 - Client: the Microsoft Visual C++ Redistributable (x64), which the audio libraries (`opus.dll`, `WebRtcVad.dll`)
-  need. Most PCs already have it; otherwise install it from
+  and the simulator integration (`SimConnect.dll`) need. Most PCs already have it; otherwise install it from
   [aka.ms/vs/17/release/vc_redist.x64.exe](https://aka.ms/vs/17/release/vc_redist.x64.exe).
 - Command-line servers: self-contained, no .NET installation needed. Linux: x64 with glibc (e.g. Debian, Ubuntu,
   Fedora).
@@ -412,9 +412,11 @@ EasyRadioLink looks for supported games every few seconds and links the radio wi
   profile. Gliders keep the profile's background sound, and so does everything once the sim is closed. The profile
   itself is not changed.
 
-The integration needs **SimConnect.dll** from the Microsoft Flight Simulator SDK (*SimConnect SDK\lib*). EasyRadioLink
-looks next to `EasyRadioLink.exe` first, then in the SDK folder (environment variables `MSFS2024_SDK` / `MSFS_SDK`,
-or `C:\MSFS 2024 SDK` / `C:\MSFS SDK`). Without it the status line says so; everything else works as usual.
+Nothing to install: the client download contains **SimConnect.dll**, Microsoft's SimConnect client library from the
+Microsoft Flight Simulator 2024 SDK (the simulator itself only contains the server side). It is proprietary Microsoft
+code, not covered by the GPL, shipped unmodified next to `EasyRadioLink.exe` (see `THIRD-PARTY-NOTICES.txt`); like
+`opus.dll` it needs the Visual C++ Redistributable. EasyRadioLink only loads it while the simulator runs and works
+without it.
 
 ### Band plan
 

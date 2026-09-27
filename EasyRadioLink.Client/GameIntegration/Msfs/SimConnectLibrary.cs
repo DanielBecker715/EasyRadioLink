@@ -8,10 +8,12 @@ using NLog;
 namespace EasyRadioLink.Client.GameIntegration.Msfs;
 
 /// <summary>
-///     The native SimConnect client library (<c>SimConnect.dll</c> of the Microsoft Flight Simulator SDK), loaded at
-///     run time: EasyRadioLink runs without it, only the simulator integration needs it. Searched in
-///     <see cref="CandidatePaths" /> order - next to EasyRadioLink.exe first, then the SDK folders. Only the few
-///     functions the integration uses are bound.
+///     The native SimConnect client library (<c>SimConnect.dll</c> of the Microsoft Flight Simulator 2024 SDK). The
+///     simulator itself only contains the SimConnect server, so the client ships the library next to EasyRadioLink.exe
+///     (proprietary Microsoft code, see THIRD-PARTY-NOTICES.txt). It is loaded at run time: EasyRadioLink runs
+///     without it, only the simulator integration needs it. Searched in <see cref="CandidatePaths" /> order - the
+///     program folder first, then the SDK folders (development builds). Only the few functions the integration uses are
+///     bound.
 /// </summary>
 internal sealed class SimConnectLibrary
 {

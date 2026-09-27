@@ -1181,7 +1181,7 @@ The password is sent over the encrypted connection, after the server's identity 
     <value>Waiting for {0}</value>
   </data>
   <data name="MsfsStatusNoSimConnect" xml:space="preserve">
-    <value>Microsoft Flight Simulator 2024 is running, but SimConnect.dll was not found. Copy SimConnect.dll (from the MSFS SDK, SimConnect SDK\lib) next to EasyRadioLink.exe.</value>
+    <value>Microsoft Flight Simulator 2024 is running, but SimConnect.dll is missing from the EasyRadioLink folder. Extract the EasyRadioLink download again, completely.</value>
   </data>
   <data name="MsfsStatusConnecting" xml:space="preserve">
     <value>Microsoft Flight Simulator 2024 is running - connecting...</value>

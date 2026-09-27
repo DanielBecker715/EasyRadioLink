@@ -434,6 +434,7 @@ Assert-FilesExist $stagingDir @(
     "Client\EasyRadioLink.exe",
     "Client\opus.dll",
     "Client\speexdsp.dll",
+    "Client\SimConnect.dll",
     "Server\EasyRadioLink.Server.exe",
     "CommandLine-Windows\EasyRadioLink.Server.Cli.exe",
     "CommandLine-Linux\EasyRadioLink.Server.Cli"
