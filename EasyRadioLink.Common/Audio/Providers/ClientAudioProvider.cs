@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using EasyRadioLink.Common.Audio.Models;
 using EasyRadioLink.Common.Models.Player;
@@ -186,7 +186,8 @@ public class ClientAudioProvider : AudioProvider
 
     /// <summary>
     ///     Mixes the sender's background sound (jet, prop, helicopter, ...) into the voice, BEFORE the sender's radio
-    ///     model, so it sounds like it was picked up by the sender's microphone.
+    ///     model, so it sounds like it was picked up by the sender's microphone. The level is set by
+    ///     <see cref="BackgroundSoundLevel" /> (the same loudness through a radio for every sound).
     ///     <paramref name="ambient" /> comes from the network: only whitelisted sounds from AudioEffects\Background are
     ///     used and the volume is clamped to 0..1.
     /// </summary>
@@ -203,9 +204,9 @@ public class ClientAudioProvider : AudioProvider
         var senderVolume = float.IsFinite(ambient.vol) ? Math.Clamp(ambient.vol, 0f, 1f) : 0f;
         if (senderVolume <= 0f) return;
 
-        var vol = (float) VolumeConversionHelper.DecibelsToLinear(VolumeConversionHelper.GetTargetdB(effect.RMS, senderVolume));
-
-        var effectVolume = vol * backgroundSoundEffectVolume;
+        // loudness in the radio band, so every sound is equally audible through a radio (see BackgroundSoundLevel)
+        var effectVolume = BackgroundSoundLevel.Gain(effect.RadioBandRMS, effect.RMS, senderVolume) *
+                           backgroundSoundEffectVolume;
         if (effectVolume <= 0f || !float.IsFinite(effectVolume)) return;
 
         var backgroundEffectProg = backgroundEffectProgress[receiveRadio];

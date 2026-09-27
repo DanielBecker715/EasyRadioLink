@@ -73,7 +73,11 @@ public class CachedAudioEffect
 
                         if (AudioEffectFloat.Length > 0)
                         {
+                            if (audioEffect == AudioEffectTypes.BACKGROUND)
+                                BackgroundSoundLevel.RemoveRumble(AudioEffectFloat, RequiredFormat.SampleRate);
+
                             RMS = VolumeConversionHelper.CalculateRMS(AudioEffectFloat, 0, AudioEffectFloat.Length);
+                            RadioBandRMS = BackgroundSoundLevel.RadioBandRms(AudioEffectFloat, RequiredFormat.SampleRate);
                             Loaded = true;
                             Logger.Info($"Read Effect {audioEffect} from {path} Successfully - Format {reader.WaveFormat}");
                         }
@@ -103,6 +107,9 @@ public class CachedAudioEffect
 
     /// <summary>RMS level of the effect in dBFS.</summary>
     public double RMS { get; }
+
+    /// <summary>RMS level in dBFS in the radio band (see <see cref="BackgroundSoundLevel" />).</summary>
+    public double RadioBandRMS { get; } = double.NegativeInfinity;
 
     /** Needed for list view ***/
     public string Text => DisplayName;
