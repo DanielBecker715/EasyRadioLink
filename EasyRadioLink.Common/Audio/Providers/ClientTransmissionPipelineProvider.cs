@@ -17,8 +17,8 @@ namespace EasyRadioLink.Common.Audio.Providers
     /// <summary>
     ///     The "sound of the sender's radio": applies the sender's radio model (transmit chain), background static and
     ///     the FM tone to one received transmission (with the final clip), mixes that with the dry voice by the radio
-    ///     effect strength, then applies the voice distortion (the link between the radios,
-    ///     <see cref="VoiceDistortionProvider" />) and the receiving radio's volume. One instance per sender (plus one
+    ///     effect strength, then applies the distance (the weak signal link between the radios,
+    ///     <see cref="WeakSignalChannelProvider" />) and the receiving radio's volume. One instance per sender (plus one
     ///     for the local passthrough).
     /// </summary>
     // #TODO: ISampleProvider?
@@ -68,8 +68,8 @@ namespace EasyRadioLink.Common.Audio.Providers
                 }
             }
 
-            // Wet/dry mix, the voice distortion (the link) and the receiving radio's volume.
-            var mixer = BuildOutput(dryProvider, wetProvider, RadioEffectsRatio, VoiceDistortionFor(transmission),
+            // Wet/dry mix, the distance (the weak signal link) and the receiving radio's volume.
+            var mixer = BuildOutput(dryProvider, wetProvider, RadioEffectsRatio, WeakSignalFor(transmission),
                 transmission.Volume);
 
             var mixerBuffer = floatPool.Rent(audioOut.Length);
@@ -85,7 +85,7 @@ namespace EasyRadioLink.Common.Audio.Providers
                 TxRadioModels.Clear();
                 _hfNoiseModel = null;
                 _hfNoiseModelLoaded = false;
-                _voiceDistortion = null;
+                _weakSignal = null;
             }
             finally
             {
@@ -100,30 +100,29 @@ namespace EasyRadioLink.Common.Audio.Providers
 
         /// <summary>
         ///     The end of the receive chain: the dry voice and the sender's radio sound (<paramref name="wet" />) mixed by
-        ///     the radio effect strength, then the voice distortion of the transmission (null = none) and the receiving
-        ///     radio's volume.
+        ///     the radio effect strength, then the distance of the transmission (the weak signal channel, null = none)
+        ///     and the receiving radio's volume.
         ///     <para>
-        ///         The voice distortion is the link between the two radios, so it degrades everything that arrives: the
-        ///         sender's radio (model, static, FM tone) AND the dry share of the mix. Inside the wet branch the clean
-        ///         dry voice would mask it (at 30 % effect strength 70 % of the voice stayed clean: no audible dropouts,
-        ///         half the fading). It is off at 0 % effect strength (amount 0 = exact bypass, see
-        ///         <see cref="VoiceDistortionProvider.AmountFromSettings" />) and never reached on clean frequencies.
-        ///         While active its output stays within +-0.92, so neither path needs an extra clip (the mix is clipped in
-        ///         RadioMixingProvider as before). The squelch tail and the receive start / end sounds are added later
-        ///         (RadioMixingProvider) and stay clean.
+        ///         The distance is the link between the two radios, so it acts on everything that arrives: the sender's
+        ///         radio (model, static, FM tone) AND the dry share of the mix. Inside the wet branch the clean dry voice
+        ///         would mask it (at 30 % effect strength 70 % of the voice would stay clean and close). It is off at 0 %
+        ///         effect strength (amount 0 = exact bypass, see <see cref="WeakSignalChannelProvider.AmountFromSettings" />)
+        ///         and never reached on clean frequencies. While active its output stays within +-0.9, so neither path
+        ///         needs an extra clip (the mix is clipped in RadioMixingProvider as before). The squelch tail and the
+        ///         receive start / end sounds are added later (RadioMixingProvider) and stay clean.
         ///     </para>
         /// </summary>
         internal static ISampleProvider BuildOutput(ISampleProvider dry, ISampleProvider wet, float radioEffectsRatio,
-            VoiceDistortionProvider distortion, float volume)
+            WeakSignalChannelProvider weakSignal, float volume)
         {
             var dryVolume = new VolumeSampleProvider(dry) { Volume = Math.Max(1.0f - radioEffectsRatio, 0.0f) };
             var wetVolume = new VolumeSampleProvider(wet) { Volume = radioEffectsRatio };
             ISampleProvider output = new MixingSampleProvider(new[] { dryVolume, wetVolume });
 
-            if (distortion != null)
+            if (weakSignal != null)
             {
-                distortion.Source = output;
-                output = distortion;
+                weakSignal.Source = output;
+                output = weakSignal;
             }
 
             return new VolumeSampleProvider(output) { Volume = volume };
@@ -166,40 +165,41 @@ namespace EasyRadioLink.Common.Audio.Providers
                 voiceProvider = BuildRadioPipeline(voiceProvider, radioModel, transmission);
             }
 
-            // (the voice distortion follows after the dry / wet mix, see BuildOutput)
+            // (the distance follows after the dry / wet mix, see BuildOutput)
             voiceProvider = new ClippingProvider(voiceProvider, -1, 1);
 
             return voiceProvider;
         }
 
         /// <summary>
-        ///     The voice distortion of the current transmission (see <see cref="VoiceDistortionProvider" />), set to the
-        ///     current amount; null for the local passthrough. One instance per transmission: a pause longer than the
-        ///     jitter buffer, another frequency or another modulation starts a new one (new random fading and events).
+        ///     The distance (weak signal channel, see <see cref="WeakSignalChannelProvider" />) of the current
+        ///     transmission, set to the current amount; null for the local passthrough. One instance per transmission: a
+        ///     pause longer than the jitter buffer, another frequency or another modulation starts a new one (a new
+        ///     random point of the fading).
         /// </summary>
-        private VoiceDistortionProvider VoiceDistortionFor(DeJitteredTransmission transmission)
+        private WeakSignalChannelProvider WeakSignalFor(DeJitteredTransmission transmission)
         {
             if (!VoiceDistortionEnabled) return null;
 
             var now = Stopwatch.GetTimestamp();
-            var newTransmission = _voiceDistortion == null
-                                  || Stopwatch.GetElapsedTime(_voiceDistortionLastUse, now) > JitterBufferProviderInterface.JITTER_MS
-                                  || _voiceDistortionFrequency != transmission.Frequency
-                                  || _voiceDistortionModulation != transmission.Modulation;
-            _voiceDistortionLastUse = now;
+            var newTransmission = _weakSignal == null
+                                  || Stopwatch.GetElapsedTime(_weakSignalLastUse, now) > JitterBufferProviderInterface.JITTER_MS
+                                  || _weakSignalFrequency != transmission.Frequency
+                                  || _weakSignalModulation != transmission.Modulation;
+            _weakSignalLastUse = now;
 
             if (newTransmission)
             {
                 // nothing to do while it is off - but it must exist, so the slider can be turned up mid-transmission
-                _voiceDistortion = new VoiceDistortionProvider(null,
-                    VoiceDistortionProvider.FlavourFor(transmission.Frequency, transmission.Modulation),
-                    _distortionSeeds.Next(), VoiceDistortionAmount);
-                _voiceDistortionFrequency = transmission.Frequency;
-                _voiceDistortionModulation = transmission.Modulation;
+                _weakSignal = new WeakSignalChannelProvider(null,
+                    WeakSignalChannelProvider.BandFor(transmission.Frequency, transmission.Modulation),
+                    _weakSignalSeeds.Next(), VoiceDistortionAmount);
+                _weakSignalFrequency = transmission.Frequency;
+                _weakSignalModulation = transmission.Modulation;
             }
 
-            _voiceDistortion.Amount = VoiceDistortionAmount;
-            return _voiceDistortion;
+            _weakSignal.Amount = VoiceDistortionAmount;
+            return _weakSignal;
         }
 
         private ISampleProvider BuildBackgroundNoiseEffect(ISampleProvider voiceProvider, TxRadioModel radioModel, DeJitteredTransmission transmission)
@@ -393,22 +393,22 @@ namespace EasyRadioLink.Common.Audio.Providers
             ToneProviders[CachedAudioEffect.AudioEffectTypes.NATO_TONE].Enabled = profileSettings.GetClientSettingBool(ProfileSettingsKeys.NATOTone);
             ToneProviders[CachedAudioEffect.AudioEffectTypes.NATO_TONE].Volume = profileSettings.GetClientSettingFloat(ProfileSettingsKeys.NATOToneVolume);
 
-            VoiceDistortionAmount = VoiceDistortionProvider.AmountFromSettings(RadioEffectsRatio,
+            VoiceDistortionAmount = WeakSignalChannelProvider.AmountFromSettings(RadioEffectsRatio,
                 profileSettings.GetClientSettingFloat(ProfileSettingsKeys.VoiceDistortion));
         }
 
         private long LastRefresh { get; set; }
 
-        /// <summary>False for the local passthrough (own voice): no voice distortion.</summary>
+        /// <summary>False for the local passthrough (own voice): no distance (weak signal) effect.</summary>
         public bool VoiceDistortionEnabled { get; init; } = true;
 
-        // voice distortion (0..1) and the instance of the current transmission
+        // distance (0..1, profile setting VoiceDistortion) and the weak signal channel of the current transmission
         private float VoiceDistortionAmount { get; set; }
-        private VoiceDistortionProvider _voiceDistortion;
-        private long _voiceDistortionLastUse;
-        private double _voiceDistortionFrequency;
-        private Modulation _voiceDistortionModulation;
-        private readonly Random _distortionSeeds = new();
+        private WeakSignalChannelProvider _weakSignal;
+        private long _weakSignalLastUse;
+        private double _weakSignalFrequency;
+        private Modulation _weakSignalModulation;
+        private readonly Random _weakSignalSeeds = new();
 
         private bool PerRadioModelEffect { get; set; }
         private float RadioEffectsRatio { get; set; } = 1.0f;

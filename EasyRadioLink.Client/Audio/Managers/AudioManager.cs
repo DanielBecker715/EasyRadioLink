@@ -204,7 +204,7 @@ public class AudioManager : IHandle<ClientUpdateMessage>
 
     public void InitMicInput()
     {
-        // own voice: radio model, but no voice distortion (that is the link to the receivers)
+        // own voice: radio model, but no distance / weak signal effect (that is the link to the receivers)
         _passThroughAudioProvider = new ClientAudioProvider(localPassthrough: true);
         
         var device = (MMDevice)_audioInputSingleton.SelectedAudioInput.Value;

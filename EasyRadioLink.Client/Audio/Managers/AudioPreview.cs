@@ -66,8 +66,8 @@ internal class AudioPreview
     public string ModelKey { get; private set; } = RadioModelFactory.DefaultModelKey;
 
     /// <summary>
-    ///     Plays the microphone through the Opus codec, the given radio model and the voice distortion of the profile on
-    ///     the speakers (mic test).
+    ///     Plays the microphone through the Opus codec, the given radio model and the distance (weak signal) setting of
+    ///     the profile on the speakers (mic test).
     /// </summary>
     /// <param name="modelKey">radio model to hear yourself through, e.g. "cb" or "walkie"; default "standard"</param>
     /// <returns>false if an audio device could not be opened (an error dialog was shown, nothing is left running)</returns>
@@ -93,14 +93,14 @@ internal class AudioPreview
                 string.IsNullOrWhiteSpace(modelKey) ? RadioModelFactory.DefaultModelKey : modelKey);
             ModelKey = filter.ModelKey;
 
-            // the voice distortion of the profile after the model, like on a received voice - follows the setting
-            // while the preview is running, so it can be tuned while listening
-            var distortion = new LiveVoiceDistortion(new VoiceDistortionProvider(filter,
-                VoiceDistortionProvider.FlavourForModel(ModelKey), Environment.TickCount,
-                LiveVoiceDistortion.CurrentAmount()));
+            // the distance (weak signal) of the profile after the model, like on a received voice - follows the
+            // setting while the preview is running, so it can be tuned while listening
+            var weakSignal = new LiveWeakSignal(new WeakSignalChannelProvider(filter,
+                WeakSignalChannelProvider.BandForModel(ModelKey), Environment.TickCount,
+                LiveWeakSignal.CurrentAmount()));
 
             //add final volume boost to all mixed audio
-            _volumeSampleProvider = new VolumeSampleProviderWithPeak(distortion,
+            _volumeSampleProvider = new VolumeSampleProviderWithPeak(weakSignal,
                 peak => { SpeakerMax = (float)VolumeConversionHelper.ConvertFloatToDB(peak); });
             _volumeSampleProvider.Volume = SpeakerBoost;
 
@@ -275,23 +275,23 @@ internal class AudioPreview
     }
 
     /// <summary>
-    ///     The preview's <see cref="VoiceDistortionProvider" />, kept on the profile setting (checked every 100 ms of
+    ///     The preview's <see cref="WeakSignalChannelProvider" />, kept on the profile setting (checked every 100 ms of
     ///     audio, on the audio thread).
     /// </summary>
-    private sealed class LiveVoiceDistortion : ISampleProvider
+    private sealed class LiveWeakSignal : ISampleProvider
     {
         private static readonly int RefreshSamples = Constants.OUTPUT_SAMPLE_RATE / 10; // 100 ms
 
-        private readonly VoiceDistortionProvider _distortion;
+        private readonly WeakSignalChannelProvider _weakSignal;
         private int _untilRefresh;
 
-        public LiveVoiceDistortion(VoiceDistortionProvider distortion)
+        public LiveWeakSignal(WeakSignalChannelProvider weakSignal)
         {
-            _distortion = distortion;
+            _weakSignal = weakSignal;
             _untilRefresh = RefreshSamples;
         }
 
-        public WaveFormat WaveFormat => _distortion.WaveFormat;
+        public WaveFormat WaveFormat => _weakSignal.WaveFormat;
 
         public int Read(float[] buffer, int offset, int count)
         {
@@ -299,25 +299,25 @@ internal class AudioPreview
             if (_untilRefresh <= 0)
             {
                 _untilRefresh = RefreshSamples;
-                _distortion.Amount = CurrentAmount();
+                _weakSignal.Amount = CurrentAmount();
             }
 
-            return _distortion.Read(buffer, offset, count);
+            return _weakSignal.Read(buffer, offset, count);
         }
 
-        /// <summary>Voice distortion of the current profile (0..1); 0 when the radio effect strength is 0.</summary>
+        /// <summary>Distance (weak signal) of the current profile (0..1); 0 when the radio effect strength is 0.</summary>
         public static float CurrentAmount()
         {
             try
             {
                 var profile = GlobalSettingsStore.Instance.ProfileSettingsStore;
-                return VoiceDistortionProvider.AmountFromSettings(
+                return WeakSignalChannelProvider.AmountFromSettings(
                     profile.GetClientSettingFloat(ProfileSettingsKeys.RadioEffectsRatio),
                     profile.GetClientSettingFloat(ProfileSettingsKeys.VoiceDistortion));
             }
             catch (Exception ex)
             {
-                Logger.Warn(ex, "Unable to read the voice distortion setting");
+                Logger.Warn(ex, "Unable to read the distance (weak signal) setting");
                 return 0f;
             }
         }

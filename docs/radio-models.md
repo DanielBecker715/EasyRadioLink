@@ -236,8 +236,8 @@ band, save it as `cb.json` instead (everybody who should hear it needs the same 
 
 - Change one thing at a time and compare with the **Audio Preview** button on the Radio tab. The preview plays no
   static, so judge `noiseGain` with a real transmission (for example on a radio check frequency) on the band the
-  model is meant for. The preview (like every received voice) also runs through your *Voice distortion* setting -
-  set it to 0 % to hear the model alone.
+  model is meant for. The preview (like every received voice) also runs through your *Distance (weak signal)*
+  setting - set it to 0 % to hear the model alone.
 - Keep the final `gain` so that the model is about as loud as `standard` (all shipped models are matched to it); a model that is much louder clips and crackles.
 - Radio voice lives between roughly 300 Hz and 3.5 kHz; narrower sounds more "radio", wider sounds cleaner.
 - The static level also depends on the frequency (lower frequencies are noisier) and on the listener's noise

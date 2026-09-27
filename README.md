@@ -23,8 +23,10 @@ simply runs a server and connects.
 - Radio sound models per band (CB, walkie-talkie, airband, tactical, HF, vintage tube, digital). Customise them as
   JSON effect chains ([docs/radio-models.md](docs/radio-models.md)).
 - Frequency-dependent static and HF noise, FM tone and an optional squelch tail (off by default).
-- *Voice distortion* (0 - 100 %, default 35 %): roughens the received voice itself, not just the sound around it -
-  narrower band, overdrive, lo-fi crunch and fading; above 50 % also crackle and short dropouts (digital: breakup).
+- *Distance (weak signal)* (0 - 100 %, default 35 %): other stations sound far away, like a long-distance or field
+  radio link - fading that swirls through the voice, static that breathes up in the fades (FM: hiss that surges up),
+  a narrower, harsher voice; slow deep fading and a faint whistle below 30 MHz, gritty "secure voice" coding on DIG.
+  No crackle, no dropouts.
 - Radio sounds of your choice when you press / release push-to-talk and when someone starts / stops talking: clicks,
   chirp, beeps, roger beep and more - or none (see [Settings](#settings)).
 - Optional background sound (jet, prop or helicopter) that the other stations hear behind your voice.
@@ -341,17 +343,26 @@ The **Settings** tab shows the everyday settings first:
   your push-to-talk sounds; the others hear what they chose for someone starting / stopping to talk. A start sound
   is played before the received voice, so a long one delays the voice by its length. Below: squelch tail (the
   short "kssht" when an AM / FM transmission ends; off by default, profiles that already have the setting keep it),
-  radio static, FM tone, your background sound and its volume, the radio effect strength and the voice distortion.
-- **Voice distortion** (0 - 100 %, default 35 %) makes the voices you receive sound like a real, imperfect radio
-  link instead of a clean voice with effects on top: the band gets narrower (up to 500 Hz - 2.3 kHz), the voice is
-  overdriven (up to +20 dB, at the same loudness), gets lo-fi crunch (down to 6 bits and 8 kHz) and fades slowly in
-  and out (up to +-2 dB at 35 %, +-5 dB at 70 %, +-8 dB at 100 %; half as much again below 30 MHz - HF, CB, MW).
-  Above 50 % crackle and short dropouts join in. On the DIG band there is no fading or crackle; the voice breaks up
-  digitally instead (short mutes and robotic repeats). 35 % is rough but easy to understand, 100 % sounds like a
-  badly broken link in which the words are still recognisable. It applies to everything you receive (also the radio
-  check echo), to the whole voice at any radio effect strength (the clean share of that mix included), but not on
-  clean frequencies and not when the radio effect strength is 0 %; the squelch tail and the start / end sounds stay
-  clean, and so does your own voice on the mic output device. The **Audio Preview** on the
+  radio static, FM tone, your background sound and its volume, the radio effect strength and the distance.
+- **Distance (weak signal)** (0 - 100 %, default 35 %) makes the stations you receive sound far away - the sound of a
+  long-distance or field radio link rather than a clean voice with effects on top:
+  - *Multipath*: the signal also arrives over other paths, a fraction of a millisecond later and with a slowly
+    drifting phase, so notches swim through the voice - the watery, swirling sound of distant radio.
+  - *Weak signal*: the signal fades, static comes up, and the receiver's automatic gain control pulls the static up
+    in the fades, so it breathes. The voice never cuts out - there is no crackle and there are no dropouts.
+  - *Field radio voice*: narrower and harsher, like a military handset (about 450 Hz - 2.6 kHz at 100 %, a honky mid
+    resonance, soft overdrive - at the same loudness).
+  - *The band sets the character*: below 30 MHz (HF, CB, MW) slow, deep fading, the strongest swirl and soft static,
+    above 50 % also a faint whistle of a distant station drifting in and out; AM on VHF / UHF (AIR, UHF AM) a fast
+    flutter; FM (VHF, FM, PMR, UHF FM) keeps the voice level, but a bright hiss surges up whenever the signal fades
+    below the FM threshold - the typical tactical radio sound; on the DIG band no static and no fading, the voice gets
+    the gritty, buzzy sound of CVSD "secure voice" coding instead.
+
+  Voice to static is about 24 dB at 35 % (clearly far away, easy to understand), 14 dB at 70 % and 7 dB at 100 %
+  (very far away: the voice swims in the static, but stays understandable). It applies to everything you receive
+  (also the radio check echo), to the whole voice at any radio effect strength (the clean share of that mix
+  included), but not on clean frequencies and not when the radio effect strength is 0 %; the squelch tail and the
+  start / end sounds stay clean, and so does your own voice on the mic output device. The **Audio Preview** on the
   Radio tab uses it too, so you can tune it while you hear yourself.
 - **General**: open the radio when connected, show who is transmitting, minimise to the system tray, start
   minimised, connect / disconnect sounds and voice activation (VOX).

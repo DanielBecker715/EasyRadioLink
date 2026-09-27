@@ -39,7 +39,7 @@ public class ClientAudioProvider : AudioProvider
     //   private readonly WaveFileWriter waveWriter;
     /// <param name="localPassthrough">
     ///     true for the own voice (mic output device, recording of the own transmissions): the sender's radio model like
-    ///     for received audio, but no voice distortion - nothing was received over a radio link.
+    ///     for received audio, but no distance (weak signal) effect - nothing was received over a radio link.
     /// </param>
     public ClientAudioProvider(bool localPassthrough = false)
     {

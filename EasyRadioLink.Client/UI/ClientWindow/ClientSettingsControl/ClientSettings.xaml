@@ -235,7 +235,7 @@
                                                                              ToolTip="{x:Static p:Resources.ToolTipRadioSoundEffects}"
                                                                              VolumeValue="{Binding RadioSoundEffectsRatio, Mode=TwoWay}" />
 
-                        <!-- degrades the received voice itself (off while the radio effect strength is 0) -->
+                        <!-- distance (weak signal): how far away other stations sound (off while the radio effect strength is 0) -->
                         <TextBlock Grid.Row="10"
                                    IsEnabled="{Binding HasRadioEffects}"
                                    Style="{StaticResource SettingText}"

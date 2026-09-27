@@ -379,7 +379,7 @@ public class AudioAssetTests
         foreach (var key in Enum.GetNames<ProfileSettingsKeys>())
             Assert.IsTrue(defaults.ContainsKey(key), $"{key} has no default");
 
-        // owner's choice (1.3): the squelch tail is off by default, the voice distortion at 35 %
+        // owner's choice (1.3): the squelch tail is off by default, the distance (weak signal) at 35 %
         Assert.AreEqual("false", defaults[nameof(ProfileSettingsKeys.RadioRxSquelchTail)]);
         Assert.AreEqual("35", defaults[nameof(ProfileSettingsKeys.VoiceDistortion)]);
         Assert.AreEqual("", defaults[nameof(ProfileSettingsKeys.BackgroundSound)], "no background sound by default");

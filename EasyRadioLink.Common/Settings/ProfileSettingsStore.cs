@@ -71,8 +71,8 @@ public enum ProfileSettingsKeys
     RadioRxStartSelection,
     RadioRxEndSelection,
 
-    // Listener: how much received voices are degraded (band narrowing, overdrive, lo-fi, fading, crackle / dropouts),
-    // 0..100 percent. See VoiceDistortionProvider.
+    // Listener: "Distance (weak signal)" - how far away other stations sound (multipath fading, static, a narrower and
+    // harsher voice), 0..100 percent. The key keeps its 1.3 draft name. See WeakSignalChannelProvider.
     VoiceDistortion
 }
 

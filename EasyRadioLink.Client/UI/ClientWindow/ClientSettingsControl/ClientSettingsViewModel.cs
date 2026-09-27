@@ -699,19 +699,19 @@ public class ClientSettingsViewModel : PropertyChangedBaseClass
         }
     }
 
-    /// <summary>Radio effects are on (strength above 0) - the voice distortion only applies then.</summary>
+    /// <summary>Radio effects are on (strength above 0) - the distance (weak signal) only applies then.</summary>
     public bool HasRadioEffects => RadioSoundEffectsRatio > 0f;
 
     /// <summary>
-    ///     Voice distortion in percent: 0 = clean voice, 100 = badly broken reception. Degrades received voices (and the
-    ///     Audio Preview) - band narrowing, overdrive, lo-fi, fading and, above 50 %, crackle and dropouts.
+    ///     Distance (weak signal) in percent: 0 = right next to you, 100 = very far away. Acts on received voices (and the
+    ///     Audio Preview): multipath fading that swirls through the voice, static, a narrower and harsher voice.
     /// </summary>
     public float VoiceDistortion
     {
         get
         {
             var value = _globalSettings.ProfileSettingsStore.GetClientSettingFloat(ProfileSettingsKeys.VoiceDistortion);
-            return float.IsFinite(value) ? Math.Clamp(value, 0f, 100f) : VoiceDistortionProvider.DefaultPercent;
+            return float.IsFinite(value) ? Math.Clamp(value, 0f, 100f) : WeakSignalChannelProvider.DefaultPercent;
         }
         set
         {
