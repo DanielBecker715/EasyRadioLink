@@ -34,6 +34,11 @@ simply runs a server and connects.
 - Profiles with their own radio sounds, background sound and key bindings - including a ready-made *Helicopter*
   profile; switch at the top of the Settings tab.
 
+**Game integration**
+- Detects supported games when they start. *Microsoft Flight Simulator 2024*: the radio follows COM1 of your aircraft
+  and tuning the radio tunes COM1, and your background sound matches the aircraft (prop, jet or helicopter) - see
+  [Game integration](#game-integration).
+
 **Controls**
 - Push-to-talk, frequency steps and volume on keyboard, mouse, joysticks/HOTAS (DirectInput) and gamepads (XInput).
 - Radio window toggle hotkey; free choice of microphone and speaker devices, plus an optional "mic output" device that
@@ -381,12 +386,35 @@ The **Settings** tab shows the everyday settings first:
   Radio tab uses it too, so you can tune it while you hear yourself.
 - **General**: open the radio when connected, show who is transmitting, minimise to the system tray, start
   minimised, connect / disconnect sounds and voice activation (VOX).
+- **Game integration**: the Microsoft Flight Simulator 2024 options and what the integration is doing right now (see
+  [Game integration](#game-integration)).
 
 Everything else is under **Advanced settings** (closed until you open it; EasyRadioLink remembers whether it is
 open): microphone and incoming audio (noise suppression, automatic gain control), voice activation details (voice
 level threshold, default 60 %; minimum transmission length, default 700 ms), recording, radio effect details
 (clipping, the radio sound of the band, static levels, FM tone volume, the background sounds of other users, radio
 balance), push-to-talk delays and controllers, the radio window and *Run as administrator*.
+
+### Game integration
+
+EasyRadioLink looks for supported games every few seconds and links the radio with a game while it runs. Supported:
+**Microsoft Flight Simulator 2024** (`FlightSimulator2024.exe`), over SimConnect. Both options are on by default
+(Settings, *Game integration*):
+
+- **MSFS 2024: radio follows COM1** - tuning COM1 in the cockpit tunes the radio, and tuning the radio to a COM
+  frequency (118.000 - 136.990 MHz) tunes COM1 (a frequency outside the COM band, e.g. CB, leaves COM1 alone). When
+  the two meet for the first time, a COM frequency on the radio is sent to the cockpit - so a frequency your group
+  agreed on survives starting the sim; otherwise the radio takes COM1's frequency. The radio is only on while you are
+  connected to a server, so that is when the sync works. If the aircraft's radio can't be set to the exact frequency
+  (e.g. 25 kHz channel spacing), the radio takes the frequency the cockpit shows.
+- **MSFS 2024: background sound from the aircraft** - while you fly, your background sound is *helicopter* for
+  helicopters, *jet* for jets and *prop* for piston and turboprop airplanes, at the background sound volume of your
+  profile. Gliders keep the profile's background sound, and so does everything once the sim is closed. The profile
+  itself is not changed.
+
+The integration needs **SimConnect.dll** from the Microsoft Flight Simulator SDK (*SimConnect SDK\lib*). EasyRadioLink
+looks next to `EasyRadioLink.exe` first, then in the SDK folder (environment variables `MSFS2024_SDK` / `MSFS_SDK`,
+or `C:\MSFS 2024 SDK` / `C:\MSFS SDK`). Without it the status line says so; everything else works as usual.
 
 ### Band plan
 

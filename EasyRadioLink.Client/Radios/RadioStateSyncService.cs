@@ -252,15 +252,17 @@ public sealed class RadioStateSyncService
     }
 
     /// <summary>
-    ///     Writes the profile's background sound (BackgroundSound / BackgroundSoundVolume) and "Boost my voice"
-    ///     (VoiceBoost) into ambient.
+    ///     Writes the profile's background sound (BackgroundSound / BackgroundSoundVolume) - or the one a game integration
+    ///     chose (<see cref="ClientStateSingleton.BackgroundSoundOverride" />) - and "Boost my voice" (VoiceBoost) into
+    ///     ambient.
     /// </summary>
     private void UpdateBackgroundSound(PlayerRadioInfo info)
     {
         var profile = _globalSettings.ProfileSettingsStore;
 
-        var name = CachedAudioEffectProvider.NormaliseBackgroundName(
-            profile.GetClientSettingString(ProfileSettingsKeys.BackgroundSound));
+        var name = CachedAudioEffectProvider.NormaliseBackgroundName(_clientState.BackgroundSoundOverride
+                                                                     ?? profile.GetClientSettingString(
+                                                                         ProfileSettingsKeys.BackgroundSound));
 
         if (name.Length > 0 && !CachedAudioEffectProvider.Instance.IsBackgroundSoundAvailable(name)) name = "";
 

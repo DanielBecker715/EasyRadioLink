@@ -3059,5 +3059,131 @@ namespace EasyRadioLink.Client.Properties {
                 return ResourceManager.GetString("ToolTipRadioBusy", resourceCulture);
             }
         }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Game integration.
+        /// </summary>
+        public static string GameIntegrationHeader {
+            get {
+                return ResourceManager.GetString("GameIntegrationHeader", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to EasyRadioLink notices when a supported game is started and links the radio with it..
+        /// </summary>
+        public static string GameIntegrationHint {
+            get {
+                return ResourceManager.GetString("GameIntegrationHint", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to MSFS 2024: radio follows COM1.
+        /// </summary>
+        public static string MsfsRadioSync {
+            get {
+                return ResourceManager.GetString("MsfsRadioSync", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Microsoft Flight Simulator 2024: tuning COM1 in the cockpit tunes the radio, and tuning the radio to a COM frequency (118.000 - 136.990 MHz) tunes COM1. Works while you are connected to a server..
+        /// </summary>
+        public static string ToolTipMsfsRadioSync {
+            get {
+                return ResourceManager.GetString("ToolTipMsfsRadioSync", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to MSFS 2024: background sound from the aircraft.
+        /// </summary>
+        public static string MsfsAircraftBackgroundSound {
+            get {
+                return ResourceManager.GetString("MsfsAircraftBackgroundSound", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Microsoft Flight Simulator 2024: while you fly, your background sound matches the aircraft - prop, jet or helicopter - at the background sound volume of the profile. Gliders keep the profile's background sound..
+        /// </summary>
+        public static string ToolTipMsfsAircraftBackgroundSound {
+            get {
+                return ResourceManager.GetString("ToolTipMsfsAircraftBackgroundSound", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Status.
+        /// </summary>
+        public static string GameIntegrationStatusLabel {
+            get {
+                return ResourceManager.GetString("GameIntegrationStatusLabel", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Off.
+        /// </summary>
+        public static string GameIntegrationStatusOff {
+            get {
+                return ResourceManager.GetString("GameIntegrationStatusOff", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Waiting for {0}.
+        /// </summary>
+        public static string GameIntegrationStatusWaiting {
+            get {
+                return ResourceManager.GetString("GameIntegrationStatusWaiting", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Microsoft Flight Simulator 2024 is running, but SimConnect.dll was not found. Copy SimConnect.dll (from the MSFS SDK, SimConnect SDK\lib) next to EasyRadioLink.exe..
+        /// </summary>
+        public static string MsfsStatusNoSimConnect {
+            get {
+                return ResourceManager.GetString("MsfsStatusNoSimConnect", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Microsoft Flight Simulator 2024 is running - connecting....
+        /// </summary>
+        public static string MsfsStatusConnecting {
+            get {
+                return ResourceManager.GetString("MsfsStatusConnecting", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Connected to Microsoft Flight Simulator 2024.
+        /// </summary>
+        public static string MsfsStatusConnected {
+            get {
+                return ResourceManager.GetString("MsfsStatusConnected", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Connected to Microsoft Flight Simulator 2024: {0} - background sound: {1}.
+        /// </summary>
+        public static string MsfsStatusAircraft {
+            get {
+                return ResourceManager.GetString("MsfsStatusAircraft", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to from the profile.
+        /// </summary>
+        public static string MsfsStatusProfileSound {
+            get {
+                return ResourceManager.GetString("MsfsStatusProfileSound", resourceCulture);
+            }
+        }
     }
 }

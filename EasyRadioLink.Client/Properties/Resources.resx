@@ -1153,4 +1153,46 @@ The password is sent over the encrypted connection, after the server's identity 
   <data name="ToolTipRadioBusy" xml:space="preserve">
     <value>Busy: another station is transmitting on this frequency. Push-to-talk is refused while it is busy - release it and press again when the frequency is free.</value>
   </data>
+  <data name="GameIntegrationHeader" xml:space="preserve">
+    <value>Game integration</value>
+  </data>
+  <data name="GameIntegrationHint" xml:space="preserve">
+    <value>EasyRadioLink notices when a supported game is started and links the radio with it.</value>
+  </data>
+  <data name="MsfsRadioSync" xml:space="preserve">
+    <value>MSFS 2024: radio follows COM1</value>
+  </data>
+  <data name="ToolTipMsfsRadioSync" xml:space="preserve">
+    <value>Microsoft Flight Simulator 2024: tuning COM1 in the cockpit tunes the radio, and tuning the radio to a COM frequency (118.000 - 136.990 MHz) tunes COM1. Works while you are connected to a server.</value>
+  </data>
+  <data name="MsfsAircraftBackgroundSound" xml:space="preserve">
+    <value>MSFS 2024: background sound from the aircraft</value>
+  </data>
+  <data name="ToolTipMsfsAircraftBackgroundSound" xml:space="preserve">
+    <value>Microsoft Flight Simulator 2024: while you fly, your background sound matches the aircraft - prop, jet or helicopter - at the background sound volume of the profile. Gliders keep the profile's background sound.</value>
+  </data>
+  <data name="GameIntegrationStatusLabel" xml:space="preserve">
+    <value>Status</value>
+  </data>
+  <data name="GameIntegrationStatusOff" xml:space="preserve">
+    <value>Off</value>
+  </data>
+  <data name="GameIntegrationStatusWaiting" xml:space="preserve">
+    <value>Waiting for {0}</value>
+  </data>
+  <data name="MsfsStatusNoSimConnect" xml:space="preserve">
+    <value>Microsoft Flight Simulator 2024 is running, but SimConnect.dll was not found. Copy SimConnect.dll (from the MSFS SDK, SimConnect SDK\lib) next to EasyRadioLink.exe.</value>
+  </data>
+  <data name="MsfsStatusConnecting" xml:space="preserve">
+    <value>Microsoft Flight Simulator 2024 is running - connecting...</value>
+  </data>
+  <data name="MsfsStatusConnected" xml:space="preserve">
+    <value>Connected to Microsoft Flight Simulator 2024</value>
+  </data>
+  <data name="MsfsStatusAircraft" xml:space="preserve">
+    <value>Connected to Microsoft Flight Simulator 2024: {0} - background sound: {1}</value>
+  </data>
+  <data name="MsfsStatusProfileSound" xml:space="preserve">
+    <value>from the profile</value>
+  </data>
 </root>

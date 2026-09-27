@@ -80,6 +80,24 @@ public sealed class ClientStateSingleton : PropertyChangedBaseClass, IHandle<TCP
     /// </summary>
     public BusyChannelLockout BusyChannel { get; } = new();
 
+    private volatile string _backgroundSoundOverride;
+
+    /// <summary>
+    ///     Background sound chosen by a game integration (e.g. "jet" for the aircraft flown in the simulator); used
+    ///     instead of the profile's background sound while not null. The volume stays the profile's.
+    /// </summary>
+    public string BackgroundSoundOverride
+    {
+        get => _backgroundSoundOverride;
+        set
+        {
+            if (string.Equals(value, _backgroundSoundOverride, StringComparison.Ordinal)) return;
+
+            _backgroundSoundOverride = value;
+            NotifyPropertyChanged();
+        }
+    }
+
     public bool IsConnected
     {
         get => isConnected;

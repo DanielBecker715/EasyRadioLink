@@ -382,6 +382,53 @@
                 </Grid>
             </GroupBox>
 
+            <!-- ============================== Basic: game integration (global.cfg) ============================== -->
+            <GroupBox Header="{x:Static p:Resources.GameIntegrationHeader}" Style="{StaticResource SettingGroup}">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="{StaticResource LabelColumnWidth}" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+
+                    <TextBlock Grid.Row="0"
+                               Grid.ColumnSpan="2"
+                               Style="{StaticResource HintText}"
+                               Text="{x:Static p:Resources.GameIntegrationHint}" />
+
+                    <TextBlock Grid.Row="1"
+                               Style="{StaticResource SettingText}"
+                               Text="{x:Static p:Resources.MsfsRadioSync}"
+                               ToolTip="{x:Static p:Resources.ToolTipMsfsRadioSync}" />
+                    <clientSettingsControl:SettingsToggleControl Grid.Row="1"
+                                                                 Grid.Column="1"
+                                                                 Style="{StaticResource SettingToggle}"
+                                                                 ToggleValue="{Binding MsfsRadioSync, Mode=TwoWay}" />
+
+                    <TextBlock Grid.Row="2"
+                               Style="{StaticResource SettingText}"
+                               Text="{x:Static p:Resources.MsfsAircraftBackgroundSound}"
+                               ToolTip="{x:Static p:Resources.ToolTipMsfsAircraftBackgroundSound}" />
+                    <clientSettingsControl:SettingsToggleControl Grid.Row="2"
+                                                                 Grid.Column="1"
+                                                                 Style="{StaticResource SettingToggle}"
+                                                                 ToggleValue="{Binding MsfsAircraftBackgroundSound, Mode=TwoWay}" />
+
+                    <TextBlock Grid.Row="3"
+                               Style="{StaticResource SettingText}"
+                               Text="{x:Static p:Resources.GameIntegrationStatusLabel}" />
+                    <TextBlock Grid.Row="3"
+                               Grid.Column="1"
+                               Style="{StaticResource SettingText}"
+                               Text="{Binding GameIntegration.Status, Mode=OneWay}" />
+                </Grid>
+            </GroupBox>
+
             <!--
                 ============================== Advanced (collapsed by default) ==============================
                 No border and no side padding: the groups inside line up with the basic groups above.

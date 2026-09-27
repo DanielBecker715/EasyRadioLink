@@ -12,6 +12,7 @@ using System.Windows.Input;
 using System.Windows.Threading;
 using Caliburn.Micro;
 using EasyRadioLink.Client.Audio.Managers;
+using EasyRadioLink.Client.GameIntegration;
 using EasyRadioLink.Client.Properties;
 using EasyRadioLink.Client.Radios;
 using EasyRadioLink.Client.Settings.Favourites;
@@ -105,6 +106,9 @@ public class MainWindowViewModel : PropertyChangedBaseClass, IHandle<TCPClientSt
         ServerSettingsCommand = new DelegateCommand(ToggleServerSettings);
 
         ClientListCommand = new DelegateCommand(ToggleClientList);
+
+        // detects supported games (Microsoft Flight Simulator 2024) and links the radio with them
+        GameIntegrationManager.Instance.Start();
     }
 
     public ICommand ClientListCommand { get; set; }
@@ -930,6 +934,8 @@ public class MainWindowViewModel : PropertyChangedBaseClass, IHandle<TCPClientSt
     {
         //stop timer
         _updateTimer?.Stop();
+
+        GameIntegrationManager.Instance.Stop();
 
         // saves the radio tuning (RadioStateSyncService.Stop) and closes the connection
         Stop();

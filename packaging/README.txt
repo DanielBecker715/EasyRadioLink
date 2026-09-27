@@ -169,6 +169,17 @@ REQUIREMENTS
   the start/end sounds and your own voice on the mic output device stay
   clean. "Audio Preview" on the Radio tab uses it too, so you can tune it
   while you hear yourself.
+
+  Game integration: EasyRadioLink notices when Microsoft Flight Simulator
+  2024 is started. "MSFS 2024: radio follows COM1": tuning COM1 in the
+  cockpit tunes the radio, and tuning the radio to a COM frequency
+  (118.000 - 136.990 MHz) tunes COM1 - while you are connected to a server.
+  "MSFS 2024: background sound from the aircraft": your background sound
+  is helicopter, jet or prop, matching the aircraft you fly (gliders keep
+  the profile's sound). Both are on by default. The integration needs
+  SimConnect.dll from the MSFS SDK (SimConnect SDK\lib): copy it next to
+  EasyRadioLink.exe. The status line in the settings shows what it is doing.
+
   Everything else is under "Advanced settings": microphone and incoming
   audio, voice activation details (voice level threshold, default 60 %;
   minimum transmission length, default 700 ms), recording, radio effect

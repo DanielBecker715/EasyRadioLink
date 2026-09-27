@@ -7,6 +7,7 @@ using System.Windows;
 using System.Windows.Input;
 using Caliburn.Micro;
 using EasyRadioLink.Client.Audio.Managers;
+using EasyRadioLink.Client.GameIntegration;
 using EasyRadioLink.Client.Properties;
 using EasyRadioLink.Client.UI.ClientWindow.RadioPanel;
 using EasyRadioLink.Client.Utils;
@@ -52,7 +53,8 @@ public class ClientSettingsViewModel : PropertyChangedBaseClass
         nameof(AllowTransmissionsRecording), nameof(RecordTransmissions), nameof(SelectedRecordingFormat),
         nameof(RecordingQuality), nameof(DisallowedAudioTone),
         nameof(ExpandInputDevices), nameof(AllowXInputController), nameof(RadioPanelTaskbarItem),
-        nameof(RequireAdminToggle), nameof(AdvancedSettingsExpanded)
+        nameof(RequireAdminToggle), nameof(AdvancedSettingsExpanded), nameof(MsfsRadioSync),
+        nameof(MsfsAircraftBackgroundSound)
     };
 
     private readonly CachedAudioEffectProvider _effects = CachedAudioEffectProvider.Instance;
@@ -479,6 +481,33 @@ public class ClientSettingsViewModel : PropertyChangedBaseClass
         {
             _globalSettings.SetClientSetting(GlobalSettingsKeys.PlayConnectionSounds, value);
             NotifyPropertyChanged();
+        }
+    }
+
+    /// <summary>Game detection and the running game integrations (status line of the "Game integration" group).</summary>
+    public GameIntegrationManager GameIntegration => GameIntegrationManager.Instance;
+
+    /// <summary>Microsoft Flight Simulator 2024: the radio and COM1 of the aircraft stay on the same frequency.</summary>
+    public bool MsfsRadioSync
+    {
+        get => _globalSettings.GetClientSettingBool(GlobalSettingsKeys.MsfsRadioSync);
+        set
+        {
+            _globalSettings.SetClientSetting(GlobalSettingsKeys.MsfsRadioSync, value);
+            NotifyPropertyChanged();
+            GameIntegration.Refresh();
+        }
+    }
+
+    /// <summary>Microsoft Flight Simulator 2024: the background sound follows the aircraft (prop / jet / helicopter).</summary>
+    public bool MsfsAircraftBackgroundSound
+    {
+        get => _globalSettings.GetClientSettingBool(GlobalSettingsKeys.MsfsAircraftBackgroundSound);
+        set
+        {
+            _globalSettings.SetClientSetting(GlobalSettingsKeys.MsfsAircraftBackgroundSound, value);
+            NotifyPropertyChanged();
+            GameIntegration.Refresh();
         }
     }
 

@@ -79,7 +79,12 @@ public enum GlobalSettingsKeys
     SettingsAdvancedExpanded, // Settings tab: the "Advanced settings" section is expanded
 
     CurrentProfile, // the active profile (active again after a restart)
-    ProfilePresetsCreated // ready-made profiles created once in this settings folder (comma separated, see ProfilePresets)
+    ProfilePresetsCreated, // ready-made profiles created once in this settings folder (comma separated, see ProfilePresets)
+
+    // Game integration (see EasyRadioLink.Client.GameIntegration): Microsoft Flight Simulator 2024 - keep the radio and
+    // COM1 of the aircraft on the same frequency, and choose the background sound by the aircraft (prop/jet/helicopter)
+    MsfsRadioSync,
+    MsfsAircraftBackgroundSound
 }
 
 /// <summary>
@@ -228,7 +233,10 @@ public class GlobalSettingsStore
         { GlobalSettingsKeys.SettingsAdvancedExpanded.ToString(), "false" },
 
         { GlobalSettingsKeys.CurrentProfile.ToString(), "default" },
-        { GlobalSettingsKeys.ProfilePresetsCreated.ToString(), "" }
+        { GlobalSettingsKeys.ProfilePresetsCreated.ToString(), "" },
+
+        { GlobalSettingsKeys.MsfsRadioSync.ToString(), "true" },
+        { GlobalSettingsKeys.MsfsAircraftBackgroundSound.ToString(), "true" }
     };
 
     private readonly Logger Logger = LogManager.GetCurrentClassLogger();
