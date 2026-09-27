@@ -54,7 +54,7 @@ public class ClientSettingsViewModel : PropertyChangedBaseClass
         nameof(RecordingQuality), nameof(DisallowedAudioTone),
         nameof(ExpandInputDevices), nameof(AllowXInputController), nameof(RadioPanelTaskbarItem),
         nameof(RequireAdminToggle), nameof(AdvancedSettingsExpanded), nameof(MsfsRadioSync),
-        nameof(MsfsAircraftBackgroundSound)
+        nameof(MsfsAircraftBackgroundSound), nameof(MsfsRadioPower)
     };
 
     private readonly CachedAudioEffectProvider _effects = CachedAudioEffectProvider.Instance;
@@ -506,6 +506,18 @@ public class ClientSettingsViewModel : PropertyChangedBaseClass
         set
         {
             _globalSettings.SetClientSetting(GlobalSettingsKeys.MsfsAircraftBackgroundSound, value);
+            NotifyPropertyChanged();
+            GameIntegration.Refresh();
+        }
+    }
+
+    /// <summary>Microsoft Flight Simulator 2024: the radio is off while COM1 of the aircraft has no power.</summary>
+    public bool MsfsRadioPower
+    {
+        get => _globalSettings.GetClientSettingBool(GlobalSettingsKeys.MsfsRadioPower);
+        set
+        {
+            _globalSettings.SetClientSetting(GlobalSettingsKeys.MsfsRadioPower, value);
             NotifyPropertyChanged();
             GameIntegration.Refresh();
         }

@@ -30,12 +30,13 @@ public static class RadioHelper
     private static readonly object ChangeLock = new();
 
     /// <summary>
-    ///     THE availability predicate: connected and the radio is loaded for this connection.
+    ///     THE availability predicate: connected, the radio is loaded for this connection and it has power (see
+    ///     <see cref="ClientStateSingleton.RadioUnpowered" />). Without it nothing is sent, received or tuned.
     /// </summary>
     public static bool RadiosAvailable()
     {
         var clientState = ClientStateSingleton.Instance;
-        return clientState.IsConnected && clientState.PlayerRadioInfo.IsActive;
+        return clientState.IsConnected && clientState.PlayerRadioInfo.IsActive && !clientState.RadioUnpowered;
     }
 
     /// <summary>

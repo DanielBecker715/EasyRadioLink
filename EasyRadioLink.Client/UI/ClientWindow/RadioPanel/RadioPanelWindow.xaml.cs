@@ -247,7 +247,9 @@ public partial class RadioPanelWindow : Window, IHandle<ResetRadioPanelMessage>
         SetIndicator(RxText, false, _rxBrush, _rxGlow);
 
         StatusText.Foreground = _dimBrush;
-        StatusText.Text = connected ? Properties.Resources.RadioStatusLoading : Properties.Resources.RadioStatusNoLink;
+        StatusText.Text = !connected ? Properties.Resources.RadioStatusNoLink
+            : _clientState.RadioUnpowered ? Properties.Resources.RadioStatusNoPower
+            : Properties.Resources.RadioStatusLoading;
 
         SetControlsEnabled(false);
     }

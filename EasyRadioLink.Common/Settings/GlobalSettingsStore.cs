@@ -82,9 +82,11 @@ public enum GlobalSettingsKeys
     ProfilePresetsCreated, // ready-made profiles created once in this settings folder (comma separated, see ProfilePresets)
 
     // Game integration (see EasyRadioLink.Client.GameIntegration): Microsoft Flight Simulator 2024 - keep the radio and
-    // COM1 of the aircraft on the same frequency, and choose the background sound by the aircraft (prop/jet/helicopter)
+    // COM1 of the aircraft on the same frequency, choose the background sound by the aircraft (prop/jet/helicopter) and
+    // switch the radio off while COM1 has no power
     MsfsRadioSync,
-    MsfsAircraftBackgroundSound
+    MsfsAircraftBackgroundSound,
+    MsfsRadioPower
 }
 
 /// <summary>
@@ -236,7 +238,8 @@ public class GlobalSettingsStore
         { GlobalSettingsKeys.ProfilePresetsCreated.ToString(), "" },
 
         { GlobalSettingsKeys.MsfsRadioSync.ToString(), "true" },
-        { GlobalSettingsKeys.MsfsAircraftBackgroundSound.ToString(), "true" }
+        { GlobalSettingsKeys.MsfsAircraftBackgroundSound.ToString(), "true" },
+        { GlobalSettingsKeys.MsfsRadioPower.ToString(), "true" }
     };
 
     private readonly Logger Logger = LogManager.GetCurrentClassLogger();

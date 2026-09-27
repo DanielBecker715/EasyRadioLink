@@ -24,7 +24,12 @@ namespace EasyRadioLink.Client.GameIntegration.Msfs;
 ///         <item>
 ///             sets the background sound by the aircraft: prop, jet or helicopter (<see cref="AircraftBackgroundSound" />,
 ///             <see cref="ClientStateSingleton.BackgroundSoundOverride" />, setting
-///             <see cref="GlobalSettingsKeys.MsfsAircraftBackgroundSound" />).
+///             <see cref="GlobalSettingsKeys.MsfsAircraftBackgroundSound" />);
+///         </item>
+///         <item>
+///             switches the radio off while COM1 has no power or has failed (<c>COM STATUS:1</c>, e.g. battery or
+///             avionics off): no transmitting, receiving or tuning (<see cref="ClientStateSingleton.RadioUnpowered" />,
+///             setting <see cref="GlobalSettingsKeys.MsfsRadioPower" />).
 ///         </item>
 ///     </list>
 ///     Both settings are read continuously, so switching them takes effect at once.
@@ -58,12 +63,13 @@ public sealed class MsfsIntegration : IGameIntegration
     private string _aircraftTitle;
     private string _aircraftSound;
     private bool _aircraftKnown;
+    private int? _comStatus;
 
     public string GameName => "Microsoft Flight Simulator 2024";
 
     public IReadOnlyList<string> ProcessNames { get; } = new[] { "FlightSimulator2024" };
 
-    public bool IsEnabled => RadioSyncEnabled || BackgroundSoundEnabled;
+    public bool IsEnabled => RadioSyncEnabled || BackgroundSoundEnabled || RadioPowerEnabled;
 
     public string Status => _status;
 
@@ -71,6 +77,17 @@ public sealed class MsfsIntegration : IGameIntegration
 
     private bool BackgroundSoundEnabled =>
         _settings.GetClientSettingBool(GlobalSettingsKeys.MsfsAircraftBackgroundSound);
+
+    private bool RadioPowerEnabled => _settings.GetClientSettingBool(GlobalSettingsKeys.MsfsRadioPower);
+
+    /// <summary>
+    ///     SimConnect <c>COM STATUS</c>: 0 = OK, 1 = does not exist, 2 = no electricity, 3 = failed. A radio the aircraft
+    ///     doesn't have (1) or an unknown value keeps the radio on.
+    /// </summary>
+    internal static bool IsComDead(int comStatus)
+    {
+        return comStatus is 2 or 3;
+    }
 
     public void Start()
     {
@@ -100,6 +117,7 @@ public sealed class MsfsIntegration : IGameIntegration
         _thread = null;
 
         ClientStateSingleton.Instance.BackgroundSoundOverride = null;
+        ClientStateSingleton.Instance.RadioUnpowered = false;
         _status = "";
     }
 
@@ -171,13 +189,19 @@ public sealed class MsfsIntegration : IGameIntegration
             Check(library.AddToDataDefinition(handle, (uint)Definition.Aircraft, "TITLE", null,
                 SimConnectDataType.String256, 0, SimConnectConstants.Unused), "TITLE");
 
+            Check(library.AddToDataDefinition(handle, (uint)Definition.Power, "COM STATUS:1", "Enum",
+                SimConnectDataType.Int32, 0, SimConnectConstants.Unused), "COM STATUS");
+
             Check(library.MapClientEventToSimEvent(handle, (uint)ClientEvent.ComSet, ComSetEventName),
                 ComSetEventName);
 
-            // COM1 every simulation frame, the aircraft every second - both only when something changed
+            // COM1 and its power every simulation frame, the aircraft every second - only when something changed
             Check(library.RequestDataOnSimObject(handle, (uint)Request.Com, (uint)Definition.Com,
                 SimConnectConstants.ObjectIdUser, SimConnectPeriod.SimFrame,
                 SimConnectConstants.DataRequestFlagChanged, 0, 0, 0), "COM request");
+            Check(library.RequestDataOnSimObject(handle, (uint)Request.Power, (uint)Definition.Power,
+                SimConnectConstants.ObjectIdUser, SimConnectPeriod.SimFrame,
+                SimConnectConstants.DataRequestFlagChanged, 0, 0, 0), "COM power request");
             Check(library.RequestDataOnSimObject(handle, (uint)Request.Aircraft, (uint)Definition.Aircraft,
                 SimConnectConstants.ObjectIdUser, SimConnectPeriod.Second,
                 SimConnectConstants.DataRequestFlagChanged, 0, 0, 0), "aircraft request");
@@ -212,6 +236,7 @@ public sealed class MsfsIntegration : IGameIntegration
             if (token.IsCancellationRequested) return;
 
             UpdateBackgroundSound();
+            UpdateRadioPower();
             SyncRadio(library, handle);
         }
     }
@@ -237,6 +262,7 @@ public sealed class MsfsIntegration : IGameIntegration
 
                 if (request == Request.Com) ReadCom(values);
                 else if (request == Request.Aircraft) ReadAircraft(values);
+                else if (request == Request.Power) ReadPower(values);
                 break;
         }
 
@@ -247,6 +273,14 @@ public sealed class MsfsIntegration : IGameIntegration
     {
         var mhz = BitConverter.Int64BitsToDouble(Marshal.ReadInt64(values));
         if (double.IsFinite(mhz) && mhz > 0) _simComFrequency = Math.Round(mhz * RadioCalculator.MHz);
+    }
+
+    private void ReadPower(IntPtr values)
+    {
+        var status = Marshal.ReadInt32(values);
+        if (status != _comStatus) Logger.Info($"COM1 status {status}{(IsComDead(status) ? " - no power / failed" : "")}");
+
+        _comStatus = status;
     }
 
     private void ReadAircraft(IntPtr values)
@@ -285,8 +319,18 @@ public sealed class MsfsIntegration : IGameIntegration
             BackgroundSoundEnabled && _aircraftKnown ? _aircraftSound : null;
     }
 
+    private void UpdateRadioPower()
+    {
+        ClientStateSingleton.Instance.RadioUnpowered =
+            RadioPowerEnabled && _comStatus is { } status && IsComDead(status);
+    }
+
     private void SyncRadio(SimConnectLibrary library, IntPtr handle)
     {
+        // a dead radio can't be tuned; the sync goes on where it was when the power comes back (a frequency set in the
+        // dark cockpit is then copied to the radio)
+        if (ClientStateSingleton.Instance.RadioUnpowered) return;
+
         // the radio is only on while connected to a server
         var radio = RadioSyncEnabled && !double.IsNaN(_simComFrequency) ? RadioHelper.GetRadio() : null;
         if (radio == null)
@@ -326,21 +370,25 @@ public sealed class MsfsIntegration : IGameIntegration
         _aircraftKnown = false;
         _aircraftTitle = null;
         _aircraftSound = null;
+        _comStatus = null;
         _comSync.Reset();
 
         ClientStateSingleton.Instance.BackgroundSoundOverride = null;
+        ClientStateSingleton.Instance.RadioUnpowered = false;
     }
 
     private enum Definition : uint
     {
         Com = 1,
-        Aircraft = 2
+        Aircraft = 2,
+        Power = 3
     }
 
     private enum Request : uint
     {
         Com = 1,
-        Aircraft = 2
+        Aircraft = 2,
+        Power = 3
     }
 
     private enum ClientEvent : uint

@@ -98,6 +98,25 @@ public sealed class ClientStateSingleton : PropertyChangedBaseClass, IHandle<TCP
         }
     }
 
+    private volatile bool _radioUnpowered;
+
+    /// <summary>
+    ///     The radio has no power - set by a game integration while the radio it stands for is dead (e.g. COM1 of an
+    ///     aircraft with the battery or avionics off). Like a real radio it can neither transmit nor receive nor be
+    ///     tuned (<see cref="Utils.RadioHelper.RadiosAvailable" />); the radio window shows NO POWER.
+    /// </summary>
+    public bool RadioUnpowered
+    {
+        get => _radioUnpowered;
+        set
+        {
+            if (value == _radioUnpowered) return;
+
+            _radioUnpowered = value;
+            NotifyPropertyChanged();
+        }
+    }
+
     public bool IsConnected
     {
         get => isConnected;

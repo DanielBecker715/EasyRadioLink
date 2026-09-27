@@ -176,7 +176,10 @@ REQUIREMENTS
   (118.000 - 136.990 MHz) tunes COM1 - while you are connected to a server.
   "MSFS 2024: background sound from the aircraft": your background sound
   is helicopter, jet or prop, matching the aircraft you fly (gliders keep
-  the profile's sound). Both are on by default and need nothing else: the
+  the profile's sound). "MSFS 2024: radio needs aircraft power": while
+  COM1 has no power (battery or avionics off), the radio can't transmit,
+  receive or be tuned and shows NO POWER. All are on by default and need
+  nothing else: the
   SimConnect.dll next to EasyRadioLink.exe (Microsoft's SimConnect library)
   connects EasyRadioLink with the simulator. The status line in the
   settings shows what it is doing.

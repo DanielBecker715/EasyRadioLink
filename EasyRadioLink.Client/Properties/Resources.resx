@@ -1195,4 +1195,13 @@ The password is sent over the encrypted connection, after the server's identity 
   <data name="MsfsStatusProfileSound" xml:space="preserve">
     <value>from the profile</value>
   </data>
+  <data name="MsfsRadioPower" xml:space="preserve">
+    <value>MSFS 2024: radio needs aircraft power</value>
+  </data>
+  <data name="ToolTipMsfsRadioPower" xml:space="preserve">
+    <value>Microsoft Flight Simulator 2024: while COM1 of your aircraft has no power (battery or avionics off) or has failed, the radio is off too - you can't transmit, receive or tune it. The radio window shows NO POWER.</value>
+  </data>
+  <data name="RadioStatusNoPower" xml:space="preserve">
+    <value>NO POWER</value>
+  </data>
 </root>

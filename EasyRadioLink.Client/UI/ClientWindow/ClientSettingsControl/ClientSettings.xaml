@@ -394,6 +394,7 @@
                         <RowDefinition Height="Auto" />
                         <RowDefinition Height="Auto" />
                         <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
                     </Grid.RowDefinitions>
 
                     <TextBlock Grid.Row="0"
@@ -421,8 +422,17 @@
 
                     <TextBlock Grid.Row="3"
                                Style="{StaticResource SettingText}"
+                               Text="{x:Static p:Resources.MsfsRadioPower}"
+                               ToolTip="{x:Static p:Resources.ToolTipMsfsRadioPower}" />
+                    <clientSettingsControl:SettingsToggleControl Grid.Row="3"
+                                                                 Grid.Column="1"
+                                                                 Style="{StaticResource SettingToggle}"
+                                                                 ToggleValue="{Binding MsfsRadioPower, Mode=TwoWay}" />
+
+                    <TextBlock Grid.Row="4"
+                               Style="{StaticResource SettingText}"
                                Text="{x:Static p:Resources.GameIntegrationStatusLabel}" />
-                    <TextBlock Grid.Row="3"
+                    <TextBlock Grid.Row="4"
                                Grid.Column="1"
                                Style="{StaticResource SettingText}"
                                Text="{Binding GameIntegration.Status, Mode=OneWay}" />

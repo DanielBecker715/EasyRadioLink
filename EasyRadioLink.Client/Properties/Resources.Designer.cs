@@ -3185,5 +3185,32 @@ namespace EasyRadioLink.Client.Properties {
                 return ResourceManager.GetString("MsfsStatusProfileSound", resourceCulture);
             }
         }
+
+        /// <summary>
+        ///   Looks up a localized string similar to MSFS 2024: radio needs aircraft power.
+        /// </summary>
+        public static string MsfsRadioPower {
+            get {
+                return ResourceManager.GetString("MsfsRadioPower", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Microsoft Flight Simulator 2024: while COM1 of your aircraft has no power (battery or avionics off) or has failed, the radio is off too - you can't transmit, receive or tune it. The radio window shows NO POWER..
+        /// </summary>
+        public static string ToolTipMsfsRadioPower {
+            get {
+                return ResourceManager.GetString("ToolTipMsfsRadioPower", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to NO POWER.
+        /// </summary>
+        public static string RadioStatusNoPower {
+            get {
+                return ResourceManager.GetString("RadioStatusNoPower", resourceCulture);
+            }
+        }
     }
 }

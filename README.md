@@ -36,7 +36,8 @@ simply runs a server and connects.
 
 **Game integration**
 - Detects supported games when they start - nothing to install. *Microsoft Flight Simulator 2024*: the radio follows COM1 of your aircraft
-  and tuning the radio tunes COM1, and your background sound matches the aircraft (prop, jet or helicopter) - see
+  and tuning the radio tunes COM1, your background sound matches the aircraft (prop, jet or helicopter), and the radio
+  is dead while the aircraft's radio has no power - see
   [Game integration](#game-integration).
 
 **Controls**
@@ -398,7 +399,7 @@ balance), push-to-talk delays and controllers, the radio window and *Run as admi
 ### Game integration
 
 EasyRadioLink looks for supported games every few seconds and links the radio with a game while it runs. Supported:
-**Microsoft Flight Simulator 2024** (`FlightSimulator2024.exe`), over SimConnect. Both options are on by default
+**Microsoft Flight Simulator 2024** (`FlightSimulator2024.exe`), over SimConnect. All options are on by default
 (Settings, *Game integration*):
 
 - **MSFS 2024: radio follows COM1** - tuning COM1 in the cockpit tunes the radio, and tuning the radio to a COM
@@ -411,6 +412,9 @@ EasyRadioLink looks for supported games every few seconds and links the radio wi
   helicopters, *jet* for jets and *prop* for piston and turboprop airplanes, at the background sound volume of your
   profile. Gliders keep the profile's background sound, and so does everything once the sim is closed. The profile
   itself is not changed.
+- **MSFS 2024: radio needs aircraft power** - while COM1 of your aircraft has no power (battery or avionics off) or
+  has failed, the radio is off too, like the one in the cockpit: you can neither transmit nor receive nor tune it, and
+  the radio window shows *NO POWER*. When the power comes back, the radio takes COM1's frequency.
 
 Nothing to install: the client download contains **SimConnect.dll**, Microsoft's SimConnect client library from the
 Microsoft Flight Simulator 2024 SDK (the simulator itself only contains the server side). It is proprietary Microsoft
