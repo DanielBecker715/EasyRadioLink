@@ -29,7 +29,10 @@ simply runs a server and connects.
   No crackle, no dropouts.
 - Radio sounds of your choice when you press / release push-to-talk and when someone starts / stops talking: clicks,
   chirp, beeps, roger beep and more - or none (see [Settings](#settings)).
-- Optional background sound (jet, prop or helicopter) that the other stations hear behind your voice.
+- Optional background sound (jet, prop or helicopter) that the other stations hear behind your voice, and *Boost my
+  voice* to make your voice stand out from it.
+- Profiles with their own radio sounds, background sound and key bindings - including a ready-made *Helicopter*
+  profile; switch at the top of the Settings tab.
 
 **Controls**
 - Push-to-talk, frequency steps and volume on keyboard, mouse, joysticks/HOTAS (DirectInput) and gamepads (XInput).
@@ -335,6 +338,11 @@ The **Controls** tab assigns keys or buttons to push-to-talk, frequency up / dow
 
 The **Settings** tab shows the everyday settings first:
 
+- **Profile**: the active profile, and *New*, *Copy*, *Rename* and *Delete*. A profile holds your key bindings and the
+  radio settings (radio sounds and effects, background sound, voice boost, push-to-talk delays, rotary tuning, radio
+  balance); all other settings apply to every profile. The profile you choose stays active after a restart. Ready
+  made: **Helicopter** (helicopter background sound at 50 %, radio effect strength 30 %, distance 20 %; created once
+  with the key bindings of your default profile - delete or rename it as you like, it does not come back).
 - **Radio Sounds**: the sound *When I press push-to-talk*, *When I release push-to-talk*, *When someone starts
   talking* and *When someone stops talking* - *Click*, *Soft click*, *Chirp* and *Key-up beep* (start sounds),
   *Roger beep*, *Double beep* and *Three-tone beep* (end sounds), *Fancy Release* and *Almost Fancy* (both), or
@@ -343,7 +351,13 @@ The **Settings** tab shows the everyday settings first:
   your push-to-talk sounds; the others hear what they chose for someone starting / stopping to talk. A start sound
   is played before the received voice, so a long one delays the voice by its length. Below: squelch tail (the
   short "kssht" when an AM / FM transmission ends; off by default, profiles that already have the setting keep it),
-  radio static, FM tone, your background sound and its volume, the radio effect strength and the distance.
+  radio static, FM tone, your background sound and its volume, *Boost my voice*, the radio effect strength and the
+  distance.
+- **Boost my voice** (0 - 100 %, default 0 %) makes your voice louder for everybody who hears you, so it stands out
+  more from your background sound and the static: +10 dB at 100 %; loud peaks are rounded off smoothly instead of
+  clipping. Everybody normalises the voices they receive, so a louder microphone would change nothing - the boost is
+  sent with your background sound and applied by the listeners (not on clean frequencies). Listeners with 1.1 / 1.2,
+  or on a 1.1 / 1.2 server, hear you without it.
 - **Distance (weak signal)** (0 - 100 %, default 35 %) makes the stations you receive sound far away - the sound of a
   long-distance or field radio link rather than a clean voice with effects on top:
   - *Multipath*: the signal also arrives over other paths, a fraction of a millisecond later and with a slowly
@@ -370,9 +384,8 @@ The **Settings** tab shows the everyday settings first:
 Everything else is under **Advanced settings** (closed until you open it; EasyRadioLink remembers whether it is
 open): microphone and incoming audio (noise suppression, automatic gain control), voice activation details,
 recording, radio effect details (clipping, the radio sound of the band, static levels, FM tone volume, the
-background sounds of other users, radio balance), push-to-talk delays and controllers, the radio window, profiles
-and *Run as administrator*. A profile holds your key bindings and the radio settings (radio sounds and effects,
-background sound, push-to-talk delays, rotary tuning, radio balance); all other settings apply to every profile.
+background sounds of other users, radio balance), push-to-talk delays and controllers, the radio window and *Run as
+administrator*.
 
 ### Band plan
 

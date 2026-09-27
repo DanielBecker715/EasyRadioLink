@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Net;
 using System.Text.Json;
@@ -110,6 +110,37 @@ public class NetworkMessageTests
         Assert.AreEqual((byte)42, radio.encKey);
         Assert.AreEqual("cb", radio.Model);
         Assert.AreEqual("jet", decoded.Client.RadioInfo.ambient.abType);
+    }
+
+    [TestMethod]
+    public void VoiceBoostTravelsWithTheBackgroundSound()
+    {
+        var info = new PlayerRadioInfoBase { ambient = new Ambient { abType = "helicopter", vol = 0.5f, voiceBoost = 0.4f } };
+        var json = new NetworkMessage
+        {
+            MsgType = NetworkMessage.MessageType.RADIO_UPDATE,
+            Client = new ClientInfo { ClientGuid = Guid, Name = "A", RadioInfo = info }
+        }.Encode();
+
+        var decoded = NetworkMessage.Decode(json).Client.RadioInfo.ambient;
+        Assert.AreEqual(0.4f, decoded.voiceBoost);
+        Assert.AreEqual(info.ambient, decoded);
+
+        // it is part of the state: a change is sent to the others
+        Assert.AreNotEqual(info.ambient, new Ambient { abType = "helicopter", vol = 0.5f });
+        Assert.AreEqual(0.4f, info.ambient.Copy().voiceBoost);
+    }
+
+    [TestMethod]
+    public void RadioInfoWithoutVoiceBoostMeansNoBoost()
+    {
+        // a 1.1 / 1.2 client: no voiceBoost in its ambient
+        var json = "{\"MsgType\":3,\"Client\":{\"ClientGuid\":\"" + Guid + "\",\"Name\":\"A\",\"RadioInfo\":" +
+                   "{\"ambient\":{\"abType\":\"jet\",\"vol\":0.3},\"radios\":[]}},\"Version\":\"1.1.0\"}";
+
+        var ambient = NetworkMessage.Decode(json).Client.RadioInfo.ambient;
+        Assert.AreEqual("jet", ambient.abType);
+        Assert.AreEqual(0f, ambient.voiceBoost);
     }
 
     [TestMethod]

@@ -73,7 +73,11 @@ public enum ProfileSettingsKeys
 
     // Listener: "Distance (weak signal)" - how far away other stations sound (multipath fading, static, a narrower and
     // harsher voice), 0..100 percent. The key keeps its 1.3 draft name. See WeakSignalChannelProvider.
-    VoiceDistortion
+    VoiceDistortion,
+
+    // Sender: "Boost my voice", 0..1 (0 = normal, 1 = +10 dB), sent with the background sound and applied by the
+    // listeners. See VoiceBoost.
+    VoiceBoost
 }
 
 public class ProfileSettingsStore
@@ -135,7 +139,9 @@ public class ProfileSettingsStore
             CachedAudioEffect.AlmostFancyFile
         },
 
-        { ProfileSettingsKeys.VoiceDistortion.ToString(), "35" } // percent
+        { ProfileSettingsKeys.VoiceDistortion.ToString(), "35" }, // percent
+
+        { ProfileSettingsKeys.VoiceBoost.ToString(), "0" }
     };
 
     /// <summary>
@@ -163,6 +169,9 @@ public class ProfileSettingsStore
     private readonly Dictionary<string, Configuration> InputConfigs = new();
     private readonly Logger Logger = LogManager.GetCurrentClassLogger();
     private string _currentProfileName = "default";
+
+    /// <summary>The section of a profile file that holds its settings (the key bindings have their own sections).</summary>
+    public const string ClientSettingsSection = "Client Settings";
 
     public ProfileSettingsStore(GlobalSettingsStore globalSettingsStore)
     {
@@ -234,8 +243,60 @@ public class ProfileSettingsStore
 
             SaveProfileFile(InputConfigs[GetProfileCfgFileName("default")], "default");
         }
+
+        CreatePresetProfiles();
+
+        // the profile that was active last time (if it still exists)
+        var lastProfile = _globalSettings.GetClientSetting(GlobalSettingsKeys.CurrentProfile).StringValue;
+        if (!string.IsNullOrWhiteSpace(lastProfile) && InputProfiles.ContainsKey(GetProfileName(lastProfile)))
+            _currentProfileName = GetProfileName(lastProfile);
     }
 
+    /// <summary>
+    ///     Creates the ready-made profiles (<see cref="ProfilePresets" />) that were not created in this settings folder
+    ///     yet - once: global.cfg remembers them (<see cref="GlobalSettingsKeys.ProfilePresetsCreated" />), so a
+    ///     deleted or renamed preset does not come back. An existing profile with the same name is left alone. A preset
+    ///     starts with the key bindings of the default profile.
+    /// </summary>
+    private void CreatePresetProfiles()
+    {
+        var created = (_globalSettings.GetClientSetting(GlobalSettingsKeys.ProfilePresetsCreated).StringValue ?? "")
+            .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .ToList();
+        var changed = false;
+
+        foreach (var preset in ProfilePresets.All)
+        {
+            if (created.Contains(preset.Name, StringComparer.OrdinalIgnoreCase)) continue;
+
+            created.Add(preset.Name);
+            changed = true;
+
+            // profiles are files: the case of the name doesn't matter
+            if (InputProfiles.Keys.Any(profile => string.Equals(profile, preset.Name, StringComparison.OrdinalIgnoreCase)))
+                continue;
+
+            InputConfigs.TryGetValue(GetProfileCfgFileName("default"), out var defaultProfile);
+            var configuration = ProfilePresets.CreateProfile(preset, defaultProfile);
+            InputConfigs[GetProfileCfgFileName(preset.Name)] = configuration;
+
+            var inputProfile = new Dictionary<InputBinding, InputDevice>();
+            foreach (InputBinding bind in Enum.GetValues(typeof(InputBinding)))
+            {
+                var device = GetControlSetting(bind, configuration);
+                if (device != null) inputProfile[bind] = device;
+            }
+
+            InputProfiles[GetProfileName(preset.Name)] = inputProfile;
+            SaveProfileFile(configuration, preset.Name);
+            _globalSettings.SetClientSetting(GlobalSettingsKeys.SettingsProfiles, InputProfiles.Keys.ToArray());
+        }
+
+        if (changed)
+            _globalSettings.SetClientSetting(GlobalSettingsKeys.ProfilePresetsCreated, string.Join(",", created));
+    }
+
+    /// <summary>The active profile; remembered in global.cfg, so it is active again after a restart.</summary>
     public string CurrentProfileName
     {
         get => _currentProfileName;
@@ -243,6 +304,7 @@ public class ProfileSettingsStore
         {
             _settingsCache.Clear();
             _currentProfileName = value;
+            _globalSettings.SetClientSetting(GlobalSettingsKeys.CurrentProfile, value ?? "default");
         }
     }
 

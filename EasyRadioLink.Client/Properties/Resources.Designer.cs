@@ -2701,6 +2701,15 @@ namespace EasyRadioLink.Client.Properties {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to Makes your voice louder for everybody who hears you, so it stands out more from your background sound and the static. 0% = normal, 100% = +10 dB (loud peaks are rounded off smoothly)..
+        /// </summary>
+        public static string ToolTipVoiceBoost {
+            get {
+                return ResourceManager.GetString("ToolTipVoiceBoost", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to How far away other stations sound: fading that swirls through the voice, more static, a narrower and harsher voice. 0% = right next to you.
         /// </summary>
         public static string ToolTipVoiceDistortion {
@@ -2799,6 +2808,15 @@ namespace EasyRadioLink.Client.Properties {
             }
         }
 
+        /// <summary>
+        ///   Looks up a localized string similar to Boost my voice.
+        /// </summary>
+        public static string VoiceBoost {
+            get {
+                return ResourceManager.GetString("VoiceBoost", resourceCulture);
+            }
+        }
+        
         /// <summary>
         ///   Looks up a localized string similar to Distance (weak signal).
         /// </summary>

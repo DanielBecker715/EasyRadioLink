@@ -297,9 +297,13 @@ public class ClientAudioProvider : AudioProvider
         var segmentAudio = segment.Audio.AsSpan();
         if (transmission.Decryptable)
         {
-            // clean frequencies get no background sound either
+            // clean frequencies get no voice boost or background sound either
             if (!transmission.NoAudioEffects)
+            {
+                // the sender's "Boost my voice": after the receive AGC (which would undo it), before the background
+                VoiceBoost.Apply(segmentAudio, transmission.Ambient?.voiceBoost ?? 0f);
                 AddBackgroundAudio(transmission.ReceivedRadio, transmission.Ambient, segmentAudio);
+            }
         }
         else
         {

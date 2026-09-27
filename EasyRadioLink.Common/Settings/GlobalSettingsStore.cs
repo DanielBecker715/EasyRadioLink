@@ -76,7 +76,10 @@ public enum GlobalSettingsKeys
 
     AutoOpenRadioPanel, // open the radio window automatically after connecting
 
-    SettingsAdvancedExpanded // Settings tab: the "Advanced settings" section is expanded
+    SettingsAdvancedExpanded, // Settings tab: the "Advanced settings" section is expanded
+
+    CurrentProfile, // the active profile (active again after a restart)
+    ProfilePresetsCreated // ready-made profiles created once in this settings folder (comma separated, see ProfilePresets)
 }
 
 /// <summary>
@@ -221,7 +224,10 @@ public class GlobalSettingsStore
 
         { GlobalSettingsKeys.AutoOpenRadioPanel.ToString(), "true" },
 
-        { GlobalSettingsKeys.SettingsAdvancedExpanded.ToString(), "false" }
+        { GlobalSettingsKeys.SettingsAdvancedExpanded.ToString(), "false" },
+
+        { GlobalSettingsKeys.CurrentProfile.ToString(), "default" },
+        { GlobalSettingsKeys.ProfilePresetsCreated.ToString(), "" }
     };
 
     private readonly Logger Logger = LogManager.GetCurrentClassLogger();

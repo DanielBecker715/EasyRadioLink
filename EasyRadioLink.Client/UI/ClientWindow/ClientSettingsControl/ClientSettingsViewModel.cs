@@ -33,7 +33,7 @@ public class ClientSettingsViewModel : PropertyChangedBaseClass
     {
         nameof(TxStartSound), nameof(TxEndSound), nameof(RxStartSound), nameof(RxEndSound),
         nameof(RadioRxSquelchTail), nameof(BackgroundRadioNoiseToggle), nameof(NATORadioToneToggle),
-        nameof(BackgroundSound), nameof(HasBackgroundSound), nameof(BackgroundSoundVolume),
+        nameof(BackgroundSound), nameof(HasBackgroundSound), nameof(BackgroundSoundVolume), nameof(VoiceBoost),
         nameof(RadioSoundEffectsRatio), nameof(VoiceDistortion), nameof(HasRadioEffects),
         nameof(RadioSoundEffectsClipping), nameof(PerRadioModelEffects), nameof(NoiseGainDB), nameof(HFNoiseGainDB),
         nameof(NATORadioToneVolume), nameof(AmbientEffectToggle), nameof(AmbientEffectVolume), nameof(RadioBalance),
@@ -681,6 +681,25 @@ public class ClientSettingsViewModel : PropertyChangedBaseClass
             NotifyPropertyChanged();
         }
     }
+    /// <summary>
+    ///     Sender: "Boost my voice" in percent (0 = normal, 100 = +10 dB), applied by everybody who hears you (see
+    ///     <see cref="EasyRadioLink.Common.Audio.Utility.VoiceBoost" />).
+    /// </summary>
+    public float VoiceBoost
+    {
+        get
+        {
+            var value = _globalSettings.ProfileSettingsStore.GetClientSettingFloat(ProfileSettingsKeys.VoiceBoost);
+            return float.IsFinite(value) ? Math.Clamp(value, 0f, 1f) * 100f : 0f;
+        }
+        set
+        {
+            var percent = float.IsFinite(value) ? (float)Math.Round(Math.Clamp(value, 0f, 100f)) : 0f;
+            _globalSettings.ProfileSettingsStore.SetClientSettingFloat(ProfileSettingsKeys.VoiceBoost, percent / 100f);
+            NotifyPropertyChanged();
+        }
+    }
+
     /// <summary>Radio effect strength in percent: 0 = clean voice, 100 = full radio effect (dry/wet ratio).</summary>
     public float RadioSoundEffectsRatio
     {

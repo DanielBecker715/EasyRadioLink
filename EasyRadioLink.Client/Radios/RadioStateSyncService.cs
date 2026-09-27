@@ -251,7 +251,10 @@ public sealed class RadioStateSyncService
         return Math.Abs(frequency - otherFrequency) < 0.5 && Math.Abs(volume - otherVolume) < 0.001f;
     }
 
-    /// <summary>Writes the profile's background sound (BackgroundSound / BackgroundSoundVolume) into ambient.</summary>
+    /// <summary>
+    ///     Writes the profile's background sound (BackgroundSound / BackgroundSoundVolume) and "Boost my voice"
+    ///     (VoiceBoost) into ambient.
+    /// </summary>
     private void UpdateBackgroundSound(PlayerRadioInfo info)
     {
         var profile = _globalSettings.ProfileSettingsStore;
@@ -270,8 +273,11 @@ public sealed class RadioStateSyncService
             volume = (float)Math.Round(volume, 2);
         }
 
+        var voiceBoost = profile.GetClientSettingFloat(ProfileSettingsKeys.VoiceBoost);
+        voiceBoost = float.IsFinite(voiceBoost) ? (float)Math.Round(Math.Clamp(voiceBoost, 0f, 1f), 2) : 0f;
+
         var ambient = info.ambient;
-        if (ambient == null || ambient.abType != name || ambient.vol != volume)
-            info.ambient = new Ambient { abType = name, vol = volume };
+        if (ambient == null || ambient.abType != name || ambient.vol != volume || ambient.voiceBoost != voiceBoost)
+            info.ambient = new Ambient { abType = name, vol = volume, voiceBoost = voiceBoost };
     }
 }
