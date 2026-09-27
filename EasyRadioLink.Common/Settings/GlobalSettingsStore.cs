@@ -161,7 +161,8 @@ public class GlobalSettingsStore
 
     private static readonly int CurrentVersion = 1;
 
-    private readonly Dictionary<string, string> defaultGlobalSettings = new()
+    /// <summary>The value a missing setting of global.cfg starts with.</summary>
+    internal static readonly Dictionary<string, string> DefaultGlobalSettings = new()
     {
         { GlobalSettingsKeys.Version.ToString(), "0" },
         { GlobalSettingsKeys.RadioPanelTaskbarHide.ToString(), "false" },
@@ -217,7 +218,7 @@ public class GlobalSettingsStore
         { GlobalSettingsKeys.VOX.ToString(), "false" },
         { GlobalSettingsKeys.VOXMode.ToString(), "3" },
         { GlobalSettingsKeys.VOXMinimumTime.ToString(), "700" },
-        { GlobalSettingsKeys.VOXMinimumDB.ToString(), "-59.0" },
+        { GlobalSettingsKeys.VOXMinimumDB.ToString(), "-38.4" }, // 60 % of the slider (-96 .. 0 dB)
 
 
         { GlobalSettingsKeys.AllowXInputController.ToString(), "false" },
@@ -485,11 +486,11 @@ public class GlobalSettingsStore
 
         if (!_configuration[section].Contains(setting))
         {
-            if (defaultGlobalSettings.ContainsKey(setting))
+            if (DefaultGlobalSettings.ContainsKey(setting))
             {
                 //save
                 _configuration[section]
-                    .Add(new SharpConfig.Setting(setting, defaultGlobalSettings[setting]));
+                    .Add(new SharpConfig.Setting(setting, DefaultGlobalSettings[setting]));
 
                 Save();
             }

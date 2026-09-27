@@ -570,34 +570,14 @@
                                        Style="{StaticResource SettingText}"
                                        Text="{x:Static p:Resources.VOXMinimumRMS}"
                                        ToolTip="{x:Static p:Resources.ToolTipVOXThreshold}" />
-                            <StackPanel Grid.Row="2"
-                                        Grid.Column="1"
-                                        Style="{StaticResource SettingSlider}">
-                                <Slider x:Name="VOXMinimumRMS"
-                                        IsSnapToTickEnabled="True"
-                                        LargeChange="4"
-                                        Maximum="0"
-                                        Minimum="-96"
-                                        SmallChange="2"
-                                        TickFrequency="4"
-                                        TickPlacement="BottomRight"
-                                        ToolTip="{x:Static p:Resources.ToolTipVOXThreshold}"
-                                        Value="{Binding VOXMinimumRMS, Mode=TwoWay}" />
-                                <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*" />
-                                        <ColumnDefinition Width="*" />
-                                    </Grid.ColumnDefinitions>
-                                    <TextBlock Grid.Column="0"
-                                               HorizontalAlignment="Left"
-                                               Style="{StaticResource SliderScale}"
-                                               Text="{x:Static p:Resources.VOXMinimumRMSLower}" />
-                                    <TextBlock Grid.Column="1"
-                                               HorizontalAlignment="Right"
-                                               Style="{StaticResource SliderScale}"
-                                               Text="{x:Static p:Resources.VOXMinimumRMSHigher}" />
-                                </Grid>
-                            </StackPanel>
+                            <!-- percent of the -96 .. 0 dB range, like the other sliders -->
+                            <clientSettingsControl:BackgroundEffectVolumeControl x:Name="VOXMinimumRMS"
+                                                                                 Grid.Row="2"
+                                                                                 Grid.Column="1"
+                                                                                 MaximumPercentage="100"
+                                                                                 TickStep="5"
+                                                                                 ToolTip="{x:Static p:Resources.ToolTipVOXThreshold}"
+                                                                                 VolumeValue="{Binding VOXThresholdPercent, Mode=TwoWay}" />
                         </Grid>
                     </GroupBox>
 

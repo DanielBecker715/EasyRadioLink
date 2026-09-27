@@ -48,7 +48,7 @@ public class ClientSettingsViewModel : PropertyChangedBaseClass
         nameof(PlayConnectionSounds), nameof(VOXEnabled),
         nameof(MicDenoise), nameof(IncomingAudioAGC), nameof(IncomingAudioAGCMaxDB), nameof(IncomingAudioAGCTarget),
         nameof(IncomingAudioDenoise),
-        nameof(VOXMinimimumTXTime), nameof(VOXMode), nameof(VOXMinimumRMS),
+        nameof(VOXMinimimumTXTime), nameof(VOXMode), nameof(VOXThresholdPercent),
         nameof(AllowTransmissionsRecording), nameof(RecordTransmissions), nameof(SelectedRecordingFormat),
         nameof(RecordingQuality), nameof(DisallowedAudioTone),
         nameof(ExpandInputDevices), nameof(AllowXInputController), nameof(RadioPanelTaskbarItem),
@@ -296,12 +296,28 @@ public class ClientSettingsViewModel : PropertyChangedBaseClass
         }
     }
 
-    public double VOXMinimumRMS
+    // the voice activation threshold (VOXMinimumDB) is shown in percent of this range
+    private const double VOXThresholdMinDb = -96;
+    private const double VOXThresholdMaxDb = 0;
+
+    /// <summary>
+    ///     Voice level threshold in percent: 0 = -96 dBFS (everything counts as speech), 100 = 0 dBFS; saved in dB
+    ///     (VOXMinimumDB).
+    /// </summary>
+    public float VOXThresholdPercent
     {
-        get => _globalSettings.GetClientSettingDouble(GlobalSettingsKeys.VOXMinimumDB);
+        get
+        {
+            var db = _globalSettings.GetClientSettingDouble(GlobalSettingsKeys.VOXMinimumDB);
+            if (!double.IsFinite(db)) db = VOXThresholdMinDb;
+            return (float)(100 * (Math.Clamp(db, VOXThresholdMinDb, VOXThresholdMaxDb) - VOXThresholdMinDb) /
+                           (VOXThresholdMaxDb - VOXThresholdMinDb));
+        }
         set
         {
-            _globalSettings.SetClientSetting(GlobalSettingsKeys.VOXMinimumDB, value);
+            var percent = float.IsFinite(value) ? Math.Clamp(value, 0f, 100f) : 0f;
+            var db = VOXThresholdMinDb + (VOXThresholdMaxDb - VOXThresholdMinDb) * percent / 100;
+            _globalSettings.SetClientSetting(GlobalSettingsKeys.VOXMinimumDB, Math.Round(db, 1));
             NotifyPropertyChanged();
         }
     }

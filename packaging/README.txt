@@ -134,13 +134,13 @@ REQUIREMENTS
   Settings tab: at the top you choose the profile. A profile holds your key
   bindings and the radio settings (radio sounds and effects, background
   sound, voice boost); the one you choose stays active after a restart.
-  Ready-made: "Helicopter" (helicopter background at 50 %, radio effect
-  strength 30 %, distance 20 %). Below that you choose the radio sounds -
-  the sound when you press and when you release push-to-talk, and when
-  someone starts and stops
-  talking: Click, Soft click, Chirp, Key-up beep, Roger beep, Double beep,
-  Three-tone beep, Fancy Release, Almost Fancy or Off (default: Fancy
-  Release at the start, Almost Fancy at the end). The play button next
+  Ready-made: "Helicopter" (helicopter background at 40 %, voice boost
+  40 %, radio effect strength 20 %, distance 15 %). Below that you choose
+  the radio sounds - the sound when you press and when you release
+  push-to-talk, and when someone starts and stops talking: Click, Soft
+  click, Chirp, Key-up beep, Roger beep, Double beep, Three-tone beep,
+  Fancy Release, Almost Fancy or Off (default: Fancy Release at the
+  start, Almost Fancy at the end). The play button next
   to each lets you listen, also without a connection. Only you hear your
   push-to-talk sounds; the others hear the sounds they chose. Below that:
   squelch tail (the short "kssht" when an AM/FM transmission ends - off by
@@ -170,8 +170,9 @@ REQUIREMENTS
   clean. "Audio Preview" on the Radio tab uses it too, so you can tune it
   while you hear yourself.
   Everything else is under "Advanced settings": microphone and incoming
-  audio, voice activation details, recording, radio effect details,
-  push-to-talk delays and controllers and the radio window.
+  audio, voice activation details (voice level threshold, default 60 %;
+  minimum transmission length, default 700 ms), recording, radio effect
+  details, push-to-talk delays and controllers and the radio window.
 
 
 4. HOSTING A SERVER

@@ -14,14 +14,18 @@ public sealed record ProfilePreset(string Name, IReadOnlyDictionary<ProfileSetti
 /// </summary>
 public static class ProfilePresets
 {
-    /// <summary>Talking from a helicopter: rotor noise behind the voice, a light radio sound, a little distance.</summary>
+    /// <summary>
+    ///     Talking from a helicopter: rotor noise behind the voice, the voice boosted to stand out from it, a light radio
+    ///     sound, a little distance.
+    /// </summary>
     public static readonly ProfilePreset Helicopter = new("Helicopter",
         new Dictionary<ProfileSettingsKeys, string>
         {
             { ProfileSettingsKeys.BackgroundSound, "helicopter" },
-            { ProfileSettingsKeys.BackgroundSoundVolume, "0.5" },
-            { ProfileSettingsKeys.RadioEffectsRatio, "0.3" },
-            { ProfileSettingsKeys.VoiceDistortion, "20" }
+            { ProfileSettingsKeys.BackgroundSoundVolume, "0.4" },
+            { ProfileSettingsKeys.VoiceBoost, "0.4" },
+            { ProfileSettingsKeys.RadioEffectsRatio, "0.2" },
+            { ProfileSettingsKeys.VoiceDistortion, "15" }
         });
 
     public static readonly IReadOnlyList<ProfilePreset> All = new[] { Helicopter };

@@ -341,8 +341,9 @@ The **Settings** tab shows the everyday settings first:
 - **Profile**: the active profile, and *New*, *Copy*, *Rename* and *Delete*. A profile holds your key bindings and the
   radio settings (radio sounds and effects, background sound, voice boost, push-to-talk delays, rotary tuning, radio
   balance); all other settings apply to every profile. The profile you choose stays active after a restart. Ready
-  made: **Helicopter** (helicopter background sound at 50 %, radio effect strength 30 %, distance 20 %; created once
-  with the key bindings of your default profile - delete or rename it as you like, it does not come back).
+  made: **Helicopter** (helicopter background sound at 40 %, *Boost my voice* 40 %, radio effect strength 20 %,
+  distance 15 %; created once with the key bindings of your default profile - delete or rename it as you like, it
+  does not come back).
 - **Radio Sounds**: the sound *When I press push-to-talk*, *When I release push-to-talk*, *When someone starts
   talking* and *When someone stops talking* - *Click*, *Soft click*, *Chirp* and *Key-up beep* (start sounds),
   *Roger beep*, *Double beep* and *Three-tone beep* (end sounds), *Fancy Release* and *Almost Fancy* (both), or
@@ -382,10 +383,10 @@ The **Settings** tab shows the everyday settings first:
   minimised, connect / disconnect sounds and voice activation (VOX).
 
 Everything else is under **Advanced settings** (closed until you open it; EasyRadioLink remembers whether it is
-open): microphone and incoming audio (noise suppression, automatic gain control), voice activation details,
-recording, radio effect details (clipping, the radio sound of the band, static levels, FM tone volume, the
-background sounds of other users, radio balance), push-to-talk delays and controllers, the radio window and *Run as
-administrator*.
+open): microphone and incoming audio (noise suppression, automatic gain control), voice activation details (voice
+level threshold, default 60 %; minimum transmission length, default 700 ms), recording, radio effect details
+(clipping, the radio sound of the band, static levels, FM tone volume, the background sounds of other users, radio
+balance), push-to-talk delays and controllers, the radio window and *Run as administrator*.
 
 ### Band plan
 

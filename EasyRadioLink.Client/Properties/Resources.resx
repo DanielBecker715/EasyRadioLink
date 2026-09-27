@@ -187,7 +187,7 @@
     <value>Advanced settings</value>
   </data>
   <data name="AdvancedSettingsSubtitle" xml:space="preserve">
-    <value>Audio processing, voice activation details, recording, effect details, controllers, profiles</value>
+    <value>Audio processing, voice activation details, recording, effect details, controllers, radio window</value>
   </data>
   <data name="AllowRotaryIncrement" xml:space="preserve">
     <value>Rotary style frequency steps</value>
@@ -1049,7 +1049,7 @@ The password is sent over the encrypted connection, after the server's identity 
     <value>The higher the sensitivity the less likely speech is missed, but the higher the chance that noise starts a transmission</value>
   </data>
   <data name="ToolTipVOXThreshold" xml:space="preserve">
-    <value>Minimum loudness that counts as speech</value>
+    <value>Minimum loudness that counts as speech: the higher, the louder you have to speak to start a transmission (0% = -96 dBFS, 100% = 0 dBFS).</value>
   </data>
   <data name="ValueNo" xml:space="preserve">
     <value>No</value>
@@ -1098,12 +1098,6 @@ The password is sent over the encrypted connection, after the server's identity 
   </data>
   <data name="VOXMinimumRMS" xml:space="preserve">
     <value>Voice level threshold</value>
-  </data>
-  <data name="VOXMinimumRMSHigher" xml:space="preserve">
-    <value>Higher</value>
-  </data>
-  <data name="VOXMinimumRMSLower" xml:space="preserve">
-    <value>Lower</value>
   </data>
   <data name="VOXMode" xml:space="preserve">
     <value>Voice detection sensitivity</value>

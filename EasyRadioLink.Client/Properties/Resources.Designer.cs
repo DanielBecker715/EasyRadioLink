@@ -267,7 +267,7 @@ namespace EasyRadioLink.Client.Properties {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to Audio processing, voice activation details, recording, effect details, controllers, profiles.
+        ///   Looks up a localized string similar to Audio processing, voice activation details, recording, effect details, controllers, radio window.
         /// </summary>
         public static string AdvancedSettingsSubtitle {
             get {
@@ -2746,7 +2746,7 @@ namespace EasyRadioLink.Client.Properties {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to Minimum loudness that counts as speech.
+        ///   Looks up a localized string similar to Minimum loudness that counts as speech: the higher, the louder you have to speak to start a transmission (0% = -96 dBFS, 100% = 0 dBFS).
         /// </summary>
         public static string ToolTipVOXThreshold {
             get {
@@ -2895,24 +2895,6 @@ namespace EasyRadioLink.Client.Properties {
         public static string VOXMinimumRMS {
             get {
                 return ResourceManager.GetString("VOXMinimumRMS", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to Higher.
-        /// </summary>
-        public static string VOXMinimumRMSHigher {
-            get {
-                return ResourceManager.GetString("VOXMinimumRMSHigher", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to Lower.
-        /// </summary>
-        public static string VOXMinimumRMSLower {
-            get {
-                return ResourceManager.GetString("VOXMinimumRMSLower", resourceCulture);
             }
         }
 

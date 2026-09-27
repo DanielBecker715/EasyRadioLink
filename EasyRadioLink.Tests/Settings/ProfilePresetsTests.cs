@@ -69,9 +69,10 @@ public class ProfilePresetsTests
         var settings = ProfilePresets.Helicopter.Settings;
         Assert.AreEqual("Helicopter", ProfilePresets.Helicopter.Name);
         Assert.AreEqual("helicopter", settings[ProfileSettingsKeys.BackgroundSound]);
-        Assert.AreEqual("0.5", settings[ProfileSettingsKeys.BackgroundSoundVolume]);
-        Assert.AreEqual("0.3", settings[ProfileSettingsKeys.RadioEffectsRatio]);
-        Assert.AreEqual("20", settings[ProfileSettingsKeys.VoiceDistortion]);
+        Assert.AreEqual("0.4", settings[ProfileSettingsKeys.BackgroundSoundVolume]);
+        Assert.AreEqual("0.4", settings[ProfileSettingsKeys.VoiceBoost]);
+        Assert.AreEqual("0.2", settings[ProfileSettingsKeys.RadioEffectsRatio]);
+        Assert.AreEqual("15", settings[ProfileSettingsKeys.VoiceDistortion]);
 
         // the sound exists
         Assert.IsTrue(File.Exists(Path.Combine(RepositoryFiles.AudioEffectsFolder,
@@ -83,6 +84,17 @@ public class ProfilePresetsTests
     }
 
     [TestMethod]
+    public void VoiceActivationDefaults()
+    {
+        var defaults = GlobalSettingsStore.DefaultGlobalSettings;
+
+        // voice level threshold: 60 % of the -96 .. 0 dB slider (-96 + 0.6 * 96)
+        Assert.AreEqual(-38.4, double.Parse(defaults[nameof(GlobalSettingsKeys.VOXMinimumDB)],
+            System.Globalization.CultureInfo.InvariantCulture), 1e-9);
+        Assert.AreEqual("700", defaults[nameof(GlobalSettingsKeys.VOXMinimumTime)]);
+    }
+
+    [TestMethod]
     public void PresetTakesTheKeyBindingsButNotTheSettingsOfTheDefaultProfile()
     {
         var source = Configuration.LoadFromString(File.ReadAllText(Path.Combine(_directory, "default.cfg")));
@@ -90,7 +102,7 @@ public class ProfilePresetsTests
 
         var settings = preset[ProfileSettingsStore.ClientSettingsSection];
         Assert.AreEqual("helicopter", settings["BackgroundSound"].RawValue);
-        Assert.AreEqual("0.3", settings["RadioEffectsRatio"].RawValue);
+        Assert.AreEqual("0.2", settings["RadioEffectsRatio"].RawValue);
         Assert.AreEqual(ProfilePresets.Helicopter.Settings.Count, settings.SettingCount);
 
         Assert.AreEqual(4, preset["Ptt"]["button"].IntValue);
@@ -111,10 +123,10 @@ public class ProfilePresetsTests
 
         store.CurrentProfileName = "Helicopter";
         Assert.AreEqual("helicopter", store.GetClientSettingString(ProfileSettingsKeys.BackgroundSound));
-        Assert.AreEqual(0.5f, store.GetClientSettingFloat(ProfileSettingsKeys.BackgroundSoundVolume));
-        Assert.AreEqual(0.3f, store.GetClientSettingFloat(ProfileSettingsKeys.RadioEffectsRatio));
-        Assert.AreEqual(20f, store.GetClientSettingFloat(ProfileSettingsKeys.VoiceDistortion));
-        Assert.AreEqual(0f, store.GetClientSettingFloat(ProfileSettingsKeys.VoiceBoost));
+        Assert.AreEqual(0.4f, store.GetClientSettingFloat(ProfileSettingsKeys.BackgroundSoundVolume));
+        Assert.AreEqual(0.4f, store.GetClientSettingFloat(ProfileSettingsKeys.VoiceBoost));
+        Assert.AreEqual(0.2f, store.GetClientSettingFloat(ProfileSettingsKeys.RadioEffectsRatio));
+        Assert.AreEqual(15f, store.GetClientSettingFloat(ProfileSettingsKeys.VoiceDistortion));
         Assert.IsTrue(store.GetCurrentInputProfile().ContainsKey(InputBinding.Ptt), "push-to-talk works at once");
 
         // the default profile keeps its own settings
