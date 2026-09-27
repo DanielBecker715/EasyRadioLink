@@ -115,13 +115,4 @@ public static class VolumeConversionHelper
     {
         return (float)Math.Pow(10, dB / 20.0d);
     }
-    
-    public static double GetTargetdB(double currentDb, double reductionFactor)
-    {
-        if (reductionFactor <= 0) return -144.0; 
-        if (reductionFactor >= 1) return currentDb;
-
-        double dbChange = 10 * Math.Log(reductionFactor, 2);
-        return currentDb + dbChange;
-    }
 }

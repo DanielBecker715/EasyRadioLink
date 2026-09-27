@@ -176,6 +176,15 @@ namespace EasyRadioLink.Server.Properties {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to One speaker per frequency (busy channel lockout).
+        /// </summary>
+        public static string LabelBusyLockout {
+            get {
+                return ResourceManager.GetString("LabelBusyLockout", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to Clean frequencies (no radio effects, MHz).
         /// </summary>
         public static string LabelCleanFreq {
@@ -379,6 +388,15 @@ namespace EasyRadioLink.Server.Properties {
         public static string TooltipArchiveTime {
             get {
                 return ResourceManager.GetString("TooltipArchiveTime", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to While a station is transmitting on a frequency, nobody else can transmit on it - like a real radio with busy channel lockout. Whoever presses push-to-talk on a busy frequency hears a busy tone and must press again once the frequency is free (0.3 s after the last transmission)..
+        /// </summary>
+        public static string TooltipBusyLockout {
+            get {
+                return ResourceManager.GetString("TooltipBusyLockout", resourceCulture);
             }
         }
 

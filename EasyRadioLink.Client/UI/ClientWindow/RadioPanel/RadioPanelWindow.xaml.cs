@@ -9,6 +9,7 @@ using System.Windows.Media;
 using System.Windows.Media.Effects;
 using System.Windows.Threading;
 using Caliburn.Micro;
+using EasyRadioLink.Client.Audio.Managers;
 using EasyRadioLink.Client.Radios;
 using EasyRadioLink.Client.Singletons;
 using EasyRadioLink.Client.Utils;
@@ -25,7 +26,9 @@ namespace EasyRadioLink.Client.UI.ClientWindow.RadioPanel;
 ///         <item>
 ///             Display: frequency on a seven-segment LCD (<c>000.000</c> MHz, two small digits for the part below
 ///             1 kHz), band and modulation (from the <see cref="BandPlan" />), users on the frequency and the name of
-///             the speaker (if the server allows it), TX / RX, the tuning step. The digit the step changes is underlined.
+///             the speaker (if the server allows it), BUSY / TX / RX, the tuning step. The digit the step changes is
+///             underlined. BUSY (busy channel lockout, if the server has it on) is lit while another station uses the
+///             frequency and flashes after a refused push-to-talk press (<see cref="BusyChannelLockout" />).
 ///         </item>
 ///         <item>
 ///             Tuning: the knob (drag in a circle, mouse wheel), the mouse wheel over the display, the ▲ / ▼ keys and the
@@ -68,14 +71,17 @@ public partial class RadioPanelWindow : Window, IHandle<ResetRadioPanelMessage>
 
     private readonly ClientStateSingleton _clientState = ClientStateSingleton.Instance;
     private readonly GlobalSettingsStore _globalSettings = GlobalSettingsStore.Instance;
+    private readonly SyncedServerSettings _serverSettings = SyncedServerSettings.Instance;
 
     private readonly Brush _litBrush;
     private readonly Brush _dimBrush;
     private readonly Brush _txBrush;
     private readonly Brush _rxBrush;
+    private readonly Brush _busyBrush;
 
     private readonly Effect _txGlow;
     private readonly Effect _rxGlow;
+    private readonly Effect _busyGlow;
 
     private readonly DispatcherTimer _updateTimer;
     private readonly DispatcherTimer _entryErrorTimer;
@@ -109,9 +115,11 @@ public partial class RadioPanelWindow : Window, IHandle<ResetRadioPanelMessage>
         _dimBrush = (Brush)FindResource("LcdDimBrush");
         _txBrush = (Brush)FindResource("LcdTxBrush");
         _rxBrush = (Brush)FindResource("LcdRxBrush");
+        _busyBrush = (Brush)FindResource("LcdBusyBrush");
 
         _txGlow = Glow(((SolidColorBrush)_txBrush).Color);
         _rxGlow = Glow(((SolidColorBrush)_rxBrush).Color);
+        _busyGlow = Glow(((SolidColorBrush)_busyBrush).Color);
 
         WindowStartupLocation = WindowStartupLocation.Manual;
         Left = _globalSettings.GetPositionSetting(GlobalSettingsKeys.RadioX).DoubleValue;
@@ -234,6 +242,7 @@ public partial class RadioPanelWindow : Window, IHandle<ResetRadioPanelMessage>
         UnitText.Foreground = _dimBrush;
         StepText.Visibility = Visibility.Hidden;
 
+        SetIndicator(BusyText, false, _busyBrush, _busyGlow);
         SetIndicator(TxText, false, _txBrush, _txGlow);
         SetIndicator(RxText, false, _rxBrush, _rxGlow);
 
@@ -298,6 +307,12 @@ public partial class RadioPanelWindow : Window, IHandle<ResetRadioPanelMessage>
         var receiveState = _clientState.RadioReceivingState[PlayerRadioInfo.RadioId];
         var receiving = receiveState != null && receiveState.IsReceiving;
 
+        // one speaker per frequency: only when the server has the busy channel lockout on
+        var busy = _serverSettings.BusyChannelLockout &&
+                   _clientState.BusyChannel.IsIndicatorLit(frequency, radio.modulation,
+                       BusyChannelLockout.NowMilliseconds);
+
+        SetIndicator(BusyText, busy, _busyBrush, _busyGlow);
         SetIndicator(TxText, transmitting, _txBrush, _txGlow);
         SetIndicator(RxText, receiving, _rxBrush, _rxGlow);
 

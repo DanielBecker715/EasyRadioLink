@@ -37,6 +37,12 @@ namespace EasyRadioLink.Client.Audio.Managers;
 ///             audio to the <see cref="AudioManager" />.
 ///         </item>
 ///         <item>PTT state machine (<see cref="PTTHandler" />, input thread every 40 ms).</item>
+///         <item>
+///             Busy channel lockout (server setting BUSY_CHANNEL_LOCKOUT, <see cref="BusyChannelLockout" />): voice of
+///             another station on the radio's channel is noted on arrival; a PTT press on a busy channel and a lost race
+///             transmit nothing for the rest of the press (busy tone, BUSY on the radio), VOX waits until the channel is
+///             free. A press that transmits nothing does not block the receiver (half-duplex).
+///         </item>
 ///     </list>
 /// </summary>
 public class UDPClientAudioProcessor : IDisposable
@@ -48,6 +54,7 @@ public class UDPClientAudioProcessor : IDisposable
 
     private readonly AudioInputSingleton _audioInputSingleton = AudioInputSingleton.Instance;
     private readonly AudioManager _audioManager;
+    private readonly BusyChannelLockout _busyChannel;
     private readonly ConnectedClientsSingleton _clients = ConnectedClientsSingleton.Instance;
     private readonly ClientStateSingleton _clientStateSingleton = ClientStateSingleton.Instance;
     private readonly GlobalSettingsStore _globalSettings = GlobalSettingsStore.Instance;
@@ -67,6 +74,9 @@ public class UDPClientAudioProcessor : IDisposable
     private ulong _packetNumber = 1;
 
     private volatile bool _ptt;
+
+    // keyed, but the busy channel lockout lets nothing out (refused press, lost race, VOX on a busy channel)
+    private volatile bool _lockoutBlocksTransmit;
     private CancellationTokenSource _stopFlag;
 
     // true while VOX keys the radios (read by CurrentlyBlockedRadios for half-duplex)
@@ -81,6 +91,7 @@ public class UDPClientAudioProcessor : IDisposable
         _voiceSession = voiceSession ?? throw new ArgumentNullException(nameof(voiceSession));
 
         _radioReceivingState = _clientStateSingleton.RadioReceivingState;
+        _busyChannel = _clientStateSingleton.BusyChannel;
     }
 
     // PTT key or VOX is keying the radio
@@ -97,6 +108,8 @@ public class UDPClientAudioProcessor : IDisposable
     {
         _ptt = false;
         _voxActive = false;
+        _lockoutBlocksTransmit = false;
+        _busyChannel.Reset();
         _packetNumber = 1;
 
         // created before the thread starts so Stop() always reaches it
@@ -116,17 +129,26 @@ public class UDPClientAudioProcessor : IDisposable
     }
 
     /// <summary>
-    ///     Half-duplex (server IRL_RADIO_TX): the radio cannot receive while it is transmitting.
+    ///     Half-duplex (server IRL_RADIO_TX): the radio cannot receive while it is transmitting. A press the busy
+    ///     channel lockout refused transmits nothing, so the radio keeps receiving.
     /// </summary>
     private List<int> CurrentlyBlockedRadios()
     {
         var transmitting = new List<int>();
         if (!_serverSettings.GetSettingAsBool(ServerSettingsKeys.IRL_RADIO_TX)) return transmitting;
 
-        if (!IsTransmitKeyed) return transmitting;
+        if (!IsTransmitKeyed || _lockoutBlocksTransmit) return transmitting;
+
+        var radio = _clientStateSingleton.PlayerRadioInfo.Radio;
+        if (!CanTransmit(radio)) return transmitting;
+
+        // just keyed on a busy channel: the next mic frame refuses the press - keep hearing the other station
+        if (_serverSettings.BusyChannelLockout &&
+            _busyChannel.WillRefuseKeyUp(radio.freq, radio.modulation, BusyChannelLockout.NowMilliseconds))
+            return transmitting;
 
         // every modulation is half-duplex (AM, FM and DIGITAL)
-        if (CanTransmit(_clientStateSingleton.PlayerRadioInfo.Radio)) transmitting.Add(PlayerRadioInfo.RadioId);
+        transmitting.Add(PlayerRadioInfo.RadioId);
 
         return transmitting;
     }
@@ -182,6 +204,38 @@ public class UDPClientAudioProcessor : IDisposable
         if (!ready) _voxActive = false;
 
         const int sendingOn = PlayerRadioInfo.RadioId;
+
+        // one speaker per frequency: a press on a busy channel or a lost race transmits nothing (busy tone instead)
+        var blockedByLockout = false;
+        if (sendingRadio != null)
+        {
+            var decision = _busyChannel.Decide(_serverSettings.BusyChannelLockout, _ptt, _voxActive,
+                sendingRadio.freq, sendingRadio.modulation, BusyChannelLockout.NowMilliseconds, out var playBusyTone);
+
+            if (playBusyTone) _audioManager.PlaySoundEffectBusy(sendingOn);
+
+            // only a Transmit decision sends: Blocked is a refused press, a lost race or VOX on a busy channel; Idle
+            // means push-to-talk was released between PTTPressed and here (the PTT thread writes _ptt concurrently)
+            if (decision != BusyChannelLockout.Decision.Transmit)
+            {
+                sendingRadio = null;
+                blockedByLockout = decision == BusyChannelLockout.Decision.Blocked;
+            }
+        }
+        else if (_ptt || _voxActive)
+        {
+            // keyed, but nothing can be sent right now (voice link not ready, radio off or not tuned): the press goes
+            // on - a refused press stays refused until push-to-talk is released
+            _busyChannel.KeyedWithoutTransmitter();
+            blockedByLockout = _busyChannel.IsPressRefused;
+        }
+        else
+        {
+            // released: the next press is a new one
+            _busyChannel.Decide(false, false, false, 0, Modulation.DISABLED, BusyChannelLockout.NowMilliseconds, out _);
+        }
+
+        _lockoutBlocksTransmit = blockedByLockout;
 
         if (sendingRadio != null)
         {
@@ -248,7 +302,8 @@ public class UDPClientAudioProcessor : IDisposable
             {
                 _clientStateSingleton.RadioSendingState.IsSending = false;
 
-                _audioManager.PlaySoundEffectEndTransmit(sendingOn);
+                // a lost race ends with the busy tone, not with the release sound
+                if (!blockedByLockout) _audioManager.PlaySoundEffectEndTransmit(sendingOn);
             }
         }
 
@@ -307,10 +362,29 @@ public class UDPClientAudioProcessor : IDisposable
         // strict checks (the body was authenticated by the UDPVoiceHandler)
         if (!UDPVoicePacket.TryDecode(encodedOpusAudio, true, out var udpVoicePacket)) return;
 
+        // busy channel lockout - before the half-duplex check: a transmitting radio must notice a lost race too
+        NoteVoiceOnChannel(udpVoicePacket);
+
         // nothing is decrypted or held for a frequency this radio does not hear
         if (FindReceivingRadio(udpVoicePacket, out _, out _, out _) == null) return;
 
         _voiceSession.Receiver.Receive(udpVoicePacket, DateTime.UtcNow, frames);
+    }
+
+    /// <summary>
+    ///     Voice of another station (not the own radio check echo) on the radio's channel makes the channel busy and,
+    ///     while transmitting, means a lost race (<see cref="BusyChannelLockout.OnVoiceHeard" />).
+    /// </summary>
+    private void NoteVoiceOnChannel(UDPVoicePacket udpVoicePacket)
+    {
+        var radio = _clientStateSingleton.PlayerRadioInfo.Radio;
+        if (!CanTransmit(radio)) return;
+
+        var frequency = radio.freq;
+        var modulation = radio.modulation;
+        if (!BusyChannelLockout.IsOtherStationOnChannel(udpVoicePacket, _guid, frequency, modulation)) return;
+
+        _busyChannel.OnVoiceHeard(frequency, modulation, BusyChannelLockout.NowMilliseconds);
     }
 
     /// <summary>The radio that hears the packet: its first frequency the radio is tuned to.</summary>
@@ -470,6 +544,8 @@ public class UDPClientAudioProcessor : IDisposable
             _stopFlag?.Cancel();
             _ptt = false;
             _voxActive = false;
+            _lockoutBlocksTransmit = false;
+            _busyChannel.Reset();
             _voiceSession.EndTransmission();
             _clientStateSingleton.RadioSendingState.IsSending = false;
             InputDeviceManager.Instance.StopListening();

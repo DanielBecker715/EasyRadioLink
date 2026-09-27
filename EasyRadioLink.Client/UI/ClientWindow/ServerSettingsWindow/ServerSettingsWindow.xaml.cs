@@ -55,6 +55,8 @@ public partial class ServerSettingsWindow : MetroWindow
         {
             RealRadio.Text = OnOff(settings.GetSettingAsBool(ServerSettingsKeys.IRL_RADIO_TX));
             RadioRXInterference.Text = OnOff(settings.GetSettingAsBool(ServerSettingsKeys.IRL_RADIO_RX_INTERFERENCE));
+            // off on a server before 1.3 (it does not send the setting and locks nothing out)
+            BusyChannelLockout.Text = OnOff(settings.BusyChannelLockout);
             TunedClientCount.Text = OnOff(settings.GetSettingAsBool(ServerSettingsKeys.SHOW_TUNED_COUNT));
             ShowTransmitterName.Text = OnOff(settings.GetSettingAsBool(ServerSettingsKeys.SHOW_TRANSMITTER_NAME));
 

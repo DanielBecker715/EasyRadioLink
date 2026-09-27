@@ -16,7 +16,7 @@
                 SmallChange="5"
                 LargeChange="10"
                 IsSnapToTickEnabled="True"
-                TickFrequency="10"
+                TickFrequency="{Binding TickStep, RelativeSource={RelativeSource AncestorType=UserControl}}"
                 VerticalAlignment="Center"
                 VerticalContentAlignment="Center"
                 Minimum="0"

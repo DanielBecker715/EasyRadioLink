@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Generates the synthesised push-to-talk sounds of EasyRadioLink (no third-party material).
+Generates the synthesised push-to-talk sounds and the busy tone of EasyRadioLink (no third-party material).
 
     python tools/generate-sounds.py [output folder]
 
@@ -17,7 +17,9 @@ without a click; frequency changes inside a note keep the phase continuous.
 
 File names decide where the sounds appear (CachedAudioEffectProvider): RADIO_TRANS_START_*.wav are the push-to-talk
 press / "someone starts talking" sounds, RADIO_TRANS_END_*.wav the release / "someone stops talking" sounds. The
-friendly names ("Chirp", "Roger beep", ...) are defined in CachedAudioEffect.BuildDisplayName.
+friendly names ("Chirp", "Roger beep", ...) are defined in CachedAudioEffect.BuildDisplayName. BUSY_TONE.wav is not
+selectable: only the sender hears it when push-to-talk is refused because another station uses the frequency (busy
+channel lockout, "one speaker per frequency").
 """
 
 import math
@@ -129,6 +131,12 @@ def sounds():
             ("tone", tone([(1046.5, 1046.5, 50.0)])),
             ("gap", silence(15.0)),
             ("tone", tone([(784.0, 784.0, 50.0)]))),
+
+        # push-to-talk refused, the frequency is busy: two short low beeps (A4)
+        "BUSY_TONE.wav": sequence(
+            ("tone", tone([(440.0, 440.0, 80.0)])),
+            ("gap", silence(60.0)),
+            ("tone", tone([(440.0, 440.0, 80.0)]))),
     }
 
 
@@ -152,7 +160,7 @@ def main():
 
     print("%-36s %8s %10s %9s" % ("file", "length", "peak", "RMS"))
     for name in sorted(os.listdir(folder)):
-        if name.upper().startswith("RADIO_TRANS_") and name.lower().endswith(".wav"):
+        if (name.upper().startswith("RADIO_TRANS_") or name.upper() == "BUSY_TONE.WAV") and name.lower().endswith(".wav"):
             length, peak, rms = levels(os.path.join(folder, name))
             print("%-36s %6.0f ms %6.1f dBFS %5.1f dBFS" % (name, length, peak, rms))
 

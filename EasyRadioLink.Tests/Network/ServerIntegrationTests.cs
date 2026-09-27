@@ -34,7 +34,8 @@ namespace EasyRadioLink.Common.Tests.Network;
 ///     The real server (ServerState: TLS sync server + UDP voice router) in-process on a free loopback port, with
 ///     protocol-level test clients built from the Common crypto classes (no audio devices): TLS with a pinned
 ///     identity, SYNC with the UDP key, encrypted UDP, VOICE_KEY and end-to-end encrypted voice.
-///     Alice and Bob are on 27.185 MHz AM, Eve on 446.00625 MHz FM.
+///     Alice and Bob are on 27.185 MHz AM, Eve on 446.00625 MHz FM. The busy channel lockout tests use frequencies of
+///     their own (27.215 / 27.225 MHz), so the hang time of one test never reaches into another.
 /// </summary>
 [TestClass]
 public class ServerIntegrationTests
@@ -43,11 +44,14 @@ public class ServerIntegrationTests
     private const double Cb19 = 27185000;
     private const double RadioCheck = 27405000;
     private const double Pmr = 446006250;
+    private const double Cb21 = 27215000;
+    private const double Cb22 = 27225000;
 
     private static readonly TimeSpan Wait = TimeSpan.FromSeconds(5);
     private static readonly TimeSpan Silence = TimeSpan.FromSeconds(1);
 
     private static string _directory;
+    private static EventAggregator _events;
     private static ServerState _server;
     private static int _port;
     private static KnownServersStore _pins;
@@ -69,7 +73,8 @@ public class ServerIntegrationTests
 
         _pins = new KnownServersStore(Path.Combine(_directory, "client", KnownServersStore.FileName));
 
-        _server = new ServerState(new EventAggregator());
+        _events = new EventAggregator();
+        _server = new ServerState(_events);
 
         // both sockets bound (checked without connecting: every connection counts against the rate limit)
         var deadline = DateTime.UtcNow + TimeSpan.FromSeconds(15);
@@ -792,6 +797,154 @@ public class ServerIntegrationTests
 
         var heard = await TransmitUntilHeardAsync(alice, bob, 3);
         Assert.IsFalse(heard?.Scrambled ?? true, "Bob hears the rest of the transmission");
+    }
+
+    // --- busy channel lockout: one speaker per frequency ---------------------------------------------------------------
+
+    /// <summary>
+    ///     The senders of the voice datagrams <paramref name="listener" /> receives until nothing arrives for
+    ///     <paramref name="quiet" /> (pongs are skipped).
+    /// </summary>
+    private static async Task<List<string>> ReceiveSendersAsync(TestClient listener, TimeSpan quiet)
+    {
+        var senders = new List<string>();
+        while (true)
+        {
+            var datagram = await listener.ReceiveDatagramAsync(quiet);
+            if (datagram == null) return senders;
+
+            Assert.AreEqual(UdpOpenResult.Ok, listener.Transport.Open(datagram, out var body), $"{listener.Name}: hop layer");
+            if (UdpDatagram.IsPing(body)) continue;
+
+            Assert.IsTrue(UDPVoicePacket.TryDecode(body, false, out var packet), $"{listener.Name}: voice packet");
+            senders.Add(packet.Guid);
+        }
+    }
+
+    /// <summary>The sender of the next voice datagram <paramref name="listener" /> receives (pongs are skipped).</summary>
+    private static async Task<string> ReceiveSenderAsync(TestClient listener)
+    {
+        while (true)
+        {
+            var datagram = await listener.ReceiveDatagramAsync(Wait);
+            Assert.IsNotNull(datagram, $"{listener.Name}: a voice datagram");
+
+            Assert.AreEqual(UdpOpenResult.Ok, listener.Transport.Open(datagram, out var body), $"{listener.Name}: hop layer");
+            if (UdpDatagram.IsPing(body)) continue;
+
+            Assert.IsTrue(UDPVoicePacket.TryDecode(body, false, out var packet), $"{listener.Name}: voice packet");
+            return packet.Guid;
+        }
+    }
+
+    /// <summary>Alice, Bob and Carol on <paramref name="frequency" /> AM, each knowing the others' public keys.</summary>
+    private static async Task<(TestClient Alice, TestClient Bob, TestClient Carol)> JoinBusyChannelTrioAsync(
+        string suffix, double frequency)
+    {
+        var alice = new TestClient("Alice" + suffix, frequency, Modulation.AM);
+        var bob = new TestClient("Bob" + suffix, frequency, Modulation.AM);
+        var carol = new TestClient("Carol" + suffix, frequency, Modulation.AM);
+        await alice.JoinAsync(_pins);
+        await bob.JoinAsync(_pins);
+        await carol.JoinAsync(_pins);
+
+        // the transmission keys reach the listeners on the frequency
+        await WaitUntil(() => Knows(alice, bob, frequency, Modulation.AM) && Knows(alice, carol, frequency, Modulation.AM) &&
+                              Knows(bob, alice, frequency, Modulation.AM) && Knows(bob, carol, frequency, Modulation.AM),
+            "client lists with public keys");
+
+        return (alice, bob, carol);
+    }
+
+    [TestMethod]
+    public async Task BusyChannelLockoutLetsOnlyTheFirstSpeakerThroughUntilTheHangTimeIsOver()
+    {
+        var (alice, bob, carol) = await JoinBusyChannelTrioAsync("Busy", Cb21);
+        using var aliceScope = alice;
+        using var bobScope = bob;
+        using var carolScope = carol;
+
+        // Alice presses a moment earlier: once her first frame is routed she holds 27.215 AM. The next frames follow
+        // right away (well within the hang time): two datagrams sent back to back on a FREE channel may be routed in
+        // either order (thread pool), so the test must not wait for silence here.
+        await alice.TransmitAsync(Opus(1), 1);
+        Assert.AreEqual(alice.Guid, await ReceiveSenderAsync(carol), "Carol hears Alice");
+        Assert.AreEqual(alice.Guid, await ReceiveSenderAsync(bob), "Bob hears Alice");
+
+        // both talk at the same time (a frame every 40 ms each): only Alice gets through
+        for (var number = 2UL; number < 14; number++)
+        {
+            await alice.TransmitAsync(Opus((int)number), number);
+            await bob.TransmitAsync(Opus(100 + (int)number), number);
+            await Task.Delay(40);
+        }
+
+        // Alice releases; right away (within the hang time) the channel is still hers
+        await bob.TransmitAsync(Opus(200), 200);
+
+        var atCarol = await ReceiveSendersAsync(carol, Silence);
+        Assert.HasCount(12, atCarol, "every frame of Alice");
+        Assert.IsTrue(atCarol.All(sender => sender == alice.Guid),
+            "none of Bob's frames reach the listener - neither during Alice's transmission nor within the hang time");
+        Assert.IsEmpty(await ReceiveSendersAsync(alice, TimeSpan.FromMilliseconds(200)), "Alice doesn't hear Bob either");
+
+        // what tells Bob's client that it lost the race: it receives Alice on its own frequency while transmitting
+        var atBob = await ReceiveSendersAsync(bob, TimeSpan.FromMilliseconds(200));
+        Assert.HasCount(12, atBob);
+        Assert.IsTrue(atBob.All(sender => sender == alice.Guid));
+
+        // after the hang time Bob is heard - and decrypted
+        await Task.Delay(BusyChannelArbiter.HangTimeMilliseconds + 100);
+        var heard = await TransmitUntilHeardAsync(bob, carol, 300);
+        Assert.IsNotNull(heard, "Carol hears Bob after Alice stopped");
+        Assert.IsFalse(heard.Value.Scrambled);
+        Assert.AreEqual(bob.Guid, heard.Value.Packet.Guid);
+
+        // now Bob holds the channel and Alice is locked out
+        await ReceiveSendersAsync(carol, TimeSpan.FromMilliseconds(100));
+        await bob.TransmitAsync(Opus(400), 400);
+        await alice.TransmitAsync(Opus(401), 401);
+        CollectionAssert.AreEqual(new[] { bob.Guid }, (await ReceiveSendersAsync(carol, Silence)).ToArray());
+    }
+
+    [TestMethod]
+    public async Task WithoutBusyChannelLockoutBothSpeakersAreHeard()
+    {
+        var (alice, bob, carol) = await JoinBusyChannelTrioAsync("Free", Cb22);
+        using var aliceScope = alice;
+        using var bobScope = bob;
+        using var carolScope = carol;
+
+        var settings = ServerSettingsStore.Instance;
+        try
+        {
+            // switched off in the server window: the voice router and the clients pick it up at once
+            settings.SetGeneralSetting(ServerSettingsKeys.BUSY_CHANNEL_LOCKOUT, false);
+            await _events.PublishOnBackgroundThreadAsync(new ServerSettingsChangedMessage());
+            await WaitUntil(() => carol.Received.Any(r =>
+                    r.Message.MsgType == NetworkMessage.MessageType.SERVER_SETTINGS &&
+                    r.Message.ServerSettings != null &&
+                    r.Message.ServerSettings.TryGetValue(nameof(ServerSettingsKeys.BUSY_CHANNEL_LOCKOUT), out var value) &&
+                    value == "False"),
+                "the new setting at the clients");
+
+            for (var number = 1UL; number < 13; number++)
+            {
+                await alice.TransmitAsync(Opus((int)number), number);
+                await bob.TransmitAsync(Opus(100 + (int)number), number);
+                await Task.Delay(40);
+            }
+
+            var atCarol = await ReceiveSendersAsync(carol, Silence);
+            Assert.AreEqual(12, atCarol.Count(sender => sender == alice.Guid), "Alice");
+            Assert.AreEqual(12, atCarol.Count(sender => sender == bob.Guid), "and Bob at the same time, as before 1.3");
+            Assert.HasCount(12, await ReceiveSendersAsync(alice, Silence), "Alice hears Bob");
+        }
+        finally
+        {
+            settings.SetGeneralSetting(ServerSettingsKeys.BUSY_CHANNEL_LOCKOUT, true);
+            await _events.PublishOnBackgroundThreadAsync(new ServerSettingsChangedMessage());
+        }
     }
 
     // --- the real client's identity check (TCPClientHandler) ----------------------------------------------------------

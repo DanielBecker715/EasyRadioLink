@@ -33,8 +33,8 @@ public class ClientSettingsViewModel : PropertyChangedBaseClass
     {
         nameof(TxStartSound), nameof(TxEndSound), nameof(RxStartSound), nameof(RxEndSound),
         nameof(RadioRxSquelchTail), nameof(BackgroundRadioNoiseToggle), nameof(NATORadioToneToggle),
-        nameof(BackgroundSound), nameof(HasBackgroundSound), nameof(BackgroundSoundVolume),
-        nameof(RadioSoundEffectsRatio),
+        nameof(BackgroundSound), nameof(HasBackgroundSound), nameof(BackgroundSoundVolume), nameof(VoiceBoost),
+        nameof(RadioSoundEffectsRatio), nameof(VoiceDistortion), nameof(HasRadioEffects),
         nameof(RadioSoundEffectsClipping), nameof(PerRadioModelEffects), nameof(NoiseGainDB), nameof(HFNoiseGainDB),
         nameof(NATORadioToneVolume), nameof(AmbientEffectToggle), nameof(AmbientEffectVolume), nameof(RadioBalance),
         nameof(AllowRotaryIncrement), nameof(PTTReleaseDelay), nameof(PTTStartDelay),
@@ -48,7 +48,7 @@ public class ClientSettingsViewModel : PropertyChangedBaseClass
         nameof(PlayConnectionSounds), nameof(VOXEnabled),
         nameof(MicDenoise), nameof(IncomingAudioAGC), nameof(IncomingAudioAGCMaxDB), nameof(IncomingAudioAGCTarget),
         nameof(IncomingAudioDenoise),
-        nameof(VOXMinimimumTXTime), nameof(VOXMode), nameof(VOXMinimumRMS),
+        nameof(VOXMinimimumTXTime), nameof(VOXMode), nameof(VOXThresholdPercent),
         nameof(AllowTransmissionsRecording), nameof(RecordTransmissions), nameof(SelectedRecordingFormat),
         nameof(RecordingQuality), nameof(DisallowedAudioTone),
         nameof(ExpandInputDevices), nameof(AllowXInputController), nameof(RadioPanelTaskbarItem),
@@ -296,12 +296,28 @@ public class ClientSettingsViewModel : PropertyChangedBaseClass
         }
     }
 
-    public double VOXMinimumRMS
+    // the voice activation threshold (VOXMinimumDB) is shown in percent of this range
+    private const double VOXThresholdMinDb = -96;
+    private const double VOXThresholdMaxDb = 0;
+
+    /// <summary>
+    ///     Voice level threshold in percent: 0 = -96 dBFS (everything counts as speech), 100 = 0 dBFS; saved in dB
+    ///     (VOXMinimumDB).
+    /// </summary>
+    public float VOXThresholdPercent
     {
-        get => _globalSettings.GetClientSettingDouble(GlobalSettingsKeys.VOXMinimumDB);
+        get
+        {
+            var db = _globalSettings.GetClientSettingDouble(GlobalSettingsKeys.VOXMinimumDB);
+            if (!double.IsFinite(db)) db = VOXThresholdMinDb;
+            return (float)(100 * (Math.Clamp(db, VOXThresholdMinDb, VOXThresholdMaxDb) - VOXThresholdMinDb) /
+                           (VOXThresholdMaxDb - VOXThresholdMinDb));
+        }
         set
         {
-            _globalSettings.SetClientSetting(GlobalSettingsKeys.VOXMinimumDB, value);
+            var percent = float.IsFinite(value) ? Math.Clamp(value, 0f, 100f) : 0f;
+            var db = VOXThresholdMinDb + (VOXThresholdMaxDb - VOXThresholdMinDb) * percent / 100;
+            _globalSettings.SetClientSetting(GlobalSettingsKeys.VOXMinimumDB, Math.Round(db, 1));
             NotifyPropertyChanged();
         }
     }
@@ -681,6 +697,25 @@ public class ClientSettingsViewModel : PropertyChangedBaseClass
             NotifyPropertyChanged();
         }
     }
+    /// <summary>
+    ///     Sender: "Boost my voice" in percent (0 = normal, 100 = +10 dB), applied by everybody who hears you (see
+    ///     <see cref="EasyRadioLink.Common.Audio.Utility.VoiceBoost" />).
+    /// </summary>
+    public float VoiceBoost
+    {
+        get
+        {
+            var value = _globalSettings.ProfileSettingsStore.GetClientSettingFloat(ProfileSettingsKeys.VoiceBoost);
+            return float.IsFinite(value) ? Math.Clamp(value, 0f, 1f) * 100f : 0f;
+        }
+        set
+        {
+            var percent = float.IsFinite(value) ? (float)Math.Round(Math.Clamp(value, 0f, 100f)) : 0f;
+            _globalSettings.ProfileSettingsStore.SetClientSettingFloat(ProfileSettingsKeys.VoiceBoost, percent / 100f);
+            NotifyPropertyChanged();
+        }
+    }
+
     /// <summary>Radio effect strength in percent: 0 = clean voice, 100 = full radio effect (dry/wet ratio).</summary>
     public float RadioSoundEffectsRatio
     {
@@ -694,6 +729,29 @@ public class ClientSettingsViewModel : PropertyChangedBaseClass
         {
             float clamped = Math.Clamp(value, 0f, 100f) / 100f; // 0–100% → 0.0–1.0
             _globalSettings.ProfileSettingsStore.SetClientSettingFloat(ProfileSettingsKeys.RadioEffectsRatio, clamped);
+            NotifyPropertyChanged();
+            NotifyPropertyChanged(nameof(HasRadioEffects));
+        }
+    }
+
+    /// <summary>Radio effects are on (strength above 0) - the distance (weak signal) only applies then.</summary>
+    public bool HasRadioEffects => RadioSoundEffectsRatio > 0f;
+
+    /// <summary>
+    ///     Distance (weak signal) in percent: 0 = right next to you, 100 = very far away. Acts on received voices (and the
+    ///     Audio Preview): multipath fading that swirls through the voice, static, a narrower and harsher voice.
+    /// </summary>
+    public float VoiceDistortion
+    {
+        get
+        {
+            var value = _globalSettings.ProfileSettingsStore.GetClientSettingFloat(ProfileSettingsKeys.VoiceDistortion);
+            return float.IsFinite(value) ? Math.Clamp(value, 0f, 100f) : WeakSignalChannelProvider.DefaultPercent;
+        }
+        set
+        {
+            var percent = float.IsFinite(value) ? (float)Math.Round(Math.Clamp(value, 0f, 100f)) : 0f;
+            _globalSettings.ProfileSettingsStore.SetClientSettingFloat(ProfileSettingsKeys.VoiceDistortion, percent);
             NotifyPropertyChanged();
         }
     }

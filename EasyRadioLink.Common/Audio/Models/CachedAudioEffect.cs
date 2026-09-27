@@ -27,7 +27,8 @@ public class CachedAudioEffect
         NATO_TONE = 4, // NATO_TONE.wav - looping FM tone (user-visible label "FM tone")
         SQUELCH_TAIL_AM = 5, // SQUELCH_TAIL_AM.wav - noise source for the AM squelch tail
         SQUELCH_TAIL_FM = 6, // SQUELCH_TAIL_FM.wav - noise source for the FM squelch tail
-        BACKGROUND = 7 // Background\<name>.wav - background sounds (jet, prop, helicopter, ...)
+        BACKGROUND = 7, // Background\<name>.wav - background sounds (jet, prop, helicopter, ...)
+        BUSY_TONE = 8 // BUSY_TONE.wav - played locally when push-to-talk is refused on a busy channel
     }
 
     public const string AudioEffectsFolderName = "AudioEffects";
@@ -72,7 +73,11 @@ public class CachedAudioEffect
 
                         if (AudioEffectFloat.Length > 0)
                         {
+                            if (audioEffect == AudioEffectTypes.BACKGROUND)
+                                BackgroundSoundLevel.RemoveRumble(AudioEffectFloat, RequiredFormat.SampleRate);
+
                             RMS = VolumeConversionHelper.CalculateRMS(AudioEffectFloat, 0, AudioEffectFloat.Length);
+                            RadioBandRMS = BackgroundSoundLevel.RadioBandRms(AudioEffectFloat, RequiredFormat.SampleRate);
                             Loaded = true;
                             Logger.Info($"Read Effect {audioEffect} from {path} Successfully - Format {reader.WaveFormat}");
                         }
@@ -102,6 +107,9 @@ public class CachedAudioEffect
 
     /// <summary>RMS level of the effect in dBFS.</summary>
     public double RMS { get; }
+
+    /// <summary>RMS level in dBFS in the radio band (see <see cref="BackgroundSoundLevel" />).</summary>
+    public double RadioBandRMS { get; } = double.NegativeInfinity;
 
     /** Needed for list view ***/
     public string Text => DisplayName;

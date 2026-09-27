@@ -94,6 +94,9 @@ public class AudioManager : IHandle<ClientUpdateMessage>
 
     private WebRtcVad _voxDectection;
 
+    // set when WebRtcVad.dll can't be loaded: VOX then never keys the radio (push-to-talk keeps working)
+    private bool _voxUnavailable;
+
     private WasapiCapture _wasapiCapture;
 
     private LowLatencyWasapiOut _waveOut;
@@ -201,7 +204,8 @@ public class AudioManager : IHandle<ClientUpdateMessage>
 
     public void InitMicInput()
     {
-        _passThroughAudioProvider = new ClientAudioProvider();
+        // own voice: radio model, but no distance / weak signal effect (that is the link to the receivers)
+        _passThroughAudioProvider = new ClientAudioProvider(localPassthrough: true);
         
         var device = (MMDevice)_audioInputSingleton.SelectedAudioInput.Value;
 
@@ -525,12 +529,26 @@ public class AudioManager : IHandle<ClientUpdateMessage>
             _voxDectection = null;
         }
 
-        _voxDectection = new WebRtcVad
+        if (_voxUnavailable) return;
+
+        try
         {
-            SampleRate = SampleRate.Is16kHz,
-            FrameLength = FrameLength.Is20ms,
-            OperatingMode = (OperatingMode)_globalSettings.GetClientSettingInt(GlobalSettingsKeys.VOXMode)
-        };
+            _voxDectection = new WebRtcVad
+            {
+                SampleRate = SampleRate.Is16kHz,
+                FrameLength = FrameLength.Is20ms,
+                OperatingMode = (OperatingMode)_globalSettings.GetClientSettingInt(GlobalSettingsKeys.VOXMode)
+            };
+        }
+        catch (Exception ex)
+        {
+            // VOX is optional - a missing WebRtcVad.dll must not stop the radio from working with push-to-talk
+            _voxDectection = null;
+            _voxUnavailable = true;
+            Logger.Error(ex,
+                "Voice activation (VOX) is not available: WebRtcVad.dll could not be loaded. Push-to-talk still works - " +
+                "extract the complete download again to get VOX back");
+        }
     }
 
     public void StopEncoding()
@@ -643,9 +661,12 @@ public class AudioManager : IHandle<ClientUpdateMessage>
         Buffer.BlockCopy(audioFrame, Constants.MIC_SEGMENT_FRAMES, tempBuffferSecond20ms, 0,
             Constants.MIC_SEGMENT_FRAMES);
 
+        if (_voxUnavailable) return false;
+
         var mode = (OperatingMode)_globalSettings.GetClientSettingInt(GlobalSettingsKeys.VOXMode);
 
-        if (_voxDectection.OperatingMode != mode) InitVox();
+        if (_voxDectection == null || _voxDectection.OperatingMode != mode) InitVox();
+        if (_voxDectection == null) return false;
 
         //frame size is 40 - this only supports 20
         var voice = _voxDectection.HasSpeech(tempBuffferFirst20ms) || _voxDectection.HasSpeech(tempBuffferSecond20ms);
@@ -676,5 +697,13 @@ public class AudioManager : IHandle<ClientUpdateMessage>
         var mixers = _radioMixingProvider;
         if (mixers != null && sendingOn >= 0 && sendingOn < mixers.Count)
             mixers[sendingOn]?.PlaySoundEffectEndTransmit();
+    }
+
+    /// <summary>The busy tone (push-to-talk refused on a busy channel) on the radio's output - only you hear it.</summary>
+    public void PlaySoundEffectBusy(int radioId)
+    {
+        var mixers = _radioMixingProvider;
+        if (mixers != null && radioId >= 0 && radioId < mixers.Count)
+            mixers[radioId]?.PlaySoundEffectBusy();
     }
 }

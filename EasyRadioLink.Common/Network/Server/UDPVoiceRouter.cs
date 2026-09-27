@@ -27,10 +27,12 @@ namespace EasyRadioLink.Common.Network.Server;
 ///     (the IP of the client's TCP connection), failed-authentication budget of the source endpoint (not for the
 ///     client's last authenticated endpoint, <see cref="UdpAuthFailureBudget" />), then decryption + replay window
 ///     (<see cref="UdpTransportSession.Open" />), then the per-sender rate limit. A ping is answered with an encrypted
-///     pong; a voice packet must name its authenticated sender, is routed by frequency/modulation as before and
-///     encrypted again for every recipient with the recipient's key and the server's counter.
+///     pong; a voice packet must name its authenticated sender, passes the busy channel lockout (server setting
+///     BUSY_CHANNEL_LOCKOUT, <see cref="BusyChannelArbiter" />: one speaker per frequency), is routed by
+///     frequency/modulation as before and encrypted again for every recipient with the recipient's key and the server's
+///     counter.
 /// </summary>
-internal class UDPVoiceRouter : IHandle<ServerFrequenciesChanged>
+internal class UDPVoiceRouter : IHandle<ServerFrequenciesChanged>, IHandle<ServerSettingsChangedMessage>
 {
     // datagrams that failed authentication are counted and summarised in the log at most this often
     private static readonly TimeSpan DropLogInterval = TimeSpan.FromMinutes(1);
@@ -51,6 +53,12 @@ internal class UDPVoiceRouter : IHandle<ServerFrequenciesChanged>
     private readonly ServerSettingsStore _serverSettings = ServerSettingsStore.Instance;
     private volatile List<double> _testFrequencies = new();
 
+    // one speaker per frequency (BUSY_CHANNEL_LOCKOUT, read again when the server settings change)
+    private readonly BusyChannelArbiter _busyChannels;
+    private volatile bool _busyChannelLockout;
+    private long _busyDropsLogged;
+    private long _lastBusyDropLogMilliseconds = Environment.TickCount64;
+
     private TransmissionLoggingQueue _transmissionLoggingQueue;
 
     // receive loop only
@@ -63,10 +71,15 @@ internal class UDPVoiceRouter : IHandle<ServerFrequenciesChanged>
     {
         _clientsList = clientsList;
         _eventAggregator = eventAggregator;
-        _eventAggregator.SubscribeOnBackgroundThread(this);
+
+        // a holder that has left frees its channel at once (only asked when a packet collides with its channel)
+        _busyChannels = new BusyChannelArbiter(guid => _clientsList.ContainsKey(guid));
 
         var freqString = _serverSettings.GetGeneralSetting(ServerSettingsKeys.TEST_FREQUENCIES).StringValue;
         UpdateTestFrequencies(freqString);
+        UpdateBusyChannelLockout(true);
+
+        _eventAggregator.SubscribeOnBackgroundThread(this);
     }
 
     public Task HandleAsync(ServerFrequenciesChanged message, CancellationToken cancellationToken)
@@ -75,6 +88,37 @@ internal class UDPVoiceRouter : IHandle<ServerFrequenciesChanged>
             UpdateTestFrequencies(message.TestFrequencies);
 
         return Task.CompletedTask;
+    }
+
+    public Task HandleAsync(ServerSettingsChangedMessage message, CancellationToken cancellationToken)
+    {
+        UpdateBusyChannelLockout(false);
+
+        return Task.CompletedTask;
+    }
+
+    private void UpdateBusyChannelLockout(bool starting)
+    {
+        bool enabled;
+        try
+        {
+            enabled = _serverSettings.GetGeneralSetting(ServerSettingsKeys.BUSY_CHANNEL_LOCKOUT).BoolValue;
+        }
+        catch (Exception ex)
+        {
+            Logger.Warn(ex, "Unable to read BUSY_CHANNEL_LOCKOUT - using the default (on)");
+            enabled = true;
+        }
+
+        if (!starting && enabled == _busyChannelLockout) return;
+
+        // switched on again later: nobody holds a channel from before
+        if (!enabled) _busyChannels.Clear();
+
+        _busyChannelLockout = enabled;
+        Logger.Info(enabled
+            ? "Busy channel lockout on: one speaker per frequency"
+            : "Busy channel lockout off: several stations may transmit on one frequency at the same time");
     }
 
     private void UpdateTestFrequencies(string freqString)
@@ -330,6 +374,21 @@ internal class UDPVoiceRouter : IHandle<ServerFrequenciesChanged>
         _lastDropLogUtc = now;
     }
 
+    /// <summary>Debug summary of the packets dropped by the busy channel lockout, at most once per minute.</summary>
+    private void LogBusyChannelDrops()
+    {
+        var now = Environment.TickCount64;
+        var last = Interlocked.Read(ref _lastBusyDropLogMilliseconds);
+        if (now - last < (long)DropLogInterval.TotalMilliseconds) return;
+        if (Interlocked.CompareExchange(ref _lastBusyDropLogMilliseconds, now, last) != last) return;
+
+        var total = _busyChannels.Drops;
+        var dropped = total - Interlocked.Exchange(ref _busyDropsLogged, total);
+        if (dropped > 0 && Logger.IsDebugEnabled)
+            Logger.Debug($"Busy channel lockout: dropped {dropped} voice packets of stations that transmitted on a " +
+                         $"frequency somebody else was using (last {(now - last) / 1000} s)");
+    }
+
     private async Task SendDatagramAsync(UdpClient listener, byte[] datagram, IPEndPoint endPoint)
     {
         try
@@ -353,6 +412,14 @@ internal class UDPVoiceRouter : IHandle<ServerFrequenciesChanged>
             // nobody speaks with another user's id: the packet must name the sender whose key authenticated it
             if (udpVoicePacket.Guid != sender.ClientGuid || udpVoicePacket.OriginalClientGuid != sender.ClientGuid)
                 return;
+
+            // one speaker per frequency: another station holds the channel - nobody hears this packet
+            if (!VoiceRouting.PassesBusyChannelLockout(_busyChannels, _busyChannelLockout, sender, udpVoicePacket,
+                    BusyChannelArbiter.NowMilliseconds))
+            {
+                LogBusyChannelDrops();
+                return;
+            }
 
             var recipients =
                 VoiceRouting.SelectRecipientClients(_clientsList.Values, sender, udpVoicePacket, _testFrequencies);

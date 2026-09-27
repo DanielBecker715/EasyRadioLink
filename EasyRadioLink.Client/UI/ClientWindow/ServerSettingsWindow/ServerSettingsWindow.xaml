@@ -35,6 +35,7 @@
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
 
             <TextBlock Grid.Row="0"
@@ -55,41 +56,49 @@
 
             <TextBlock Grid.Row="2"
                        Style="{StaticResource SettingText}"
-                       Text="{x:Static p:Resources.SrvTunedClientCount}" />
-            <TextBlock x:Name="TunedClientCount"
+                       Text="{x:Static p:Resources.SrvBusyChannelLockout}" />
+            <TextBlock x:Name="BusyChannelLockout"
                        Grid.Row="2"
                        Grid.Column="1"
                        Style="{StaticResource InfoValue}" />
 
             <TextBlock Grid.Row="3"
                        Style="{StaticResource SettingText}"
-                       Text="{x:Static p:Resources.SrvShowTransmitterName}" />
-            <TextBlock x:Name="ShowTransmitterName"
+                       Text="{x:Static p:Resources.SrvTunedClientCount}" />
+            <TextBlock x:Name="TunedClientCount"
                        Grid.Row="3"
                        Grid.Column="1"
                        Style="{StaticResource InfoValue}" />
 
             <TextBlock Grid.Row="4"
                        Style="{StaticResource SettingText}"
-                       Text="{x:Static p:Resources.SrvTestFrequencies}" />
-            <TextBlock x:Name="TestFrequencies"
+                       Text="{x:Static p:Resources.SrvShowTransmitterName}" />
+            <TextBlock x:Name="ShowTransmitterName"
                        Grid.Row="4"
                        Grid.Column="1"
                        Style="{StaticResource InfoValue}" />
 
             <TextBlock Grid.Row="5"
                        Style="{StaticResource SettingText}"
-                       Text="{x:Static p:Resources.SrvCleanFrequencies}" />
-            <TextBlock x:Name="CleanFrequencies"
+                       Text="{x:Static p:Resources.SrvTestFrequencies}" />
+            <TextBlock x:Name="TestFrequencies"
                        Grid.Row="5"
                        Grid.Column="1"
                        Style="{StaticResource InfoValue}" />
 
             <TextBlock Grid.Row="6"
                        Style="{StaticResource SettingText}"
+                       Text="{x:Static p:Resources.SrvCleanFrequencies}" />
+            <TextBlock x:Name="CleanFrequencies"
+                       Grid.Row="6"
+                       Grid.Column="1"
+                       Style="{StaticResource InfoValue}" />
+
+            <TextBlock Grid.Row="7"
+                       Style="{StaticResource SettingText}"
                        Text="{x:Static p:Resources.SrvServerVersion}" />
             <TextBlock x:Name="ServerVersion"
-                       Grid.Row="6"
+                       Grid.Row="7"
                        Grid.Column="1"
                        Style="{StaticResource InfoValue}" />
         </Grid>

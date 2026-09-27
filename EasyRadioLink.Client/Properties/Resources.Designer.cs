@@ -267,7 +267,7 @@ namespace EasyRadioLink.Client.Properties {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to Audio processing, voice activation details, recording, effect details, controllers, profiles.
+        ///   Looks up a localized string similar to Audio processing, voice activation details, recording, effect details, controllers, radio window.
         /// </summary>
         public static string AdvancedSettingsSubtitle {
             get {
@@ -2161,6 +2161,15 @@ namespace EasyRadioLink.Client.Properties {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to One speaker per frequency (busy channel lockout).
+        /// </summary>
+        public static string SrvBusyChannelLockout {
+            get {
+                return ResourceManager.GetString("SrvBusyChannelLockout", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to Clean frequencies (no radio effects).
         /// </summary>
         public static string SrvCleanFrequencies {
@@ -2692,6 +2701,24 @@ namespace EasyRadioLink.Client.Properties {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to Makes your voice louder for everybody who hears you, so it stands out more from your background sound and the static. 0% = normal, 100% = +10 dB (loud peaks are rounded off smoothly)..
+        /// </summary>
+        public static string ToolTipVoiceBoost {
+            get {
+                return ResourceManager.GetString("ToolTipVoiceBoost", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to How far away other stations sound: fading that swirls through the voice, more static, a narrower and harsher voice. 0% = right next to you.
+        /// </summary>
+        public static string ToolTipVoiceDistortion {
+            get {
+                return ResourceManager.GetString("ToolTipVoiceDistortion", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Voice connection (UDP) to the server.
         /// </summary>
         public static string ToolTipVoiceStatus {
@@ -2719,7 +2746,7 @@ namespace EasyRadioLink.Client.Properties {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to Minimum loudness that counts as speech.
+        ///   Looks up a localized string similar to Minimum loudness that counts as speech: the higher, the louder you have to speak to start a transmission (0% = -96 dBFS, 100% = 0 dBFS).
         /// </summary>
         public static string ToolTipVOXThreshold {
             get {
@@ -2781,6 +2808,24 @@ namespace EasyRadioLink.Client.Properties {
             }
         }
 
+        /// <summary>
+        ///   Looks up a localized string similar to Boost my voice.
+        /// </summary>
+        public static string VoiceBoost {
+            get {
+                return ResourceManager.GetString("VoiceBoost", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Distance (weak signal).
+        /// </summary>
+        public static string VoiceDistortion {
+            get {
+                return ResourceManager.GetString("VoiceDistortion", resourceCulture);
+            }
+        }
+        
         /// <summary>
         ///   Looks up a localized string similar to Voice.
         /// </summary>
@@ -2850,24 +2895,6 @@ namespace EasyRadioLink.Client.Properties {
         public static string VOXMinimumRMS {
             get {
                 return ResourceManager.GetString("VOXMinimumRMS", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to Higher.
-        /// </summary>
-        public static string VOXMinimumRMSHigher {
-            get {
-                return ResourceManager.GetString("VOXMinimumRMSHigher", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to Lower.
-        /// </summary>
-        public static string VOXMinimumRMSLower {
-            get {
-                return ResourceManager.GetString("VOXMinimumRMSLower", resourceCulture);
             }
         }
 
@@ -3021,6 +3048,15 @@ namespace EasyRadioLink.Client.Properties {
         public static string ToolTipUsersOnFrequency {
             get {
                 return ResourceManager.GetString("ToolTipUsersOnFrequency", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Busy: another station is transmitting on this frequency. Push-to-talk is refused while it is busy - release it and press again when the frequency is free..
+        /// </summary>
+        public static string ToolTipRadioBusy {
+            get {
+                return ResourceManager.GetString("ToolTipRadioBusy", resourceCulture);
             }
         }
     }

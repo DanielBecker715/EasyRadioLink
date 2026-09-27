@@ -76,7 +76,10 @@ public enum GlobalSettingsKeys
 
     AutoOpenRadioPanel, // open the radio window automatically after connecting
 
-    SettingsAdvancedExpanded // Settings tab: the "Advanced settings" section is expanded
+    SettingsAdvancedExpanded, // Settings tab: the "Advanced settings" section is expanded
+
+    CurrentProfile, // the active profile (active again after a restart)
+    ProfilePresetsCreated // ready-made profiles created once in this settings folder (comma separated, see ProfilePresets)
 }
 
 /// <summary>
@@ -158,7 +161,8 @@ public class GlobalSettingsStore
 
     private static readonly int CurrentVersion = 1;
 
-    private readonly Dictionary<string, string> defaultGlobalSettings = new()
+    /// <summary>The value a missing setting of global.cfg starts with.</summary>
+    internal static readonly Dictionary<string, string> DefaultGlobalSettings = new()
     {
         { GlobalSettingsKeys.Version.ToString(), "0" },
         { GlobalSettingsKeys.RadioPanelTaskbarHide.ToString(), "false" },
@@ -213,15 +217,18 @@ public class GlobalSettingsStore
 
         { GlobalSettingsKeys.VOX.ToString(), "false" },
         { GlobalSettingsKeys.VOXMode.ToString(), "3" },
-        { GlobalSettingsKeys.VOXMinimumTime.ToString(), "300" },
-        { GlobalSettingsKeys.VOXMinimumDB.ToString(), "-59.0" },
+        { GlobalSettingsKeys.VOXMinimumTime.ToString(), "700" },
+        { GlobalSettingsKeys.VOXMinimumDB.ToString(), "-38.4" }, // 60 % of the slider (-96 .. 0 dB)
 
 
         { GlobalSettingsKeys.AllowXInputController.ToString(), "false" },
 
         { GlobalSettingsKeys.AutoOpenRadioPanel.ToString(), "true" },
 
-        { GlobalSettingsKeys.SettingsAdvancedExpanded.ToString(), "false" }
+        { GlobalSettingsKeys.SettingsAdvancedExpanded.ToString(), "false" },
+
+        { GlobalSettingsKeys.CurrentProfile.ToString(), "default" },
+        { GlobalSettingsKeys.ProfilePresetsCreated.ToString(), "" }
     };
 
     private readonly Logger Logger = LogManager.GetCurrentClassLogger();
@@ -479,11 +486,11 @@ public class GlobalSettingsStore
 
         if (!_configuration[section].Contains(setting))
         {
-            if (defaultGlobalSettings.ContainsKey(setting))
+            if (DefaultGlobalSettings.ContainsKey(setting))
             {
                 //save
                 _configuration[section]
-                    .Add(new SharpConfig.Setting(setting, defaultGlobalSettings[setting]));
+                    .Add(new SharpConfig.Setting(setting, DefaultGlobalSettings[setting]));
 
                 Save();
             }

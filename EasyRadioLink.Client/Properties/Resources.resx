@@ -187,7 +187,7 @@
     <value>Advanced settings</value>
   </data>
   <data name="AdvancedSettingsSubtitle" xml:space="preserve">
-    <value>Audio processing, voice activation details, recording, effect details, controllers, profiles</value>
+    <value>Audio processing, voice activation details, recording, effect details, controllers, radio window</value>
   </data>
   <data name="AllowRotaryIncrement" xml:space="preserve">
     <value>Rotary style frequency steps</value>
@@ -679,7 +679,7 @@ This client: protocol {2} (servers with protocol {3} or newer are supported)</va
     <value>Profiles</value>
   </data>
   <data name="ProfileHint" xml:space="preserve">
-    <value>A profile holds your key bindings (Controls tab) and the radio settings: the radio sounds and effects, the background sound, the push-to-talk delays, rotary tuning and the radio balance. All other settings apply to every profile.</value>
+    <value>A profile holds your key bindings (Controls tab) and the radio settings: the radio sounds and effects, the background sound, the voice boost, the push-to-talk delays, rotary tuning and the radio balance. Switch between them here, e.g. to the ready-made &quot;Helicopter&quot; profile - the one you choose stays active after a restart. All other settings apply to every profile.</value>
   </data>
   <data name="ProfileNamePrompt" xml:space="preserve">
     <value>Profile name</value>
@@ -757,7 +757,7 @@ This client: protocol {2} (servers with protocol {3} or newer are supported)</va
     <value>Radio Sounds</value>
   </data>
   <data name="RadioSoundsProfileNotice" xml:space="preserve">
-    <value>These settings belong to the profile "{0}" (Advanced settings &gt; Profiles).</value>
+    <value>These settings belong to the profile "{0}".</value>
   </data>
   <data name="RadioTab" xml:space="preserve">
     <value>Radio</value>
@@ -851,6 +851,9 @@ This client: protocol {2} (servers with protocol {3} or newer are supported)</va
   </data>
   <data name="SpeakerLabel" xml:space="preserve">
     <value>Speakers</value>
+  </data>
+  <data name="SrvBusyChannelLockout" xml:space="preserve">
+    <value>One speaker per frequency (busy channel lockout)</value>
   </data>
   <data name="SrvCleanFrequencies" xml:space="preserve">
     <value>Clean frequencies (no radio effects)</value>
@@ -1030,6 +1033,12 @@ The password is sent over the encrypted connection, after the server's identity 
   <data name="ToolTipSpeakerBoost" xml:space="preserve">
     <value>Boosts all received audio</value>
   </data>
+  <data name="ToolTipVoiceBoost" xml:space="preserve">
+    <value>Makes your voice louder for everybody who hears you, so it stands out more from your background sound and the static. 0% = normal, 100% = +10 dB (loud peaks are rounded off smoothly).</value>
+  </data>
+  <data name="ToolTipVoiceDistortion" xml:space="preserve">
+    <value>How far away other stations sound: fading that swirls through the voice, more static, a narrower and harsher voice. 0% = right next to you.</value>
+  </data>
   <data name="ToolTipVoiceStatus" xml:space="preserve">
     <value>Voice connection (UDP) to the server</value>
   </data>
@@ -1040,7 +1049,7 @@ The password is sent over the encrypted connection, after the server's identity 
     <value>The higher the sensitivity the less likely speech is missed, but the higher the chance that noise starts a transmission</value>
   </data>
   <data name="ToolTipVOXThreshold" xml:space="preserve">
-    <value>Minimum loudness that counts as speech</value>
+    <value>Minimum loudness that counts as speech: the higher, the louder you have to speak to start a transmission (0% = -96 dBFS, 100% = 0 dBFS).</value>
   </data>
   <data name="ValueNo" xml:space="preserve">
     <value>No</value>
@@ -1059,6 +1068,12 @@ The password is sent over the encrypted connection, after the server's identity 
   </data>
   <data name="ValueYes" xml:space="preserve">
     <value>Yes</value>
+  </data>
+  <data name="VoiceBoost" xml:space="preserve">
+    <value>Boost my voice</value>
+  </data>
+  <data name="VoiceDistortion" xml:space="preserve">
+    <value>Distance (weak signal)</value>
   </data>
   <data name="VOIPConnectionStatusLabel" xml:space="preserve">
     <value>Voice</value>
@@ -1083,12 +1098,6 @@ The password is sent over the encrypted connection, after the server's identity 
   </data>
   <data name="VOXMinimumRMS" xml:space="preserve">
     <value>Voice level threshold</value>
-  </data>
-  <data name="VOXMinimumRMSHigher" xml:space="preserve">
-    <value>Higher</value>
-  </data>
-  <data name="VOXMinimumRMSLower" xml:space="preserve">
-    <value>Lower</value>
   </data>
   <data name="VOXMode" xml:space="preserve">
     <value>Voice detection sensitivity</value>
@@ -1140,5 +1149,8 @@ The password is sent over the encrypted connection, after the server's identity 
   </data>
   <data name="ToolTipUsersOnFrequency" xml:space="preserve">
     <value>Other users on this frequency</value>
+  </data>
+  <data name="ToolTipRadioBusy" xml:space="preserve">
+    <value>Busy: another station is transmitting on this frequency. Push-to-talk is refused while it is busy - release it and press again when the frequency is free.</value>
   </data>
 </root>

@@ -115,4 +115,9 @@
             <Generator>MSBuild:Compile</Generator>
         </Page>
     </ItemGroup>
+    <!-- WebRtcVadSharp only loads WebRtcVad.dll from the program folder. A build puts it next to the exe, but a publish
+         only copies it to runtimes/<rid>/native - so copy the built one next to the published exe as well. -->
+    <Target Name="CopyWebRtcVadNextToPublishedExe" AfterTargets="Publish">
+        <Copy SourceFiles="$(OutDir)WebRtcVad.dll" DestinationFolder="$(PublishDir)" Condition="Exists('$(OutDir)WebRtcVad.dll')" />
+    </Target>
 </Project>

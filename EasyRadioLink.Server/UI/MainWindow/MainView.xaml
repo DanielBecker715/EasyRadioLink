@@ -113,6 +113,9 @@
                     <CheckBox IsChecked="{Binding RadioInterference}"
                               Content="{x:Static p:Resources.LabelRealRx}"
                               ToolTip="{x:Static p:Resources.TooltipRealRx}" />
+                    <CheckBox IsChecked="{Binding BusyChannelLockout}"
+                              Content="{x:Static p:Resources.LabelBusyLockout}"
+                              ToolTip="{x:Static p:Resources.TooltipBusyLockout}" />
                 </StackPanel>
             </GroupBox>
 

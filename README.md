@@ -1,8 +1,8 @@
 # EasyRadioLink
 
 EasyRadioLink is a standalone digital radio for Windows. Users connect to an EasyRadioLink server, tune their radio
-to a frequency and talk to everybody on that frequency, with the sound of real radios: band-pass filters, static,
-squelch tails, key clicks, tones, half-duplex behaviour and interference.
+to a frequency and talk to everybody on that frequency, with the sound and the rules of real radios: band-pass
+filters, static, squelch tails, key clicks, tones, one speaker per frequency, half-duplex behaviour and interference.
 
 It needs no game or other software: a group of friends, a club, a flight-sim squadron, an airsoft or role-play team
 simply runs a server and connects.
@@ -13,17 +13,26 @@ simply runs a server and connects.
 - One radio, 1.000 - 999.999 MHz: as many channels as there are frequencies. The frequency decides the band,
   the modulation (AM, FM or digital) and the radio sound (see [Band plan](#band-plan)).
 - Radio window with a seven-segment display, a tuning knob (drag, mouse wheel or arrow keys), step keys, STEP
-  (1 kHz - 100 MHz), direct entry (double-click the display), volume knob, TX/RX indicators with the transmitter's
-  name and the number of users on the frequency.
+  (1 kHz - 100 MHz), direct entry (double-click the display), volume knob, BUSY/TX/RX indicators with the
+  transmitter's name and the number of users on the frequency.
+- One speaker per frequency, like real radios with busy channel lockout: while somebody is talking, the others can't
+  (a short busy tone tells you the frequency is in use; see [The radio](#the-radio)).
 - The radio remembers its frequency and volume between sessions.
 
 **Radio sound**
 - Radio sound models per band (CB, walkie-talkie, airband, tactical, HF, vintage tube, digital). Customise them as
   JSON effect chains ([docs/radio-models.md](docs/radio-models.md)).
-- Frequency-dependent static and HF noise, squelch tail and FM tone.
+- Frequency-dependent static and HF noise, FM tone and an optional squelch tail (off by default).
+- *Distance (weak signal)* (0 - 100 %, default 35 %): other stations sound far away, like a long-distance or field
+  radio link - fading that swirls through the voice, static that breathes up in the fades (FM: hiss that surges up),
+  a narrower, harsher voice; slow deep fading and a faint whistle below 30 MHz, gritty "secure voice" coding on DIG.
+  No crackle, no dropouts.
 - Radio sounds of your choice when you press / release push-to-talk and when someone starts / stops talking: clicks,
   chirp, beeps, roger beep and more - or none (see [Settings](#settings)).
-- Optional background sound (jet, prop or helicopter) that the other stations hear behind your voice.
+- Optional background sound (jet, prop or helicopter) that the other stations hear behind your voice, and *Boost my
+  voice* to make your voice stand out from it.
+- Profiles with their own radio sounds, background sound and key bindings - including a ready-made *Helicopter*
+  profile; switch at the top of the Settings tab.
 
 **Controls**
 - Push-to-talk, frequency steps and volume on keyboard, mouse, joysticks/HOTAS (DirectInput) and gamepads (XInput).
@@ -39,7 +48,8 @@ simply runs a server and connects.
 **Server**
 - Server with a window for Windows, plus a command-line server for Windows and Linux (x64).
 - Optional server password, radio check (echo) frequencies, clean frequencies without radio effects,
-  half-duplex radios and interference of simultaneous transmissions.
+  one speaker per frequency (busy channel lockout, on by default), half-duplex radios and interference of
+  simultaneous transmissions.
 - Mute/kick/ban, client list export, transmission log, UPnP port forwarding and an optional HTTP admin API.
 
 ## Download
@@ -136,6 +146,7 @@ starts without options keep the settings. On/off options take a value: `--half-d
 | `--clean-frequencies` | `CLEAN_FREQUENCIES` | empty | Frequencies in MHz that are played without radio effects. |
 | `--half-duplex` | `IRL_RADIO_TX` | `false` | Half-duplex radios: a radio cannot receive while it transmits. |
 | `--radio-interference` | `IRL_RADIO_RX_INTERFERENCE` | `false` | Simultaneous transmissions on one frequency interfere. |
+| `--busy-lockout` | `BUSY_CHANNEL_LOCKOUT` | `true` | One speaker per frequency (busy channel lockout): while a station transmits on a frequency, nobody else can transmit on it until 0.3 s after its last transmission. |
 | `--show-tuned-count` | `SHOW_TUNED_COUNT` | `true` | Users see how many people are tuned to their frequency. |
 | `--show-transmitter-name` | `SHOW_TRANSMITTER_NAME` | `false` | Users see who is transmitting. |
 | `--client-export` | `CLIENT_EXPORT_ENABLED` | `false` | Write the connected clients to a JSON file every 5 seconds. |
@@ -308,9 +319,16 @@ the **Radio** tab and the *Show / hide the radio* hotkey open it at any time. It
   the frame flash and the entry stays open.
 - **VOL**: the small knob sets the volume (drag or mouse wheel).
 - **Display**: the frequency in seven-segment digits (digits below 1 kHz appear small, e.g. the `75` of
-  446.19375), the band, the modulation (AM / FM / DIG), `TX` while you transmit, `RX` while you receive, the
-  transmitter's name and the number of users on the frequency (when the server allows them) and the step. Without a
-  connection it shows `NO LINK` and the controls are disabled.
+  446.19375), the band, the modulation (AM / FM / DIG), `BUSY` while another station uses the frequency, `TX` while
+  you transmit, `RX` while you receive, the transmitter's name and the number of users on the frequency (when the
+  server allows them) and the step. Without a connection it shows `NO LINK` and the controls are disabled.
+- **One speaker per frequency** (busy channel lockout; the server has it on unless its admin switched it off - see
+  **Server Info**): while somebody is talking on your frequency, `BUSY` is lit and you can't transmit. If you press
+  push-to-talk then, you hear a short busy tone (two low beeps, only you hear it), `BUSY` flashes and nothing is sent
+  for the whole press - release and press again once the frequency is free (0.3 s after the other station stopped).
+  If two stations press at the same moment, the server lets the first one through; the other one hears the busy tone
+  and stops transmitting. With voice activation (VOX) nothing is sent while the frequency is busy; you hear the busy
+  tone at most once per second. The radio check echo of your own voice never counts as busy.
 - Drag the radio by its case; the grip at the bottom right scales it. Position and size are remembered.
 
 The **Controls** tab assigns keys or buttons to push-to-talk, frequency up / down (one binding per step, 100 MHz to
@@ -320,23 +338,55 @@ The **Controls** tab assigns keys or buttons to push-to-talk, frequency up / dow
 
 The **Settings** tab shows the everyday settings first:
 
+- **Profile**: the active profile, and *New*, *Copy*, *Rename* and *Delete*. A profile holds your key bindings and the
+  radio settings (radio sounds and effects, background sound, voice boost, push-to-talk delays, rotary tuning, radio
+  balance); all other settings apply to every profile. The profile you choose stays active after a restart. Ready
+  made: **Helicopter** (helicopter background sound at 40 %, *Boost my voice* 40 %, radio effect strength 20 %,
+  distance 15 %; created once with the key bindings of your default profile - delete or rename it as you like, it
+  does not come back).
 - **Radio Sounds**: the sound *When I press push-to-talk*, *When I release push-to-talk*, *When someone starts
   talking* and *When someone stops talking* - *Click*, *Soft click*, *Chirp* and *Key-up beep* (start sounds),
   *Roger beep*, *Double beep* and *Three-tone beep* (end sounds), *Fancy Release* and *Almost Fancy* (both), or
   *Off* (default: *Fancy Release* when a transmission starts, *Almost Fancy* when it ends). The ▶ button next to
   each plays the chosen sound on your speakers, also without a connection. Only you hear
   your push-to-talk sounds; the others hear what they chose for someone starting / stopping to talk. A start sound
-  is played before the received voice, so a long one delays the voice by its length. Below: squelch tail, radio
-  static, FM tone, your background sound and its volume, and the radio effect strength.
+  is played before the received voice, so a long one delays the voice by its length. Below: squelch tail (the
+  short "kssht" when an AM / FM transmission ends; off by default, profiles that already have the setting keep it),
+  radio static, FM tone, your background sound and its volume, *Boost my voice*, the radio effect strength and the
+  distance.
+- **Boost my voice** (0 - 100 %, default 0 %) makes your voice louder for everybody who hears you, so it stands out
+  more from your background sound and the static: +10 dB at 100 %; loud peaks are rounded off smoothly instead of
+  clipping. Everybody normalises the voices they receive, so a louder microphone would change nothing - the boost is
+  sent with your background sound and applied by the listeners (not on clean frequencies). Listeners with 1.1 / 1.2,
+  or on a 1.1 / 1.2 server, hear you without it.
+- **Distance (weak signal)** (0 - 100 %, default 35 %) makes the stations you receive sound far away - the sound of a
+  long-distance or field radio link rather than a clean voice with effects on top:
+  - *Multipath*: the signal also arrives over other paths, a fraction of a millisecond later and with a slowly
+    drifting phase, so notches swim through the voice - the watery, swirling sound of distant radio.
+  - *Weak signal*: the signal fades, static comes up, and the receiver's automatic gain control pulls the static up
+    in the fades, so it breathes. The voice never cuts out - there is no crackle and there are no dropouts.
+  - *Field radio voice*: narrower and harsher, like a military handset (about 450 Hz - 2.6 kHz at 100 %, a honky mid
+    resonance, soft overdrive - at the same loudness).
+  - *The band sets the character*: below 30 MHz (HF, CB, MW) slow, deep fading, the strongest swirl and soft static,
+    above 50 % also a faint whistle of a distant station drifting in and out; AM on VHF / UHF (AIR, UHF AM) a fast
+    flutter; FM (VHF, FM, PMR, UHF FM) keeps the voice level, but a bright hiss surges up whenever the signal fades
+    below the FM threshold - the typical tactical radio sound; on the DIG band no static and no fading, the voice gets
+    the gritty, buzzy sound of CVSD "secure voice" coding instead.
+
+  Voice to static is about 24 dB at 35 % (clearly far away, easy to understand), 14 dB at 70 % and 7 dB at 100 %
+  (very far away: the voice swims in the static, but stays understandable). It applies to everything you receive
+  (also the radio check echo), to the whole voice at any radio effect strength (the clean share of that mix
+  included), but not on clean frequencies and not when the radio effect strength is 0 %; the squelch tail and the
+  start / end sounds stay clean, and so does your own voice on the mic output device. The **Audio Preview** on the
+  Radio tab uses it too, so you can tune it while you hear yourself.
 - **General**: open the radio when connected, show who is transmitting, minimise to the system tray, start
   minimised, connect / disconnect sounds and voice activation (VOX).
 
 Everything else is under **Advanced settings** (closed until you open it; EasyRadioLink remembers whether it is
-open): microphone and incoming audio (noise suppression, automatic gain control), voice activation details,
-recording, radio effect details (clipping, the radio sound of the band, static levels, FM tone volume, the
-background sounds of other users, radio balance), push-to-talk delays and controllers, the radio window, profiles
-and *Run as administrator*. A profile holds your key bindings and the radio settings (radio sounds and effects,
-background sound, push-to-talk delays, rotary tuning, radio balance); all other settings apply to every profile.
+open): microphone and incoming audio (noise suppression, automatic gain control), voice activation details (voice
+level threshold, default 60 %; minimum transmission length, default 700 ms), recording, radio effect details
+(clipping, the radio sound of the band, static levels, FM tone volume, the background sounds of other users, radio
+balance), push-to-talk delays and controllers, the radio window and *Run as administrator*.
 
 ### Band plan
 

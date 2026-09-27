@@ -60,7 +60,7 @@ REQUIREMENTS
 --------------
   1. Radio tab > Audio Devices: choose your microphone and your speakers or
      headset. "Audio Preview" lets you hear your own voice with the radio
-     sound.
+     sound (including the distance setting, see below).
   2. Controls tab: assign a key, mouse button or joystick button to
      "Push-To-Talk (PTT)".
   3. Radio tab > Connection: enter your name and the server address, for
@@ -89,9 +89,10 @@ REQUIREMENTS
   - Double-click the display (or press Enter) to type a frequency in MHz,
     for example 446.19375 (446,19375 works too). Enter sets it, Esc cancels.
   - VOL: the small knob sets the volume (drag it up / down or use the wheel).
-  - The display shows the band and the modulation, TX while you transmit, RX
-    while you receive, the name of the speaker and the number of users on the
-    frequency (if the server allows it).
+  - The display shows the band and the modulation, BUSY while another
+    station uses the frequency, TX while you transmit, RX while you receive,
+    the name of the speaker and the number of users on the frequency (if the
+    server allows it).
   - Drag the radio by its case, resize it with the corner at the bottom
     right. Without a connection the display shows NO LINK.
   - Controls tab: besides Push-To-Talk you can assign keys or buttons to
@@ -115,23 +116,63 @@ REQUIREMENTS
   The radio starts on 27.185 MHz (CB channel 19) and remembers its frequency
   and volume.
 
+  One speaker per frequency: like a real radio with busy channel lockout,
+  you can't transmit while somebody else is talking on your frequency (BUSY
+  is lit). If you press push-to-talk then, you hear a short busy tone (two
+  low beeps, only you hear it), BUSY flashes and nothing is sent for the
+  whole press - release and press again when the frequency is free (0.3 s
+  after the other station stopped). If two stations press at the same
+  moment, the first one gets through and the other one hears the busy tone.
+  With voice activation (VOX) nothing is sent while the frequency is busy.
+  The server decides this; its admin can switch it off ("Server Info" shows
+  whether it is on).
+
   Radio check: on a server with default settings, whatever you transmit on
   27.405 MHz (CB channel 40) or 446.19375 MHz (PMR channel 16) is sent back
   to you, so you can hear how you sound.
 
-  Settings tab: at the top you choose the radio sounds - the sound when you
-  press and when you release push-to-talk, and when someone starts and stops
-  talking: Click, Soft click, Chirp, Key-up beep, Roger beep, Double beep,
-  Three-tone beep, Fancy Release, Almost Fancy or Off (default: Fancy
-  Release at the start, Almost Fancy at the end). The play button next
+  Settings tab: at the top you choose the profile. A profile holds your key
+  bindings and the radio settings (radio sounds and effects, background
+  sound, voice boost); the one you choose stays active after a restart.
+  Ready-made: "Helicopter" (helicopter background at 40 %, voice boost
+  40 %, radio effect strength 20 %, distance 15 %). Below that you choose
+  the radio sounds - the sound when you press and when you release
+  push-to-talk, and when someone starts and stops talking: Click, Soft
+  click, Chirp, Key-up beep, Roger beep, Double beep, Three-tone beep,
+  Fancy Release, Almost Fancy or Off (default: Fancy Release at the
+  start, Almost Fancy at the end). The play button next
   to each lets you listen, also without a connection. Only you hear your
   push-to-talk sounds; the others hear the sounds they chose. Below that:
-  squelch tail, radio static, FM tone, your background sound, the radio
-  effect strength, and general options such as opening the radio when
-  connected and voice activation (VOX).
+  squelch tail (the short "kssht" when an AM/FM transmission ends - off by
+  default; profiles that already have the setting keep it), radio static,
+  FM tone, your background sound, "Boost my voice" (makes your voice louder
+  for everybody who hears you, so it stands out from your background sound
+  and the static; up to +10 dB), the radio effect strength and the
+  distance, and general options such as opening the radio when connected
+  and voice activation (VOX).
+
+  Distance (weak signal) (0-100 %, default 35 %) makes the stations you
+  receive sound far away, like a long-distance or field radio link: the
+  signal arrives over several paths, so notches swim through the voice
+  (the watery, swirling sound of distant radio); it fades, static comes up
+  and breathes with the receiver's automatic gain control; the voice gets
+  narrower and harsher, like a military handset. Below 30 MHz (HF, CB, MW)
+  the fading is slow and deep, above 50 % with a faint whistle of a distant
+  station; AM on VHF/UHF flutters fast; FM keeps the voice level, but a
+  bright hiss surges up whenever the signal fades; on the DIG band there is
+  no static or fading, the voice gets the gritty sound of "secure voice"
+  coding instead. No crackle, no dropouts. Voice to static is about 24 dB
+  at 35 % (easy to understand), 14 dB at 70 % and 7 dB at 100 % (the voice
+  swims in the static but stays understandable). It acts on the whole
+  received voice at any radio effect strength, but is not used on clean
+  frequencies or when the radio effect strength is 0 %; the squelch tail,
+  the start/end sounds and your own voice on the mic output device stay
+  clean. "Audio Preview" on the Radio tab uses it too, so you can tune it
+  while you hear yourself.
   Everything else is under "Advanced settings": microphone and incoming
-  audio, voice activation details, recording, radio effect details,
-  push-to-talk delays and controllers, the radio window and profiles.
+  audio, voice activation details (voice level threshold, default 60 %;
+  minimum transmission length, default 700 ms), recording, radio effect
+  details, push-to-talk delays and controllers and the radio window.
 
 
 4. HOSTING A SERVER
@@ -160,7 +201,8 @@ REQUIREMENTS
     Share the fingerprint with your users. Keep server-identity.pfx private
     and in your backups.
   - The server window also sets: radio check (echo) frequencies, clean
-    frequencies (played without radio effects), half-duplex radios,
+    frequencies (played without radio effects), one speaker per frequency
+    (busy channel lockout, on by default), half-duplex radios,
     interference of simultaneous transmissions, whether users see the
     number of users on their frequency and the name of the speaker, the
     client list export and transmission logging. Connected users can be
@@ -175,10 +217,10 @@ REQUIREMENTS
       cd EasyRadioLink-Server-<version>
       ./EasyRadioLink.Server.Cli --password=secret
   Run it with --help to see all options (on/off options take a value, for
-  example --half-duplex=true). The options you give are saved to server.cfg,
-  so later starts without options keep them. To remove the password again,
-  start it once with --password "" (a space, not "="). Stop the server with
-  Ctrl+C.
+  example --half-duplex=true or --busy-lockout=false). The options you give
+  are saved to server.cfg, so later starts without options keep them. To
+  remove the password again, start it once with --password "" (a space, not
+  "="). Stop the server with Ctrl+C.
 
   On a Linux server, run it as a service with the included
   easyradiolink.service (own user, no privileges, writes only to

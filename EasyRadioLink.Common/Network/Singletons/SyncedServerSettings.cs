@@ -11,7 +11,8 @@ namespace EasyRadioLink.Common.Network.Singletons;
 
 /// <summary>
 ///     Client-side mirror of the server's broadcast settings ("[General Settings]").
-///     Missing keys fall back to <see cref="DefaultServerSettings.Defaults" />.
+///     Missing keys fall back to <see cref="DefaultServerSettings.Defaults" /> - except for features that an older
+///     server does not have (<see cref="BusyChannelLockout" />): those are off unless the server sends them.
 /// </summary>
 public class SyncedServerSettings
 {
@@ -20,6 +21,9 @@ public class SyncedServerSettings
     private static readonly Dictionary<string, string> defaults = DefaultServerSettings.Defaults;
 
     private readonly ConcurrentDictionary<string, string> _settings;
+
+    // the keys the server actually sent (not filled in from the defaults)
+    private readonly ConcurrentDictionary<string, bool> _sentByServer = new();
 
     //cache of processed settings as bools to make lookup slightly quicker
     private readonly ConcurrentDictionary<string, bool> _settingsBool;
@@ -36,6 +40,14 @@ public class SyncedServerSettings
 
     /// <summary>Frequencies in Hz that are played without radio effects (CLEAN_FREQUENCIES).</summary>
     public IReadOnlyList<double> CleanFrequencies { get; private set; } = Array.Empty<double>();
+
+    /// <summary>
+    ///     One speaker per frequency (BUSY_CHANNEL_LOCKOUT): the server lets only one station transmit on a frequency
+    ///     at a time. False for a server that does not send the setting (before 1.3 it does not lock anything out).
+    /// </summary>
+    public bool BusyChannelLockout =>
+        WasSentByServer(ServerSettingsKeys.BUSY_CHANNEL_LOCKOUT) &&
+        GetSettingAsBool(ServerSettingsKeys.BUSY_CHANNEL_LOCKOUT);
 
     /// <summary>Protocol version reported by the server in its SYNC reply.</summary>
     public string ServerVersion { get; set; }
@@ -56,6 +68,12 @@ public class SyncedServerSettings
         }
     }
 
+
+    /// <summary>True if the connected server sent <paramref name="key" /> (it knows the setting).</summary>
+    public bool WasSentByServer(ServerSettingsKeys key)
+    {
+        return _sentByServer.ContainsKey(key.ToString());
+    }
 
     public string GetSetting(ServerSettingsKeys key)
     {
@@ -113,6 +131,7 @@ public class SyncedServerSettings
     {
         _settings.Clear();
         _settingsBool.Clear();
+        _sentByServer.Clear();
         ServerVersion = null;
         ServerIdentityFingerprint = null;
         UpdateFrequencyLists();
@@ -132,6 +151,7 @@ public class SyncedServerSettings
 
             var value = kvp.Value ?? "";
             _settings.AddOrUpdate(kvp.Key, value, (key, oldVal) => value);
+            _sentByServer[kvp.Key] = true;
         }
 
         UpdateFrequencyLists();
