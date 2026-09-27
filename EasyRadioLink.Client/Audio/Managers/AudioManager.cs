@@ -678,4 +678,12 @@ public class AudioManager : IHandle<ClientUpdateMessage>
         if (mixers != null && sendingOn >= 0 && sendingOn < mixers.Count)
             mixers[sendingOn]?.PlaySoundEffectEndTransmit();
     }
+
+    /// <summary>The busy tone (push-to-talk refused on a busy channel) on the radio's output - only you hear it.</summary>
+    public void PlaySoundEffectBusy(int radioId)
+    {
+        var mixers = _radioMixingProvider;
+        if (mixers != null && radioId >= 0 && radioId < mixers.Count)
+            mixers[radioId]?.PlaySoundEffectBusy();
+    }
 }

@@ -156,6 +156,9 @@
   <data name="LabelArchiveTime" xml:space="preserve">
     <value>Keep transmission logs (days)</value>
   </data>
+  <data name="LabelBusyLockout" xml:space="preserve">
+    <value>One speaker per frequency (busy channel lockout)</value>
+  </data>
   <data name="LabelCleanFreq" xml:space="preserve">
     <value>Clean frequencies (no radio effects, MHz)</value>
   </data>
@@ -230,6 +233,9 @@ and click "Start Server".</value>
   </data>
   <data name="TooltipArchiveTime" xml:space="preserve">
     <value>How many days of transmission logs are kept (0-7).</value>
+  </data>
+  <data name="TooltipBusyLockout" xml:space="preserve">
+    <value>While a station is transmitting on a frequency, nobody else can transmit on it - like a real radio with busy channel lockout. Whoever presses push-to-talk on a busy frequency hears a busy tone and must press again once the frequency is free (0.3 s after the last transmission).</value>
   </data>
   <data name="TooltipCleanFreq" xml:space="preserve">
     <value>Transmissions on these frequencies are played without radio effects (static, filters, clicks). Comma separated, use a dot as decimal separator, e.g. 145.5,446.1</value>

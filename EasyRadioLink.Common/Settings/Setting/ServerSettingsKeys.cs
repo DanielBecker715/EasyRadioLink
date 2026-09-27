@@ -6,7 +6,7 @@ namespace EasyRadioLink.Common.Settings.Setting;
 /// <summary>
 ///     Server settings. The enum NAMES are the keys in server.cfg and on the wire (NetworkMessage.ServerSettings);
 ///     the numeric values are only kept stable for readability - never reuse a removed number (the highest number used
-///     so far is 40, so a new key starts at 41).
+///     so far is 41, so a new key starts at 42).
 /// </summary>
 public enum ServerSettingsKeys
 {
@@ -27,7 +27,8 @@ public enum ServerSettingsKeys
     HTTP_SERVER_API_KEY = 34,
     HTTP_SERVER_ADDRESS = 38,
     SERVER_PASSWORD = 39, // [Server Settings] only - never broadcast; empty = open server
-    CLEAN_FREQUENCIES = 40 // MHz list: transmissions on these frequencies are played without radio effects
+    CLEAN_FREQUENCIES = 40, // MHz list: transmissions on these frequencies are played without radio effects
+    BUSY_CHANNEL_LOCKOUT = 41 // one speaker per frequency: a second station can't transmit on a busy channel
 }
 
 public class DefaultServerSettings
@@ -54,7 +55,8 @@ public class DefaultServerSettings
         { ServerSettingsKeys.HTTP_SERVER_API_KEY.ToString(), ShortGuid.NewGuid() },
         { ServerSettingsKeys.HTTP_SERVER_ADDRESS.ToString(), "localhost" },
         { ServerSettingsKeys.SERVER_PASSWORD.ToString(), "" },
-        { ServerSettingsKeys.CLEAN_FREQUENCIES.ToString(), "" }
+        { ServerSettingsKeys.CLEAN_FREQUENCIES.ToString(), "" },
+        { ServerSettingsKeys.BUSY_CHANNEL_LOCKOUT.ToString(), "true" }
     };
 
     /// <summary>
@@ -65,6 +67,7 @@ public class DefaultServerSettings
         ServerSettingsKeys.CLIENT_EXPORT_ENABLED,
         ServerSettingsKeys.IRL_RADIO_TX,
         ServerSettingsKeys.IRL_RADIO_RX_INTERFERENCE,
+        ServerSettingsKeys.BUSY_CHANNEL_LOCKOUT,
         ServerSettingsKeys.TEST_FREQUENCIES,
         ServerSettingsKeys.CLEAN_FREQUENCIES,
         ServerSettingsKeys.SHOW_TUNED_COUNT,

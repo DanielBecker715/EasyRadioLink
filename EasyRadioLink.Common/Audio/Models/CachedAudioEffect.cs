@@ -27,7 +27,8 @@ public class CachedAudioEffect
         NATO_TONE = 4, // NATO_TONE.wav - looping FM tone (user-visible label "FM tone")
         SQUELCH_TAIL_AM = 5, // SQUELCH_TAIL_AM.wav - noise source for the AM squelch tail
         SQUELCH_TAIL_FM = 6, // SQUELCH_TAIL_FM.wav - noise source for the FM squelch tail
-        BACKGROUND = 7 // Background\<name>.wav - background sounds (jet, prop, helicopter, ...)
+        BACKGROUND = 7, // Background\<name>.wav - background sounds (jet, prop, helicopter, ...)
+        BUSY_TONE = 8 // BUSY_TONE.wav - played locally when push-to-talk is refused on a busy channel
     }
 
     public const string AudioEffectsFolderName = "AudioEffects";

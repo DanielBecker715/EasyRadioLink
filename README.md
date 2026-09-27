@@ -1,8 +1,8 @@
 # EasyRadioLink
 
 EasyRadioLink is a standalone digital radio for Windows. Users connect to an EasyRadioLink server, tune their radio
-to a frequency and talk to everybody on that frequency, with the sound of real radios: band-pass filters, static,
-squelch tails, key clicks, tones, half-duplex behaviour and interference.
+to a frequency and talk to everybody on that frequency, with the sound and the rules of real radios: band-pass
+filters, static, squelch tails, key clicks, tones, one speaker per frequency, half-duplex behaviour and interference.
 
 It needs no game or other software: a group of friends, a club, a flight-sim squadron, an airsoft or role-play team
 simply runs a server and connects.
@@ -13,8 +13,10 @@ simply runs a server and connects.
 - One radio, 1.000 - 999.999 MHz: as many channels as there are frequencies. The frequency decides the band,
   the modulation (AM, FM or digital) and the radio sound (see [Band plan](#band-plan)).
 - Radio window with a seven-segment display, a tuning knob (drag, mouse wheel or arrow keys), step keys, STEP
-  (1 kHz - 100 MHz), direct entry (double-click the display), volume knob, TX/RX indicators with the transmitter's
-  name and the number of users on the frequency.
+  (1 kHz - 100 MHz), direct entry (double-click the display), volume knob, BUSY/TX/RX indicators with the
+  transmitter's name and the number of users on the frequency.
+- One speaker per frequency, like real radios with busy channel lockout: while somebody is talking, the others can't
+  (a short busy tone tells you the frequency is in use; see [The radio](#the-radio)).
 - The radio remembers its frequency and volume between sessions.
 
 **Radio sound**
@@ -41,7 +43,8 @@ simply runs a server and connects.
 **Server**
 - Server with a window for Windows, plus a command-line server for Windows and Linux (x64).
 - Optional server password, radio check (echo) frequencies, clean frequencies without radio effects,
-  half-duplex radios and interference of simultaneous transmissions.
+  one speaker per frequency (busy channel lockout, on by default), half-duplex radios and interference of
+  simultaneous transmissions.
 - Mute/kick/ban, client list export, transmission log, UPnP port forwarding and an optional HTTP admin API.
 
 ## Download
@@ -138,6 +141,7 @@ starts without options keep the settings. On/off options take a value: `--half-d
 | `--clean-frequencies` | `CLEAN_FREQUENCIES` | empty | Frequencies in MHz that are played without radio effects. |
 | `--half-duplex` | `IRL_RADIO_TX` | `false` | Half-duplex radios: a radio cannot receive while it transmits. |
 | `--radio-interference` | `IRL_RADIO_RX_INTERFERENCE` | `false` | Simultaneous transmissions on one frequency interfere. |
+| `--busy-lockout` | `BUSY_CHANNEL_LOCKOUT` | `true` | One speaker per frequency (busy channel lockout): while a station transmits on a frequency, nobody else can transmit on it until 0.3 s after its last transmission. |
 | `--show-tuned-count` | `SHOW_TUNED_COUNT` | `true` | Users see how many people are tuned to their frequency. |
 | `--show-transmitter-name` | `SHOW_TRANSMITTER_NAME` | `false` | Users see who is transmitting. |
 | `--client-export` | `CLIENT_EXPORT_ENABLED` | `false` | Write the connected clients to a JSON file every 5 seconds. |
@@ -310,9 +314,16 @@ the **Radio** tab and the *Show / hide the radio* hotkey open it at any time. It
   the frame flash and the entry stays open.
 - **VOL**: the small knob sets the volume (drag or mouse wheel).
 - **Display**: the frequency in seven-segment digits (digits below 1 kHz appear small, e.g. the `75` of
-  446.19375), the band, the modulation (AM / FM / DIG), `TX` while you transmit, `RX` while you receive, the
-  transmitter's name and the number of users on the frequency (when the server allows them) and the step. Without a
-  connection it shows `NO LINK` and the controls are disabled.
+  446.19375), the band, the modulation (AM / FM / DIG), `BUSY` while another station uses the frequency, `TX` while
+  you transmit, `RX` while you receive, the transmitter's name and the number of users on the frequency (when the
+  server allows them) and the step. Without a connection it shows `NO LINK` and the controls are disabled.
+- **One speaker per frequency** (busy channel lockout; the server has it on unless its admin switched it off - see
+  **Server Info**): while somebody is talking on your frequency, `BUSY` is lit and you can't transmit. If you press
+  push-to-talk then, you hear a short busy tone (two low beeps, only you hear it), `BUSY` flashes and nothing is sent
+  for the whole press - release and press again once the frequency is free (0.3 s after the other station stopped).
+  If two stations press at the same moment, the server lets the first one through; the other one hears the busy tone
+  and stops transmitting. With voice activation (VOX) nothing is sent while the frequency is busy; you hear the busy
+  tone at most once per second. The radio check echo of your own voice never counts as busy.
 - Drag the radio by its case; the grip at the bottom right scales it. Position and size are remembered.
 
 The **Controls** tab assigns keys or buttons to push-to-talk, frequency up / down (one binding per step, 100 MHz to

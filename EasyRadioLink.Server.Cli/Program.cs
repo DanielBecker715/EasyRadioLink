@@ -203,6 +203,8 @@ internal class Program : IHandle<ClientConnectionMessage>, IHandle<ServerStartFa
             store.SetGeneralSetting(ServerSettingsKeys.IRL_RADIO_TX, options.RealRadioTX.Value);
         if (options.RealRadioRX.HasValue)
             store.SetGeneralSetting(ServerSettingsKeys.IRL_RADIO_RX_INTERFERENCE, options.RealRadioRX.Value);
+        if (options.BusyChannelLockout.HasValue)
+            store.SetGeneralSetting(ServerSettingsKeys.BUSY_CHANNEL_LOCKOUT, options.BusyChannelLockout.Value);
         if (options.TestFrequencies != null)
             store.SetGeneralSetting(ServerSettingsKeys.TEST_FREQUENCIES,
                 RadioCalculator.NormaliseFrequencyListMHz(options.TestFrequencies));
@@ -321,6 +323,12 @@ public class Options
         Required = false)]
     public bool? RealRadioRX { get; set; }
 
+    [Option("busy-lockout",
+        HelpText =
+            "One speaker per frequency (busy channel lockout): while a station transmits on a frequency, nobody else can transmit on it until 0.3 s after its last transmission. Default is true",
+        Required = false)]
+    public bool? BusyChannelLockout { get; set; }
+
     [Option("test-frequencies",
         HelpText =
             "Radio check (echo) frequencies in MHz, comma separated with '.' as decimal separator. Transmissions on them are played back to the sender. Default is 27.405,446.19375",
@@ -437,6 +445,7 @@ public class Options
             $"{nameof(ClientExportPath)}: {ClientExportPath}, \n" +
             $"{nameof(RealRadioTX)}: {RealRadioTX}, \n" +
             $"{nameof(RealRadioRX)}: {RealRadioRX}, \n" +
+            $"{nameof(BusyChannelLockout)}: {BusyChannelLockout}, \n" +
             $"{nameof(TestFrequencies)}: {TestFrequencies}, \n" +
             $"{nameof(CleanFrequencies)}: {CleanFrequencies}, \n" +
             $"{nameof(ShowTunedCount)}: {ShowTunedCount}, \n" +

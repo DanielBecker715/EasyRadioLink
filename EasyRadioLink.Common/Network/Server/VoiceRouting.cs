@@ -10,6 +10,10 @@ namespace EasyRadioLink.Common.Network.Server;
 ///     The server's voice routing decision (pure, no I/O):
 ///     <list type="bullet">
 ///         <item>a muted sender is dropped,</item>
+///         <item>
+///             while the busy channel lockout is on, a packet on a channel another station holds is dropped
+///             (<see cref="PassesBusyChannelLockout" />, checked by the <c>UDPVoiceRouter</c> before routing),
+///         </item>
 ///         <item>the sender gets its own transmission back only on a radio check (test) frequency,</item>
 ///         <item>every other client receives the packet if one of its radios <see cref="CanReceive" /> it.</item>
 ///     </list>
@@ -133,6 +137,20 @@ public static class VoiceRouting
         }
 
         return recipients;
+    }
+
+    /// <summary>
+    ///     The busy channel lockout (one speaker per frequency): true if <paramref name="packet" /> of
+    ///     <paramref name="sender" /> may be forwarded - always when the lockout is off (<paramref name="enabled" />,
+    ///     server setting BUSY_CHANNEL_LOCKOUT), otherwise only if no other station holds one of its channels
+    ///     (<see cref="BusyChannelArbiter.Allow" />; the sender then holds the channel).
+    /// </summary>
+    public static bool PassesBusyChannelLockout(BusyChannelArbiter arbiter, bool enabled, ClientInfo sender,
+        UDPVoicePacket packet, long nowMilliseconds)
+    {
+        if (!enabled || arbiter == null || sender == null || packet == null) return true;
+
+        return arbiter.Allow(sender.ClientGuid, packet.Frequencies, packet.Modulations, nowMilliseconds);
     }
 
     /// <summary>A client sends 25 voice packets per second (40 ms frames); more than this is dropped.</summary>

@@ -89,9 +89,10 @@ REQUIREMENTS
   - Double-click the display (or press Enter) to type a frequency in MHz,
     for example 446.19375 (446,19375 works too). Enter sets it, Esc cancels.
   - VOL: the small knob sets the volume (drag it up / down or use the wheel).
-  - The display shows the band and the modulation, TX while you transmit, RX
-    while you receive, the name of the speaker and the number of users on the
-    frequency (if the server allows it).
+  - The display shows the band and the modulation, BUSY while another
+    station uses the frequency, TX while you transmit, RX while you receive,
+    the name of the speaker and the number of users on the frequency (if the
+    server allows it).
   - Drag the radio by its case, resize it with the corner at the bottom
     right. Without a connection the display shows NO LINK.
   - Controls tab: besides Push-To-Talk you can assign keys or buttons to
@@ -114,6 +115,17 @@ REQUIREMENTS
 
   The radio starts on 27.185 MHz (CB channel 19) and remembers its frequency
   and volume.
+
+  One speaker per frequency: like a real radio with busy channel lockout,
+  you can't transmit while somebody else is talking on your frequency (BUSY
+  is lit). If you press push-to-talk then, you hear a short busy tone (two
+  low beeps, only you hear it), BUSY flashes and nothing is sent for the
+  whole press - release and press again when the frequency is free (0.3 s
+  after the other station stopped). If two stations press at the same
+  moment, the first one gets through and the other one hears the busy tone.
+  With voice activation (VOX) nothing is sent while the frequency is busy.
+  The server decides this; its admin can switch it off ("Server Info" shows
+  whether it is on).
 
   Radio check: on a server with default settings, whatever you transmit on
   27.405 MHz (CB channel 40) or 446.19375 MHz (PMR channel 16) is sent back
@@ -175,7 +187,8 @@ REQUIREMENTS
     Share the fingerprint with your users. Keep server-identity.pfx private
     and in your backups.
   - The server window also sets: radio check (echo) frequencies, clean
-    frequencies (played without radio effects), half-duplex radios,
+    frequencies (played without radio effects), one speaker per frequency
+    (busy channel lockout, on by default), half-duplex radios,
     interference of simultaneous transmissions, whether users see the
     number of users on their frequency and the name of the speaker, the
     client list export and transmission logging. Connected users can be
@@ -190,10 +203,10 @@ REQUIREMENTS
       cd EasyRadioLink-Server-<version>
       ./EasyRadioLink.Server.Cli --password=secret
   Run it with --help to see all options (on/off options take a value, for
-  example --half-duplex=true). The options you give are saved to server.cfg,
-  so later starts without options keep them. To remove the password again,
-  start it once with --password "" (a space, not "="). Stop the server with
-  Ctrl+C.
+  example --half-duplex=true or --busy-lockout=false). The options you give
+  are saved to server.cfg, so later starts without options keep them. To
+  remove the password again, start it once with --password "" (a space, not
+  "="). Stop the server with Ctrl+C.
 
   On a Linux server, run it as a service with the included
   easyradiolink.service (own user, no privileges, writes only to

@@ -2,6 +2,7 @@
 using System.Threading;
 using System.Threading.Tasks;
 using Caliburn.Micro;
+using EasyRadioLink.Client.Audio.Managers;
 using EasyRadioLink.Client.Network.Models;
 using EasyRadioLink.Client.Radios;
 using EasyRadioLink.Common;
@@ -72,6 +73,12 @@ public sealed class ClientStateSingleton : PropertyChangedBaseClass, IHandle<TCP
 
     // indexed by radio slot (0..10) - only PlayerRadioInfo.RadioId is used
     public RadioReceivingState[] RadioReceivingState { get; }
+
+    /// <summary>
+    ///     Busy channel lockout of the radio (one speaker per frequency): refused presses, lost races and the BUSY
+    ///     indicator of the radio window.
+    /// </summary>
+    public BusyChannelLockout BusyChannel { get; } = new();
 
     public bool IsConnected
     {

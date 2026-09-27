@@ -13,8 +13,9 @@ namespace EasyRadioLink.Common.Audio.Providers;
 
 /// <summary>
 ///     Output of ONE local radio slot (index 0..10; only the radio in slot 1 is ever used, the other slots stay
-///     silent): start/end clicks, squelch tail, the mix of all received transmissions (receive filter, FM capture) and
-///     the stereo balance.
+///     silent): start/end clicks, squelch tail, the mix of all received transmissions (receive filter, FM capture), the
+///     busy tone and the stereo balance. The start/end sounds play before the received voice; the busy tone is mixed
+///     over it, so it never delays what is being received.
 /// </summary>
 public class RadioMixingProvider : ISampleProvider
 {
@@ -27,6 +28,9 @@ public class RadioMixingProvider : ISampleProvider
 
     private readonly CachedAudioEffectProvider _cachedAudioEffectsProvider;
     private readonly CircularFloatBuffer effectsBuffer;
+
+    // local sounds mixed over the output (the busy tone) - unlike effectsBuffer they don't hold back the received voice
+    private readonly CircularFloatBuffer overlayBuffer;
 
 
     private readonly ClientEffectsPipeline pipeline = new();
@@ -61,6 +65,7 @@ public class RadioMixingProvider : ISampleProvider
 
         //5 seconds worth of buffer
         effectsBuffer = new CircularFloatBuffer(WaveFormat.SampleRate * 5);
+        overlayBuffer = new CircularFloatBuffer(WaveFormat.SampleRate);
         _cachedAudioEffectsProvider = CachedAudioEffectProvider.Instance;
 
         //   waveWriter = new NAudio.Wave.WaveFileWriter($@"C:\\temp\\output{Guid.NewGuid()}.wav", new WaveFormat(AudioManager.OUTPUT_SAMPLE_RATE, 2));
@@ -192,6 +197,9 @@ public class RadioMixingProvider : ISampleProvider
         }
 
 
+        // the busy tone on top of whatever is playing (or of silence)
+        monoOffset = MixOverlay(overlayBuffer, monoBuffer, monoOffset, monoBufferLength);
+
         if (monoOffset > 0)
         {
              // We have available data, make it stereo and copy to target.
@@ -294,6 +302,34 @@ public class RadioMixingProvider : ISampleProvider
 
         return outputSamples;
     }
+
+    /// <summary>
+    ///     Adds up to <paramref name="count" /> queued samples of <paramref name="overlayBuffer" /> to the start of
+    ///     <paramref name="buffer" /> (which holds <paramref name="offset" /> valid samples and silence after them) and
+    ///     clips; returns the new number of valid samples.
+    /// </summary>
+    internal static int MixOverlay(CircularFloatBuffer overlayBuffer, float[] buffer, int offset, int count)
+    {
+        var overlayCount = Math.Min(overlayBuffer.Count, count);
+        if (overlayCount <= 0) return offset;
+
+        var floatPool = ArrayPool<float>.Shared;
+        var overlay = floatPool.Rent(overlayCount);
+        try
+        {
+            overlayCount = overlayBuffer.Read(overlay, 0, overlayCount);
+            for (var i = 0; i < overlayCount; i++) buffer[i] += overlay[i];
+
+            AudioManipulationHelper.ClipArray(buffer.AsSpan(0, overlayCount));
+        }
+        finally
+        {
+            floatPool.Return(overlay);
+        }
+
+        return Math.Max(offset, overlayCount);
+    }
+
     private int ReadMixBuffer(float[] buffer, int offset, int count)
     {
         // Drain current.
@@ -380,6 +416,20 @@ public class RadioMixingProvider : ISampleProvider
         if (!profileSettings.GetClientSettingBool(ProfileSettingsKeys.RadioTxEffects_End)) return;
 
         WriteEffect(_cachedAudioEffectsProvider.SelectedRadioTransmissionEndEffect);
+    }
+
+    /// <summary>
+    ///     Plays the busy tone on this radio: push-to-talk was refused because another station is using the frequency
+    ///     (busy channel lockout). Only heard locally, like the push-to-talk sounds; always on. Mixed over the received
+    ///     voice (which goes on undelayed); a new tone restarts one that is still playing.
+    /// </summary>
+    public void PlaySoundEffectBusy()
+    {
+        var effect = _cachedAudioEffectsProvider.BusyTone;
+        if (effect == null || !effect.Loaded) return;
+
+        overlayBuffer.Reset();
+        overlayBuffer.Write(effect.AudioEffectFloat, 0, effect.AudioEffectFloat.Length);
     }
 
 

@@ -2161,6 +2161,15 @@ namespace EasyRadioLink.Client.Properties {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to One speaker per frequency (busy channel lockout).
+        /// </summary>
+        public static string SrvBusyChannelLockout {
+            get {
+                return ResourceManager.GetString("SrvBusyChannelLockout", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to Clean frequencies (no radio effects).
         /// </summary>
         public static string SrvCleanFrequencies {
@@ -3039,6 +3048,15 @@ namespace EasyRadioLink.Client.Properties {
         public static string ToolTipUsersOnFrequency {
             get {
                 return ResourceManager.GetString("ToolTipUsersOnFrequency", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Busy: another station is transmitting on this frequency. Push-to-talk is refused while it is busy - release it and press again when the frequency is free..
+        /// </summary>
+        public static string ToolTipRadioBusy {
+            get {
+                return ResourceManager.GetString("ToolTipRadioBusy", resourceCulture);
             }
         }
     }

@@ -852,6 +852,9 @@ This client: protocol {2} (servers with protocol {3} or newer are supported)</va
   <data name="SpeakerLabel" xml:space="preserve">
     <value>Speakers</value>
   </data>
+  <data name="SrvBusyChannelLockout" xml:space="preserve">
+    <value>One speaker per frequency (busy channel lockout)</value>
+  </data>
   <data name="SrvCleanFrequencies" xml:space="preserve">
     <value>Clean frequencies (no radio effects)</value>
   </data>
@@ -1146,5 +1149,8 @@ The password is sent over the encrypted connection, after the server's identity 
   </data>
   <data name="ToolTipUsersOnFrequency" xml:space="preserve">
     <value>Other users on this frequency</value>
+  </data>
+  <data name="ToolTipRadioBusy" xml:space="preserve">
+    <value>Busy: another station is transmitting on this frequency. Push-to-talk is refused while it is busy - release it and press again when the frequency is free.</value>
   </data>
 </root>

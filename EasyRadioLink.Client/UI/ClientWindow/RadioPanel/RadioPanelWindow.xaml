@@ -26,11 +26,12 @@
         <SolidColorBrush x:Key="LcdDimBrush" Color="#B0D08A2C" />
         <SolidColorBrush x:Key="LcdTxBrush" Color="#FFFF5A45" />
         <SolidColorBrush x:Key="LcdRxBrush" Color="#FF72FF86" />
+        <SolidColorBrush x:Key="LcdBusyBrush" Color="#FFFF3B30" />
         <SolidColorBrush x:Key="PanelLabelBrush" Color="#FF858C96" />
 
         <FontFamily x:Key="LcdFont">Bahnschrift SemiBold, Segoe UI Semibold, Segoe UI</FontFamily>
 
-        <!-- small indicator text on the LCD (band, mode, TX/RX, name, step) -->
+        <!-- small indicator text on the LCD (band, mode, BUSY/TX/RX, name, step) -->
         <Style x:Key="LcdText" TargetType="{x:Type TextBlock}">
             <Setter Property="FontFamily" Value="{StaticResource LcdFont}" />
             <Setter Property="FontSize" Value="10.5" />
@@ -39,7 +40,7 @@
             <Setter Property="SnapsToDevicePixels" Value="False" />
         </Style>
 
-        <!-- TX / RX: faint while off, lit and glowing while on -->
+        <!-- BUSY / TX / RX: faint while off, lit and glowing while on -->
         <Style x:Key="LcdIndicator"
                BasedOn="{StaticResource LcdText}"
                TargetType="{x:Type TextBlock}">
@@ -327,7 +328,7 @@
                                         <RowDefinition Height="16" />
                                     </Grid.RowDefinitions>
 
-                                    <!-- band, mode | users on the frequency, TX, RX -->
+                                    <!-- band, mode | users on the frequency, BUSY, TX, RX -->
                                     <DockPanel Grid.Row="0" LastChildFill="False">
                                         <Border x:Name="BandChip"
                                                 Padding="4,0,4,0"
@@ -355,6 +356,13 @@
                                                    DockPanel.Dock="Right"
                                                    Style="{StaticResource LcdIndicator}"
                                                    Text="TX" />
+                                        <!-- busy channel lockout: lit while another station uses the frequency,
+                                             flashing after a refused push-to-talk press -->
+                                        <TextBlock x:Name="BusyText"
+                                                   DockPanel.Dock="Right"
+                                                   Style="{StaticResource LcdIndicator}"
+                                                   Text="BUSY"
+                                                   ToolTip="{x:Static p:Resources.ToolTipRadioBusy}" />
                                         <StackPanel x:Name="UsersPanel"
                                                     Margin="0,0,4,0"
                                                     VerticalAlignment="Center"

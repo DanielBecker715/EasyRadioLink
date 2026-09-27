@@ -12,7 +12,7 @@ namespace EasyRadioLink.Common.Audio.Providers;
 /// <summary>
 ///     Loads and caches the sound effects shipped in <c>&lt;ProgramDirectory&gt;\AudioEffects</c>:
 ///     start/end sounds (clicks and beeps, user selectable by file-name prefix, separately for transmitting and
-///     receiving), the FM tone, the squelch tail noise sources and the background sounds in
+///     receiving), the FM tone, the squelch tail noise sources, the busy tone and the background sounds in
 ///     <c>AudioEffects\Background</c>.
 /// </summary>
 public class CachedAudioEffectProvider
@@ -75,6 +75,12 @@ public class CachedAudioEffectProvider
     public CachedAudioEffect SquelchTailFM { get; private set; }
 
     /// <summary>
+    ///     BUSY_TONE.wav - two short low beeps, played only locally when push-to-talk is refused because another
+    ///     station is using the frequency (busy channel lockout).
+    /// </summary>
+    public CachedAudioEffect BusyTone { get; private set; }
+
+    /// <summary>
     ///     Names (lower case, e.g. "helicopter", "jet", "prop") of the background sounds found in
     ///     <c>AudioEffects\Background</c>, sorted. "" (none) is not part of the list.
     /// </summary>
@@ -88,6 +94,8 @@ public class CachedAudioEffectProvider
 
         SquelchTailAM = new CachedAudioEffect(CachedAudioEffect.AudioEffectTypes.SQUELCH_TAIL_AM);
         SquelchTailFM = new CachedAudioEffect(CachedAudioEffect.AudioEffectTypes.SQUELCH_TAIL_FM);
+
+        BusyTone = new CachedAudioEffect(CachedAudioEffect.AudioEffectTypes.BUSY_TONE);
 
         LoadBackgroundEffects();
     }

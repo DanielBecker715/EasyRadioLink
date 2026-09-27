@@ -89,6 +89,13 @@ public sealed class MainViewModel : Screen, IHandle<ServerStateMessage>, IHandle
         set => SetSetting(ServerSettingsKeys.IRL_RADIO_RX_INTERFERENCE, value);
     }
 
+    /// <summary>One speaker per frequency: the voice router and the clients pick the change up at once.</summary>
+    public bool BusyChannelLockout
+    {
+        get => GetSetting(ServerSettingsKeys.BUSY_CHANNEL_LOCKOUT);
+        set => SetSetting(ServerSettingsKeys.BUSY_CHANNEL_LOCKOUT, value);
+    }
+
     public bool ShowTunedCount
     {
         get => GetSetting(ServerSettingsKeys.SHOW_TUNED_COUNT);
